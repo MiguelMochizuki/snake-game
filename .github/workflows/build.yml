@@ -1,0 +1,104 @@
+name: Build Binaries
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x86-64
+            runs-on: ubuntu-24.04
+            artifact-name: snake-linux-x86_64
+            binary-path: build/bin/snake
+            cmake-generator: Ninja
+          - name: Linux ARM64
+            runs-on: ubuntu-24.04
+            artifact-name: snake-linux-arm64
+            binary-path: build/bin/snake
+            cmake-generator: Ninja
+            toolchain: linux-arm64
+          - name: Windows x86-64
+            runs-on: windows-2022
+            artifact-name: snake-windows-x86_64
+            binary-path: build\\Release\\snake.exe
+            cmake-generator: Visual Studio 17 2022
+            cmake-arch: x64
+          - name: Windows ARM64
+            runs-on: windows-2022
+            artifact-name: snake-windows-arm64
+            binary-path: build\\Release\\snake.exe
+            cmake-generator: Visual Studio 17 2022
+            cmake-arch: ARM64
+          - name: macOS Universal
+            runs-on: macos-14
+            artifact-name: snake-macos-universal
+            binary-path: build/bin/snake
+            cmake-generator: Ninja
+            osx-architectures: "x86_64;arm64"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Ninja
+        if: matrix.cmake-generator == 'Ninja'
+        uses: seanmiddleditch/gha-setup-ninja@v5
+
+      - name: Set up Linux ARM64 toolchain
+        if: matrix.toolchain == 'linux-arm64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          cmake_args=(
+            -S .
+            -B build
+            -DCMAKE_BUILD_TYPE=Release
+          )
+
+          if [ "${{ matrix.cmake-generator }}" = "Visual Studio 17 2022" ]; then
+            cmake_args+=(-G "Visual Studio 17 2022" -A "${{ matrix.cmake-arch }}")
+          else
+            cmake_args+=(-G "${{ matrix.cmake-generator }}")
+          fi
+
+          if [ "${{ matrix.toolchain }}" = "linux-arm64" ]; then
+            printf '%s\n' \
+              'set(CMAKE_SYSTEM_NAME Linux)' \
+              'set(CMAKE_SYSTEM_PROCESSOR aarch64)' \
+              'set(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)' \
+              'set(CMAKE_CXX_COMPILER aarch64-linux-gnu-g++)' \
+              > linux-arm64-toolchain.cmake
+            cmake_args+=(-DCMAKE_TOOLCHAIN_FILE=$PWD/linux-arm64-toolchain.cmake)
+          fi
+
+          if [ -n "${{ matrix.osx-architectures }}" ]; then
+            cmake_args+=(-DCMAKE_OSX_ARCHITECTURES="${{ matrix.osx-architectures }}")
+          fi
+
+          cmake "${cmake_args[@]}"
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: ${{ matrix.binary-path }}
+          if-no-files-found: error
