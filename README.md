@@ -263,6 +263,13 @@ The Dockerfile uses a multi-stage build for minimal image size:
 -v $(pwd)/data:/app/data
 ```
 
+### Pre-built Image on Docker Hub
+A pre-built Docker image is available on Docker Hub at [miguelmochizuki/snake-game](https://hub.docker.com/repository/docker/miguelmochizuki/snake-game/general):
+```bash
+docker pull miguelmochizuki/snake-game
+docker run --rm -it -v $(pwd)/data:/app/data miguelmochizuki/snake-game
+```
+
 ### Security
 - Runs as non-root user (`snakeuser`)
 - Minimal Alpine base image
