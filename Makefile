@@ -18,6 +18,9 @@ DOCKER_VOLUME = snake-data
 # Executable path
 EXECUTABLE = $(BUILD_DIR)/bin/snake
 
+# Docker cache tracking
+DOCKER_CACHE = .docker-build-cache
+
 # Colors
 GREEN = \033[0;32m
 BLUE = \033[0;34m
@@ -30,7 +33,10 @@ NC = \033[0m
 # ==============================
 
 .PHONY: local
-local:
+local: $(EXECUTABLE)
+
+# Build only if source files or CMakeLists.txt changed
+$(EXECUTABLE): $(shell find . -name "*.cpp" -o -name "*.h" -o -name "*.c" 2>/dev/null) CMakeLists.txt
 	@echo "$(BLUE)Configuring CMake...$(NC)"
 	@mkdir -p $(BUILD_DIR)
 	@cd $(BUILD_DIR) && $(CMAKE) $(CMAKE_FLAGS) ..
@@ -57,11 +63,15 @@ rebuild-local: clean-local local
 # Docker targets
 # ==============================
 
-.PHONY: docker
-docker:
+# Build Docker image only if Dockerfile or source files changed
+$(DOCKER_CACHE): Dockerfile $(shell find . -name "*.cpp" -o -name "*.h" -o -name "*.c" 2>/dev/null) CMakeLists.txt
 	@echo "$(BLUE)Building Docker image...$(NC)"
 	@docker build -t $(DOCKER_IMAGE) .
+	@touch $(DOCKER_CACHE)
 	@echo "$(GREEN)Docker image built: $(DOCKER_IMAGE)$(NC)"
+
+.PHONY: docker
+docker: $(DOCKER_CACHE)
 
 .PHONY: run-docker
 run-docker: docker
@@ -77,6 +87,7 @@ clean-docker:
 	@echo "$(YELLOW)Cleaning Docker...$(NC)"
 	@docker rm -f $(DOCKER_CONTAINER) 2>/dev/null || true
 	@docker rmi -f $(DOCKER_IMAGE) 2>/dev/null || true
+	@rm -f $(DOCKER_CACHE)
 	@echo "$(YELLOW)Docker clean complete!$(NC)"
 
 .PHONY: clean-volume
@@ -97,14 +108,14 @@ help:
 	@echo "$(GREEN)Snake Game - Makefile Options$(NC)"
 	@echo ""
 	@echo "$(BLUE)Local targets:$(NC)"
-	@echo "  make local          - Build the game locally"
-	@echo "  make run-local      - Build and run the game locally"
+	@echo "  make local          - Build the game locally (only if changed)"
+	@echo "  make run-local      - Build and run the game locally (only if changed)"
 	@echo "  make clean-local    - Remove build files"
 	@echo "  make rebuild-local  - Clean and rebuild locally"
 	@echo ""
 	@echo "$(BLUE)Docker targets:$(NC)"
-	@echo "  make docker         - Build Docker image"
-	@echo "  make run-docker     - Build and run in Docker (with volume persistence)"
-	@echo "  make clean-docker   - Remove Docker image and containers"
+	@echo "  make docker         - Build Docker image (only if changed)"
+	@echo "  make run-docker     - Build and run in Docker (only if changed)"
+	@echo "  make clean-docker   - Remove Docker image, container and cache"
 	@echo "  make clean-volume   - Remove the data volume"
 	@echo "  make rebuild-docker - Clean and rebuild Docker image"
