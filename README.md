@@ -64,12 +64,12 @@ snake-windows-x86_64.exe
 snake-game/
 ├── CMakeLists.txt          # CMake build configuration
 ├── Dockerfile              # Multi-stage Docker build
+├── DOCKER_HUB.md           # Docker Hub repository description
 ├── Makefile                # Build orchestration
 ├── LICENSE                 # MIT License
 ├── .github/
 │   └── workflows/
-│       ├── build.yml       # CI build workflow
-│       └── release.yml     # Automatic release workflow
+│       └── build-and-release.yml  # CI build, release & Docker publish
 ├── data/                   # Score persistence directory
 │   ├── best_score.txt     # Best score storage
 │   └── score_history.txt  # All scores history
@@ -277,34 +277,37 @@ docker run --rm -it -v $(pwd)/data:/app/data miguelmochizuki/snake-game
 
 ## CI/CD
 
-The project uses GitHub Actions for continuous integration and delivery:
+The project uses a single GitHub Actions workflow for continuous integration and delivery:
 
-### Build Workflow
-Automatically builds binaries for all supported platforms on every push to `main` and `dev`:
+### Build
+On every push to `main` or pull request, binaries are built for all supported platforms:
 - Linux x86-64
 - Linux ARM64
 - Windows x86-64
 - Windows ARM64
 - macOS Universal
 
-### Release Workflow
-When a tag matching `v*` is pushed, the release workflow automatically:
-1. Downloads all build artifacts
-2. Creates a GitHub Release
-3. Attaches the binaries directly to the release (no ZIP files)
+### Release
+When a tag matching `v*` is pushed, the workflow additionally:
+1. Creates a GitHub Release attaching all pre-built binaries
+2. Builds and publishes a multi-platform Docker image to Docker Hub
+
+Because `docker-publish` runs in parallel with `build`, the Docker image is built **while** platform binaries are being compiled.
 
 ### Creating a New Release
 ```bash
-# Ensure all changes are merged to main
-git checkout main
-git pull origin main
-
-# Create and push a version tag
 git tag -a v1.0.0 -m "Release v1.0.0"
 git push origin v1.0.0
 ```
 
-The release will be automatically created with all binaries attached.
+The release and Docker image will be created automatically.
+
+### Docker Hub
+A pre-built multi-platform image (linux/amd64, linux/arm64) is available at:
+```bash
+docker pull miguelmochizuki/snake-game
+docker run --rm -it -v $(pwd)/data:/app/data miguelmochizuki/snake-game
+```
 
 ## 📄 License
 
