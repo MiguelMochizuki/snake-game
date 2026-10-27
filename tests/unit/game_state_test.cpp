@@ -24,6 +24,8 @@ const int DY[4] = {-1, 1, 0, 0};
  * GameState& gs: The game state to move
  * int dir: The direction (0=UP, 1=DOWN, 2=LEFT, 3=RIGHT)
  * int n: Number of moves
+ *
+ * Throws std::runtime_error: If any move collides (propagated from moveSnake)
  */
 void step(GameState& gs, int dir, int n) {
 	for (int i = 0; i < n; ++i) {
@@ -36,10 +38,11 @@ void step(GameState& gs, int dir, int n) {
  *
  * Parameters:
  * GameState& gs: The game state to steer (ends having eaten the food)
+ * bool* lastAte: If not null, receives the result of the final moveSnake call
  *
  * Returns int: The direction of the final (eating) move, or -1 if unreachable
  */
-int steerToFood(GameState& gs) {
+int steerToFood(GameState& gs, bool* lastAte = nullptr) {
 	const int rows = gs.getRows();
 	const int cols = gs.getCols();
 	const int hx = gs.getSnake().getHead()->getX();
@@ -79,8 +82,12 @@ int steerToFood(GameState& gs) {
 		x -= DX[d];
 		y -= DY[d];
 	}
+	bool ate = false;
 	for (auto it = path.rbegin(); it != path.rend(); ++it) {
-		gs.moveSnake(*it);
+		ate = gs.moveSnake(*it);
+	}
+	if (lastAte) {
+		*lastAte = ate;
 	}
 	return path.front();  // path was built from the food backwards
 }
@@ -98,14 +105,28 @@ TEST(GameState, InitialSnakeCentered) {
 
 TEST(GameState, FoodNeverOnSnake) {
 	for (unsigned seed = 0; seed < 200; ++seed) {
-		// Known quirk: the constructor spawns food before the occupancy mask is
-		// built, so seed 92 places the first food on the snake body.
+		// Known quirk, pinned by InitialFoodCanLandOnSnakeQuirk: seed 92 places
+		// the first food on the snake body.
 		if (seed == 92) {
 			continue;
 		}
 		GameState gs(20, 20, 0, seed);
 		EXPECT_FALSE(gs.getSnake().hasPosition(gs.getFood().getX(), gs.getFood().getY())) << "seed " << seed;
 	}
+}
+
+// Pinned quirk: constructor/reset call spawnFood() before updateOccupied(), so the first food ignores the snake. Fixing this flips this test.
+TEST(GameState, InitialFoodCanLandOnSnakeQuirk) {
+	GameState gs(20, 20, 0, 92);
+	EXPECT_TRUE(gs.getSnake().hasPosition(gs.getFood().getX(), gs.getFood().getY()));
+}
+
+// Pinned quirk: reset() spawns food against the stale mask of the previous game. Fixing this flips this test.
+TEST(GameState, ResetFoodCanLandOnSnakeQuirk) {
+	GameState gs(20, 20, 0, 57);
+	step(gs, 0, 4);
+	gs.reset();
+	EXPECT_TRUE(gs.getSnake().hasPosition(gs.getFood().getX(), gs.getFood().getY()));
 }
 
 TEST(GameState, IsOccupiedOutOfBounds) {
@@ -174,7 +195,9 @@ TEST(GameState, EatingIncrementsScoreAndGrows) {
 	GameState gs(20, 20, 0, 42);
 	const int fx = gs.getFood().getX();
 	const int fy = gs.getFood().getY();
-	ASSERT_GE(steerToFood(gs), 0);
+	bool ate = false;
+	ASSERT_GE(steerToFood(gs, &ate), 0);
+	EXPECT_TRUE(ate);
 	EXPECT_EQ(gs.getScore(), 1);
 	EXPECT_EQ(gs.getSnake().getLength(), 4u);
 	EXPECT_TRUE(gs.getFood().getX() != fx || gs.getFood().getY() != fy);
