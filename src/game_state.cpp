@@ -4,8 +4,6 @@
  * Description: Class GameState implementation
  */
 #include "game_state.hpp"
-#include <cstdlib>
-#include <ctime>
 #include <stdexcept>
 #include <algorithm>
 
@@ -16,16 +14,17 @@
  * int rows: Number of rows in the board
  * int cols: Number of columns in the board
  * int bestScore: Initial best score from ScoreManager
+ * unsigned seed: Seed for the food placement generator
  */
-GameState::GameState(int rows, int cols, int bestScore)
+GameState::GameState(int rows, int cols, int bestScore, unsigned seed)
 	: rows_(rows)
 	, cols_(cols)
 	, snake_(cols / 2, rows / 2, 3)
 	, food_(0, 0)
 	, occupied_(rows * cols, false)
 	, score_(0)
-	, bestScore_(bestScore) {
-	std::srand(static_cast<unsigned>(std::time(nullptr)));
+	, bestScore_(bestScore)
+	, rng_(seed) {
 	spawnFood();
 	updateOccupied();
 }
@@ -211,8 +210,8 @@ void GameState::setBestScore(int bestScore) {
  */
 void GameState::spawnFood() {
 	for (int attempt = 0; attempt < 100; ++attempt) {
-		int x = std::rand() % cols_;
-		int y = std::rand() % rows_;
+		int x = static_cast<int>(rng_() % static_cast<unsigned>(cols_));
+		int y = static_cast<int>(rng_() % static_cast<unsigned>(rows_));
 
 		if (!isOccupied(x, y)) {
 			food_.setX(x);

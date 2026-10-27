@@ -7,21 +7,31 @@
 #define TERMINAL_RENDERER_HPP
 
 #include "game_state.hpp"
+#include <cstddef>
+#include <iostream>
 
 // Forward declaration
 class WASDInputHandler;
 
 /**
  * Renders game state to terminal/console
+ *
+ * Attributes:
+ * std::ostream& out_: Stream that receives all output
+ * bool firstRender_: Whether the next clear is the first one (full clear)
  */
 class TerminalRenderer {
+	std::ostream& out_;
 	bool firstRender_ = true;
 
 public:
 	/**
 	 * Constructor for the TerminalRenderer class
+	 *
+	 * Parameters:
+	 * std::ostream& out: Stream that receives all output (default: std::cout)
 	 */
-	TerminalRenderer() = default;
+	explicit TerminalRenderer(std::ostream& out = std::cout);
 
 	/**
 	 * Destructor for the TerminalRenderer class
@@ -45,6 +55,17 @@ public:
 	 * const GameState& state: The game state to render
 	 */
 	void render(const GameState& state);
+
+	/**
+	 * Prints the game over panel with statistics
+	 *
+	 * Parameters:
+	 * int finalScore: The final score
+	 * int bestScore: The best score
+	 * size_t totalGames: Total number of games played
+	 * double averageScore: Average score
+	 */
+	void printGameOver(int finalScore, int bestScore, size_t totalGames, double averageScore);
 
 	/**
 	 * Shows game over screen with statistics

@@ -81,8 +81,11 @@ private:
 public:
 	/**
 	 * Constructor for the ScoreManager class
+	 *
+	 * Parameters:
+	 * const std::string& dataDir: Directory for storing score files (default: "data")
 	 */
-	ScoreManager();
+	explicit ScoreManager(const std::string& dataDir = "data");
 
 	/**
 	 * Destructor for the ScoreManager class

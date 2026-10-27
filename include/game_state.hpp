@@ -9,6 +9,8 @@
 #include "snake.hpp"
 #include "food.hpp"
 #include <vector>
+#include <random>
+#include <ctime>
 
 /**
  * Represents the complete state of the game
@@ -21,6 +23,7 @@
  * std::vector<bool> occupied_: Flat bitmask for O(1) occupancy checks
  * int score_: Current score
  * int bestScore_: Current best score (loaded from file)
+ * std::mt19937 rng_: Random generator for food placement, seeded once
  */
 class GameState {
 private:
@@ -31,6 +34,7 @@ private:
 	std::vector<bool> occupied_;
 	int score_;
 	int bestScore_;
+	std::mt19937 rng_;
 
 	/**
 	 * Updates the occupancy bitmask based on current snake and food positions
@@ -45,8 +49,9 @@ public:
 	 * int rows: Number of rows in the board
 	 * int cols: Number of columns in the board
 	 * int bestScore: Initial best score from ScoreManager
+	 * unsigned seed: Seed for the food placement generator (default: current time)
 	 */
-	GameState(int rows, int cols, int bestScore = 0);
+	GameState(int rows, int cols, int bestScore = 0, unsigned seed = static_cast<unsigned>(std::time(nullptr)));
 
 	/**
 	 * Destructor for the GameState class

@@ -15,10 +15,11 @@
  * int rows: Number of rows in the board (default: 20)
  * int cols: Number of columns in the board (default: 20)
  * int speedMs: Game speed in milliseconds (default: 200)
+ * unsigned seed: Seed for food placement
  */
-GameEngine::GameEngine(int rows, int cols, int speedMs)
+GameEngine::GameEngine(int rows, int cols, int speedMs, unsigned seed)
 	: scoreManager_()
-	, state_(rows, cols, scoreManager_.getBestScore())
+	, state_(rows, cols, scoreManager_.getBestScore(), seed)
 	, inputHandler_()
 	, renderer_()
 	, direction_(Direction::RIGHT)
