@@ -43,7 +43,7 @@ Pre-built binaries are available for download from the [Releases](https://github
 | Windows | ARM64 | `snake-windows-arm64.exe` |
 | macOS | Universal (x86_64 + ARM64) | `snake-macos-universal` |
 
-> **Latest release:** [v1.2.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.2.0) — Color-coded rendering (disable with `NO_COLOR`); game-over screen exits on input EOF; restart runs as a loop; regression test suite gating releases and the Docker image.
+> **Latest release:** [v1.3.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.3.0) — Arrow keys alongside WASD; only registered keys have any effect (fixes ← steering right, Windows PgDn quitting, Ctrl+C leaving the terminal raw); average score over the last 10 games.
 
 ### Running Downloaded Binaries
 
@@ -346,8 +346,8 @@ Because `docker-publish` runs in parallel with `build`, the Docker image is buil
 
 ### Creating a New Release
 ```bash
-git tag -a v1.2.0 -m "Release v1.2.0"
-git push origin v1.2.0
+git tag -a v1.3.0 -m "Release v1.3.0"
+git push origin v1.3.0
 ```
 
 The release and Docker image will be created automatically.
@@ -356,6 +356,7 @@ The release and Docker image will be created automatically.
 
 | Version | Highlights |
 |---------|------------|
+| [v1.3.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.3.0) | Arrow keys via composite input handlers; strict key handling (escape sequences, Windows extended keys, Ctrl+C/Z/S); average over the last 10 games |
 | [v1.2.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.2.0) | Color-coded rendering with `NO_COLOR` support; game-over EOF exit and loop-based restart; Makefile tracks headers; CTest regression suite (unit, golden, Linux e2e) on every platform and inside Docker |
 | [v1.1.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.1.0) | Flattened occupancy bitmask (reduced memory); string-buffered terminal output (smoother rendering) |
 | [v1.0.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.0.0) | Initial release: cross-platform builds, Docker support, score persistence |
