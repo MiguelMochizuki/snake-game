@@ -128,3 +128,36 @@ TEST(KeyDecoder, WindowsSingleBytes) {
 	EXPECT_EQ(KeyDecoder::decodeWindows('w', 0), charKey('w'));
 	EXPECT_EQ(KeyDecoder::decodeWindows(0x1a, 0), sk(KeyKind::Unknown));
 }
+
+TEST(KeyDecoder, AbortedCsiReprocessesAbortingByte) {
+	KeyDecoder d;
+	EXPECT_EQ(d.feed("\x1b[\x1b[D"), (Keys{sk(KeyKind::Unknown), sk(KeyKind::Left)}));
+	EXPECT_EQ(d.feed("\x1b[\x03"), (Keys{sk(KeyKind::Unknown), sk(KeyKind::CtrlC)}));
+}
+
+TEST(KeyDecoder, AbortedSs3ReprocessesAbortingByte) {
+	KeyDecoder d;
+	EXPECT_EQ(d.feed("\x1bO\x1b[A"), (Keys{sk(KeyKind::Unknown), sk(KeyKind::Up)}));
+}
+
+TEST(KeyDecoder, EscEscIsAltModifiedSingleUnknown) {
+	KeyDecoder d;
+	EXPECT_EQ(d.feed("\x1b\x1b[D"), (Keys{sk(KeyKind::Unknown)}));
+	EXPECT_EQ(d.feed("\x1b\x1bOA"), (Keys{sk(KeyKind::Unknown)}));
+	EXPECT_EQ(d.feed("\x1b\x1bq"), (Keys{sk(KeyKind::Unknown)}));
+}
+
+TEST(KeyDecoder, EscEscSplitAcrossFeeds) {
+	KeyDecoder d;
+	EXPECT_EQ(d.feed("\x1b\x1b"), Keys{});
+	EXPECT_EQ(d.feed("[D"), (Keys{sk(KeyKind::Unknown)}));
+	EXPECT_EQ(d.feed("\x1b\x1b"), Keys{});
+	EXPECT_EQ(d.idle(), (Keys{sk(KeyKind::Unknown)}));
+}
+
+TEST(KeyDecoder, IdleLeavesIncompleteSs3Pending) {
+	KeyDecoder d;
+	EXPECT_EQ(d.feed("\x1bO"), Keys{});
+	EXPECT_EQ(d.idle(), Keys{});
+	EXPECT_EQ(d.feed("A"), (Keys{sk(KeyKind::Up)}));
+}

@@ -17,6 +17,7 @@
  * Attributes:
  * State state_: Position in the escape sequence being read
  * bool hasParams_: true if the CSI sequence being read has parameter bytes
+ * bool alt_: true if the sequence being read started with ESC ESC (Alt-modified)
  */
 class KeyDecoder {
 private:
@@ -24,6 +25,7 @@ private:
 
 	State state_ = State::Ground;
 	bool hasParams_ = false;
+	bool alt_ = false;
 
 	/**
 	 * Decodes a byte that is not part of an escape sequence
