@@ -37,7 +37,7 @@ NC = \033[0m
 local: $(EXECUTABLE)
 
 # Build only if source files or CMakeLists.txt changed
-$(EXECUTABLE): $(shell find . -name "*.cpp" -o -name "*.h" -o -name "*.c" 2>/dev/null) CMakeLists.txt
+$(EXECUTABLE): $(shell find . -path ./build -prune -o -path ./.git -prune -o -path ./.superpowers -prune -o -name "*.cpp" -print -o -name "*.hpp" -print -o -name "*.h" -print -o -name "*.c" -print 2>/dev/null) CMakeLists.txt
 	@echo "$(BLUE)Configuring CMake...$(NC)"
 	@mkdir -p $(BUILD_DIR)
 	@cd $(BUILD_DIR) && $(CMAKE) $(CMAKE_FLAGS) ..
@@ -76,7 +76,7 @@ rebuild-local: clean-local local
 # ==============================
 
 # Build Docker image only if Dockerfile or source files changed
-$(DOCKER_CACHE): Dockerfile $(shell find . -name "*.cpp" -o -name "*.h" -o -name "*.c" 2>/dev/null) CMakeLists.txt
+$(DOCKER_CACHE): Dockerfile .gitattributes $(shell find . -path ./build -prune -o -path ./.git -prune -o -path ./.superpowers -prune -o -name "*.cpp" -print -o -name "*.hpp" -print -o -name "*.h" -print -o -name "*.c" -print -o -path "./tests/*.py" -print -o -path "./tests/*.txt" -print 2>/dev/null) CMakeLists.txt
 	@echo "$(BLUE)Building Docker image...$(NC)"
 	@docker build -t $(DOCKER_IMAGE) .
 	@touch $(DOCKER_CACHE)
