@@ -1,0 +1,257 @@
+"""
+harness.py
+Author: Miguel Mochizuki Silva
+Description: Pty harness for the Linux end-to-end tests (spawns the game, feeds keys, parses frames)
+"""
+import os
+import re
+import select
+import signal
+import subprocess
+import termios
+import time
+
+ANSI_RE = re.compile(r"\033\[[0-9;]*[A-Za-z]")
+FRAME_END = "Controls: WASD to move, Q to quit"
+
+
+def scale():
+	"""
+	Reads the timeout multiplier from SNAKE_E2E_TIMEOUT_SCALE
+
+	Returns float: The multiplier (default 1.0)
+	"""
+	return float(os.environ.get("SNAKE_E2E_TIMEOUT_SCALE") or 1.0)
+
+
+def strip_ansi(s):
+	"""
+	Removes ANSI CSI sequences and carriage returns
+
+	Parameters:
+	str s: Raw terminal output
+
+	Returns str: The text without escape sequences
+	"""
+	return ANSI_RE.sub("", s).replace("\r", "")
+
+
+class Game:
+	"""
+	Runs the snake binary on a pty; use as a context manager so the child is always killed
+
+	Attributes:
+	subprocess.Popen proc: The child process
+	int master: Pty master fd (our side)
+	int slave: Pty slave fd (the child's terminal, kept open to read termios after exit)
+	str out: Everything the child printed so far (raw)
+	int pos: Offset in the stripped output where the next wait_for starts
+	"""
+
+	def __init__(self, binary, cwd=None, env=None, frame_ms=30, seed=1):
+		"""
+		Spawns the game
+
+		Parameters:
+		str binary: Path to the snake executable
+		str cwd: Working directory (score files go to cwd/data)
+		dict env: Extra environment variables, applied after the SNAKE_* defaults
+		int frame_ms: Value for SNAKE_FRAME_MS
+		int seed: Value for SNAKE_SEED
+		"""
+		full_env = dict(os.environ, SNAKE_FRAME_MS=str(frame_ms), SNAKE_SEED=str(seed))
+		full_env.update(env or {})
+		self.master, self.slave = os.openpty()
+		self.out = ""
+		self.pos = 0
+		self.proc = subprocess.Popen([binary], cwd=cwd, env=full_env, stdin=self.slave,
+			stdout=self.slave, stderr=self.slave, start_new_session=True)
+
+	def __enter__(self):
+		"""
+		Returns Game: self
+		"""
+		return self
+
+	def __exit__(self, *exc):
+		"""
+		Kills the child if still running and closes both pty fds
+
+		Returns bool: False (exceptions propagate)
+		"""
+		if self.proc.poll() is None:
+			os.killpg(self.proc.pid, signal.SIGKILL)
+			self.proc.wait()
+		os.close(self.master)
+		os.close(self.slave)
+		return False
+
+	def _pump(self, wait):
+		"""
+		Reads whatever the child printed, waiting up to `wait` seconds for data
+
+		Parameters:
+		float wait: Maximum seconds to block in select
+		"""
+		ready, _, _ = select.select([self.master], [], [], wait)
+		if ready:
+			self.out += os.read(self.master, 65536).decode("latin-1")
+
+	def _until(self, cond, timeout, what):
+		"""
+		Pumps output until cond() is truthy
+
+		Parameters:
+		callable cond: Predicate polled after every read
+		float timeout: Seconds before scale()
+		str what: Description used in the failure message
+
+		Returns object: The truthy value cond() returned
+
+		Throws AssertionError: On timeout, with the last 2 KB of stripped output
+		"""
+		deadline = time.monotonic() + timeout * scale()
+		while True:
+			result = cond()
+			if result:
+				return result
+			left = deadline - time.monotonic()
+			if left <= 0:
+				raise AssertionError("timed out waiting for %s; output tail:\n%s"
+					% (what, strip_ansi(self.out)[-2048:]))
+			self._pump(min(left, 0.05))
+
+	def send(self, keys):
+		"""
+		Sends keys to the game; first waits for frame 2, because the game switches the tty
+		to raw mode (TCSAFLUSH, discarding pending input) only after drawing frame 1
+
+		Parameters:
+		str keys: Characters to type
+		"""
+		self.wait_frames(2)
+		os.write(self.master, keys.encode())
+
+	def wait_for(self, pattern, timeout=5.0):
+		"""
+		Waits for a regex in the stripped output after the previous match, and consumes it
+
+		Parameters:
+		str | re.Pattern pattern: What to look for
+		float timeout: Seconds before scale()
+
+		Returns str: The matched text
+
+		Throws AssertionError: On timeout
+		"""
+		rx = re.compile(pattern) if isinstance(pattern, str) else pattern
+		m = self._until(lambda: rx.search(strip_ansi(self.out), self.pos), timeout, repr(rx.pattern))
+		self.pos = m.end()
+		return m.group(0)
+
+	def frame_count(self):
+		"""
+		Returns int: Number of fully rendered frames so far
+		"""
+		return self.out.count(FRAME_END)
+
+	def wait_frames(self, n, timeout=5.0):
+		"""
+		Waits until at least n frames were rendered in total
+
+		Parameters:
+		int n: Frame count to reach
+		float timeout: Seconds before scale()
+
+		Throws AssertionError: On timeout
+		"""
+		self._until(lambda: self.frame_count() >= n, timeout, "%d frames" % n)
+
+	def frames(self):
+		"""
+		Returns list[list[str]]: Every complete frame as its 20 inner board rows (borders removed)
+		"""
+		result = []
+		for chunk in self.out.split("\033[H"):
+			if FRAME_END in chunk:
+				lines = strip_ansi(chunk).split("\n")
+				result.append([row[1:-1] for row in lines[1:21]])
+		return result
+
+	def last_frame(self):
+		"""
+		Returns list[str]: The board rows of the last complete frame
+		"""
+		return self.frames()[-1]
+
+	def find(self, ch):
+		"""
+		Locates a character in the last frame
+
+		Parameters:
+		str ch: Character to find
+
+		Returns tuple: (x, y) board coordinates
+
+		Throws AssertionError: If the character is not on the board
+		"""
+		for y, row in enumerate(self.last_frame()):
+			if ch in row:
+				return row.index(ch), y
+		raise AssertionError("%r not on board:\n%s" % (ch, "\n".join(self.last_frame())))
+
+	def exit_code(self, timeout=5.0):
+		"""
+		Waits for the child to exit while draining its output
+
+		Parameters:
+		float timeout: Seconds before scale()
+
+		Returns int: The exit status
+
+		Throws AssertionError: On timeout
+		"""
+		self._until(lambda: self.proc.poll() is not None, timeout, "process exit")
+		self._pump(0)
+		return self.proc.returncode
+
+	def tty_attrs(self):
+		"""
+		Returns list: termios attributes of the child's terminal (the slave fd)
+		"""
+		return termios.tcgetattr(self.slave)
+
+
+def quit_game(game):
+	"""
+	Quits a running game from the board: q, wait for the panel, q, expect exit 0
+
+	Parameters:
+	Game game: The running game
+
+	Returns str: Stripped output from the game-over panel on
+
+	Throws AssertionError: If the panel never shows or the exit status is not 0
+	"""
+	game.send("q")
+	game.wait_for("GAME OVER!")
+	start = game.pos
+	game.send("q")
+	code = game.exit_code()
+	assert code == 0, "exit code %d" % code
+	return strip_ansi(game.out)[start:]
+
+
+def play_once(binary, cwd):
+	"""
+	Plays one game that quits right away with score 0
+
+	Parameters:
+	str binary: Path to the snake executable
+	str cwd: Working directory
+
+	Returns str: Stripped game-over panel text
+	"""
+	with Game(binary, cwd=cwd) as game:
+		game.wait_for(r"Score: 0")
+		return quit_game(game)
