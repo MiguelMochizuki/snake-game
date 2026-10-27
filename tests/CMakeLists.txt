@@ -21,3 +21,24 @@ snake_set_warnings(snake_unit_tests)
 
 include(GoogleTest)
 gtest_discover_tests(snake_unit_tests PROPERTIES LABELS unit)
+
+# End-to-end tests (Linux only): every tests/e2e/test_*.py is registered automatically
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	find_package(Python3 COMPONENTS Interpreter)
+	if(Python3_Interpreter_FOUND)
+		set(SNAKE_E2E_TIMEOUT_SCALE 1 CACHE STRING "Multiplier for every e2e timeout (slow or emulated hosts)")
+		math(EXPR E2E_TIMEOUT "60 * ${SNAKE_E2E_TIMEOUT_SCALE}")
+		file(GLOB E2E_SCRIPTS CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/e2e/test_*.py)
+		foreach(script ${E2E_SCRIPTS})
+			get_filename_component(stem ${script} NAME_WE)
+			string(REGEX REPLACE "^test_" "" name ${stem})
+			add_test(NAME e2e_${name} COMMAND Python3::Interpreter -B ${script} $<TARGET_FILE:snake>)
+			set_tests_properties(e2e_${name} PROPERTIES
+				LABELS e2e
+				TIMEOUT ${E2E_TIMEOUT}
+				ENVIRONMENT SNAKE_E2E_TIMEOUT_SCALE=${SNAKE_E2E_TIMEOUT_SCALE})
+		endforeach()
+	else()
+		message(STATUS "Python3 not found: e2e tests not registered")
+	endif()
+endif()
