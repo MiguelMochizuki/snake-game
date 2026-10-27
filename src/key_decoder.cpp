@@ -51,6 +51,7 @@ std::vector<Key> KeyDecoder::feed(const std::string& bytes) {
 					hasParams_ = false;
 				} else if (ch == 'O') {
 					state_ = State::Ss3;
+					hasParams_ = false;
 				} else {
 					emit(specialKey(KeyKind::Unknown));
 					state_ = State::Ground;
@@ -70,8 +71,10 @@ std::vector<Key> KeyDecoder::feed(const std::string& bytes) {
 				}
 				break;
 			case State::Ss3:
-				if (c >= 0x40 && c <= 0x7E) {
-					emit(decodeArrow(ch));
+				if (c >= 0x20 && c <= 0x3F) {
+					hasParams_ = true;
+				} else if (c >= 0x40 && c <= 0x7E) {
+					emit(hasParams_ ? specialKey(KeyKind::Unknown) : decodeArrow(ch));
 					state_ = State::Ground;
 				} else {
 					emit(specialKey(KeyKind::Unknown));

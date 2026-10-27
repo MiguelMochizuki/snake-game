@@ -18,6 +18,7 @@ FRAME_END = "Controls: WASD to move, Q to quit"
 
 # Keys with no effect in any state: function/navigation keys, modified keys, control bytes, UTF-8, other characters
 UNREGISTERED_KEYS = [
+	b"\x1bO2Q", b"\x1bO5D",
 	b"\x1bOP", b"\x1b[15~", b"\x1b[24~",
 	b"\x1b[H", b"\x1b[F",
 	b"\x1b[5~", b"\x1b[6~",

@@ -161,3 +161,21 @@ TEST(KeyDecoder, IdleLeavesIncompleteSs3Pending) {
 	EXPECT_EQ(d.idle(), Keys{});
 	EXPECT_EQ(d.feed("A"), (Keys{sk(KeyKind::Up)}));
 }
+
+TEST(KeyDecoder, ParameterizedSs3IsUnknown) {
+	for (const char* s : {"\x1bO2Q", "\x1bO5D", "\x1bO1;2R"}) {
+		KeyDecoder d;
+		EXPECT_EQ(d.feed(s), (Keys{sk(KeyKind::Unknown)})) << s;
+	}
+}
+
+TEST(KeyDecoder, ParameterizedSs3SplitAcrossReads) {
+	KeyDecoder d;
+	EXPECT_EQ(d.feed("\x1bO5"), Keys{});
+	EXPECT_EQ(d.feed("D"), (Keys{sk(KeyKind::Unknown)}));
+}
+
+TEST(KeyDecoder, WindowsPrefixWithoutCodeIsUnknown) {
+	EXPECT_EQ(KeyDecoder::decodeWindows(0xE0, 0), sk(KeyKind::Unknown));
+	EXPECT_EQ(KeyDecoder::decodeWindows(0x00, 0), sk(KeyKind::Unknown));
+}

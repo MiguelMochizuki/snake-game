@@ -79,7 +79,9 @@ std::vector<Key> TerminalKeySource::poll() {
 	while (_kbhit()) {
 		int c = _getch();
 		if (KeyDecoder::isWindowsPrefix(c)) {
-			keys.push_back(KeyDecoder::decodeWindows(c, _getch()));
+			// A lone 0xE0/0x00 character must not block the tick waiting for a second byte
+			int second = _kbhit() ? _getch() : 0;
+			keys.push_back(KeyDecoder::decodeWindows(c, second));
 		} else {
 			keys.push_back(KeyDecoder::decodeWindows(c, 0));
 		}
