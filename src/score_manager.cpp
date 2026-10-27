@@ -59,7 +59,7 @@ void ScoreManager::createDataDirectory() {
 }
 
 /**
- * Gets the average score from history
+ * Gets the average score over the last AVERAGE_WINDOW games (or all games if fewer)
  *
  * Returns double: Average score, or 0 if no scores
  */
@@ -68,11 +68,12 @@ double ScoreManager::getAverageScore() const {
 		return 0.0;
 	}
 
-	int sum = 0;
-	for (int score : scoreHistory_) {
-		sum += score;
+	std::size_t count = std::min(AVERAGE_WINDOW, scoreHistory_.size());
+	long long sum = 0;
+	for (auto it = scoreHistory_.end() - static_cast<std::ptrdiff_t>(count); it != scoreHistory_.end(); ++it) {
+		sum += *it;
 	}
-	return static_cast<double>(sum) / scoreHistory_.size();
+	return static_cast<double>(sum) / static_cast<double>(count);
 }
 
 /**

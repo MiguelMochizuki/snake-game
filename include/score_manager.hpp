@@ -12,6 +12,7 @@
 #include <iostream>
 #include <algorithm>
 #include <ctime>
+#include <cstddef>
 #include <cstdint>
 
 /**
@@ -27,6 +28,12 @@
  * uint64_t checksum_: Stored integrity checksum
  */
 class ScoreManager {
+public:
+	/**
+	 * Number of most recent games the average score is computed over
+	 */
+	static constexpr std::size_t AVERAGE_WINDOW = 10;
+
 private:
 	std::string dataDir_;
 	std::string historyFile_;
@@ -93,7 +100,7 @@ public:
 	~ScoreManager() = default;
 
 	/**
-	 * Gets the average score from history
+	 * Gets the average score over the last AVERAGE_WINDOW games (or all games if fewer)
 	 *
 	 * Returns double: Average score, or 0 if no scores
 	 */
