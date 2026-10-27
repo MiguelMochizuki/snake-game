@@ -23,13 +23,19 @@ Key KeyDecoder::decodeArrow(char c) {
 
 std::vector<Key> KeyDecoder::feed(const std::string& bytes) {
 	std::vector<Key> out;
-	size_t i = 0;
-	// A pending ESC from an earlier feed followed by a non-sequence byte resolves alone
-	if (state_ == State::Esc && !bytes.empty() && bytes[0] != '[' && bytes[0] != 'O') {
-		out.push_back(specialKey(KeyKind::Unknown));
+	// Emits k, or Unknown if the sequence was Alt-modified (ESC ESC ...)
+	auto emit = [&](Key k) {
+		out.push_back(alt_ ? specialKey(KeyKind::Unknown) : k);
+		alt_ = false;
+	};
+	// Across feeds a pending ESC followed by a plain byte is a lone ESC, so the byte is
+	// decoded from scratch. Within one feed (case Esc below) ESC + byte is Alt+byte.
+	if (state_ == State::Esc && !alt_ && !bytes.empty()
+			&& bytes[0] != '[' && bytes[0] != 'O' && bytes[0] != '\x1b') {
+		emit(specialKey(KeyKind::Unknown));
 		state_ = State::Ground;
 	}
-	for (; i < bytes.size(); i++) {
+	for (size_t i = 0; i < bytes.size(); i++) {
 		const char ch = bytes[i];
 		const int c = static_cast<unsigned char>(ch);
 		switch (state_) {
@@ -38,29 +44,40 @@ std::vector<Key> KeyDecoder::feed(const std::string& bytes) {
 				else out.push_back(decodeSingle(c));
 				break;
 			case State::Esc:
-				if (ch == '[') {
+				if (c == 0x1B) {
+					alt_ = true;
+				} else if (ch == '[') {
 					state_ = State::Csi;
 					hasParams_ = false;
 				} else if (ch == 'O') {
 					state_ = State::Ss3;
 				} else {
-					out.push_back(specialKey(KeyKind::Unknown));
+					emit(specialKey(KeyKind::Unknown));
 					state_ = State::Ground;
 				}
 				break;
 			case State::Csi:
 				if (c >= 0x20 && c <= 0x3F) {
 					hasParams_ = true;
-				} else {
-					// Final byte, or an invalid byte that aborts the sequence
-					out.push_back(c >= 0x40 && c <= 0x7E && !hasParams_
-						? decodeArrow(ch) : specialKey(KeyKind::Unknown));
+				} else if (c >= 0x40 && c <= 0x7E) {
+					emit(hasParams_ ? specialKey(KeyKind::Unknown) : decodeArrow(ch));
 					state_ = State::Ground;
+				} else {
+					// Invalid byte: abort the sequence and decode this byte from Ground
+					emit(specialKey(KeyKind::Unknown));
+					state_ = State::Ground;
+					i--;
 				}
 				break;
 			case State::Ss3:
-				out.push_back(decodeArrow(ch));
-				state_ = State::Ground;
+				if (c >= 0x40 && c <= 0x7E) {
+					emit(decodeArrow(ch));
+					state_ = State::Ground;
+				} else {
+					emit(specialKey(KeyKind::Unknown));
+					state_ = State::Ground;
+					i--;
+				}
 				break;
 		}
 	}
@@ -72,11 +89,13 @@ std::vector<Key> KeyDecoder::idle() {
 	if (state_ == State::Esc) {
 		out.push_back(specialKey(KeyKind::Unknown));
 		state_ = State::Ground;
+		alt_ = false;
 	}
 	return out;
 }
 
 void KeyDecoder::reset() {
+	alt_ = false;
 	state_ = State::Ground;
 	hasParams_ = false;
 }
