@@ -16,12 +16,13 @@
  * int cols: Number of columns in the board (default: 20)
  * int speedMs: Game speed in milliseconds (default: 200)
  * unsigned seed: Seed for food placement
+ * bool color: Whether to render with ANSI colors
  */
-GameEngine::GameEngine(int rows, int cols, int speedMs, unsigned seed)
+GameEngine::GameEngine(int rows, int cols, int speedMs, unsigned seed, bool color)
 	: scoreManager_()
 	, state_(rows, cols, scoreManager_.getBestScore(), seed)
 	, inputHandler_()
-	, renderer_()
+	, renderer_(std::cout, color)
 	, direction_(Direction::RIGHT)
 	, running_(true)
 	, speedMs_(speedMs) {
