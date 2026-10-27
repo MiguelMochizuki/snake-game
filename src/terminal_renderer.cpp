@@ -254,29 +254,3 @@ void TerminalRenderer::printGameOver(int finalScore, int bestScore, size_t total
 	p.endl();
 	out_ << buf.str();
 }
-
-/**
- * Shows game over screen with statistics
- *
- * Parameters:
- * int finalScore: The final score
- * int bestScore: The best score
- * size_t totalGames: Total number of games played
- * double averageScore: Average score
- * WASDInputHandler& inputHandler: Reference to the input handler
- *
- * Returns bool: true if restart was requested (R key); false on Q or when input hits EOF
- */
-bool TerminalRenderer::showGameOver(int finalScore, int bestScore, size_t totalGames,
-                                   double averageScore, WASDInputHandler& inputHandler) {
-	printGameOver(finalScore, bestScore, totalGames, averageScore);
-
-	while (true) {
-		char choice = inputHandler.readCharBlocking();
-		if (choice == 'r' || choice == 'R') {
-			return true;
-		} else if (choice == 'q' || choice == 'Q' || choice == 0) {
-			return false;
-		}
-	}
-}
