@@ -217,7 +217,7 @@ After the game ends, you'll see:
 - Final Score
 - Best Score
 - Total Games Played
-- Average Score
+- Average Score (last 10 games)
 
 Press **R** to restart or **Q** to quit.
 

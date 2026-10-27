@@ -117,6 +117,45 @@ TEST_F(ScoreManagerTest, AverageScore) {
 	EXPECT_DOUBLE_EQ(m.getAverageScore(), 3.5);
 }
 
+TEST_F(ScoreManagerTest, AverageUsesAllGamesBelowWindow) {
+	ScoreManager m(dir());
+	for (int s : {1, 2, 3}) m.saveScore(s);
+	EXPECT_DOUBLE_EQ(m.getAverageScore(), 2.0);
+}
+
+TEST_F(ScoreManagerTest, AverageExactlyWindow) {
+	ScoreManager m(dir());
+	for (int s = 1; s <= 10; ++s) m.saveScore(s);
+	EXPECT_DOUBLE_EQ(m.getAverageScore(), 5.5);
+}
+
+TEST_F(ScoreManagerTest, AverageUsesLastTenOnly) {
+	ScoreManager m(dir());
+	m.saveScore(100); m.saveScore(100);           // outside the window
+	for (int s = 1; s <= 10; ++s) m.saveScore(s);
+	EXPECT_DOUBLE_EQ(m.getAverageScore(), 5.5);
+	EXPECT_EQ(m.getTotalGames(), 12u);
+}
+
+TEST_F(ScoreManagerTest, AverageWindowSurvivesReload) {
+	{ ScoreManager m(dir()); for (int s = 1; s <= 12; ++s) m.saveScore(s); }
+	ScoreManager m2(dir());
+	EXPECT_DOUBLE_EQ(m2.getAverageScore(), 7.5);  // mean of 3..12
+}
+
+TEST_F(ScoreManagerTest, AverageAfterTamperIsZero) {
+	{
+		ScoreManager m(dir());
+		for (int s = 1; s <= 12; ++s) m.saveScore(s);
+	}
+	std::string tampered = "50\n";
+	for (int i = 1; i < 12; ++i) tampered += "1\n";
+	write("score_history.txt", tampered);
+	ScoreManager m2(dir());
+	EXPECT_DOUBLE_EQ(m2.getAverageScore(), 0.0);
+	EXPECT_EQ(m2.getTotalGames(), 12u);
+}
+
 TEST_F(ScoreManagerTest, PersistsAcrossInstances) {
 	{
 		ScoreManager m(dir());
