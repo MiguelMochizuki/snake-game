@@ -24,6 +24,7 @@ set(CORE_SOURCES
 	src/arrow_input_handler.cpp
 	src/command_input_handler.cpp
 	src/composite_input_handler.cpp
+	src/key_decoder.cpp
 )
 
 # Compiler warnings, shared by all targets (including tests)
