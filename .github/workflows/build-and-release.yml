@@ -37,14 +37,14 @@ jobs:
             artifact-name: snake-windows-x86_64
             binary-path: build/bin/Release/snake.exe
             final-name: snake-windows-x86_64.exe
-            cmake-generator: Visual Studio 17 2022
+            cmake-generator: Visual Studio
             cmake-arch: x64
           - name: Windows ARM64
             runs-on: windows-11-arm
             artifact-name: snake-windows-arm64
             binary-path: build/bin/Release/snake.exe
             final-name: snake-windows-arm64.exe
-            cmake-generator: Visual Studio 17 2022
+            cmake-generator: Visual Studio
             cmake-arch: ARM64
           - name: macOS Universal
             runs-on: macos-14
@@ -78,8 +78,9 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release
           )
 
-          if [ "${{ matrix.cmake-generator }}" = "Visual Studio 17 2022" ]; then
-            cmake_args+=(-G "Visual Studio 17 2022" -A "${{ matrix.cmake-arch }}")
+          if [ "${{ matrix.cmake-generator }}" = "Visual Studio" ]; then
+            # Let CMake pick the newest Visual Studio installed on the runner
+            cmake_args+=(-A "${{ matrix.cmake-arch }}")
           else
             cmake_args+=(-G "${{ matrix.cmake-generator }}")
           fi
