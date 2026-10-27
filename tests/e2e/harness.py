@@ -3,10 +3,12 @@ harness.py
 Author: Miguel Mochizuki Silva
 Description: Pty harness for the Linux end-to-end tests (spawns the game, feeds keys, parses frames)
 """
+import fcntl
 import os
 import re
 import select
 import signal
+import struct
 import subprocess
 import termios
 import time
@@ -56,10 +58,10 @@ class Game:
 		str binary: Path to the snake executable
 		str cwd: Working directory (score files go to cwd/data)
 		dict env: Extra environment variables, applied after the SNAKE_* defaults
-		int frame_ms: Value for SNAKE_FRAME_MS
+		int frame_ms: Frame time in ms; SNAKE_FRAME_MS gets frame_ms * scale() so slow hosts slow the game too
 		int seed: Value for SNAKE_SEED
 		"""
-		full_env = dict(os.environ, SNAKE_FRAME_MS=str(frame_ms), SNAKE_SEED=str(seed))
+		full_env = dict(os.environ, SNAKE_FRAME_MS=str(int(frame_ms * scale())), SNAKE_SEED=str(seed))
 		full_env.update(env or {})
 		self.master, self.slave = os.openpty()
 		self.out = ""
@@ -123,14 +125,36 @@ class Game:
 
 	def send(self, keys):
 		"""
-		Sends keys to the game; first waits for frame 2, because the game switches the tty
-		to raw mode (TCSAFLUSH, discarding pending input) only after drawing frame 1
+		Sends keys to the game. The WASDInputHandler constructor switches the tty to raw mode
+		with TCSAFLUSH before frame 1, discarding anything typed earlier, so this first waits
+		for frame 2 as a margin (free once the game is past it)
 
 		Parameters:
 		str keys: Characters to type
 		"""
 		self.wait_frames(2)
 		os.write(self.master, keys.encode())
+
+	def drain(self):
+		"""
+		Reads all output already queued on the pty, so frame_count() is current
+		"""
+		while select.select([self.master], [], [], 0)[0]:
+			self.out += os.read(self.master, 65536).decode("latin-1")
+
+	def wait_input_consumed(self, timeout=5.0):
+		"""
+		Waits until the game has read every key sent so far (the slave's input queue is empty)
+
+		Parameters:
+		float timeout: Seconds before scale()
+
+		Throws AssertionError: On timeout
+		"""
+		def empty():
+			buf = fcntl.ioctl(self.slave, termios.FIONREAD, struct.pack("i", 0))
+			return struct.unpack("i", buf)[0] == 0
+		self._until(empty, timeout, "the game to read pending input")
 
 	def wait_for(self, pattern, timeout=5.0):
 		"""
