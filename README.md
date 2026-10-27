@@ -314,7 +314,7 @@ git diff tests/golden/
 ```
 
 ### Test environment variables
-- `SNAKE_E2E_TIMEOUT_SCALE` (integer, default 1): multiplies end-to-end timeouts. Raise it on slow hosts. The Docker build uses 10.
+- `SNAKE_E2E_TIMEOUT_SCALE` (integer, default 1): multiplies end-to-end timeouts and game frame time. Raise it on slow hosts. The Docker build uses 10.
 - `SNAKE_FRAME_MS` (0-10000, default 200) and `SNAKE_SEED` (unsigned): test hooks read by the binary to set the frame time and the random seed. Normal play does not need them.
 
 ## CI/CD
@@ -329,7 +329,7 @@ On every push to `main` or pull request, binaries are built for all supported pl
 - Windows ARM64
 - macOS Universal
 
-Tests run on every platform job; a failure blocks both the GitHub release and the Docker image. The Docker image build runs the suite for amd64 and arm64 (arm64 under emulation), so a failing test also stops the image from being published.
+Tests run on every platform job; a platform-job failure blocks the GitHub release. The Docker image is gated separately: the test suite runs inside its build (amd64 and arm64, arm64 under emulation), so a failing test stops the image build.
 
 ### Release
 When a tag matching `v*` is pushed, the workflow additionally:
