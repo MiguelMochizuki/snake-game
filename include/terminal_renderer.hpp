@@ -19,10 +19,12 @@ class WASDInputHandler;
  * Attributes:
  * std::ostream& out_: Stream that receives all output
  * bool firstRender_: Whether the next clear is the first one (full clear)
+ * bool color_: Whether output carries ANSI SGR color codes
  */
 class TerminalRenderer {
 	std::ostream& out_;
 	bool firstRender_ = true;
+	bool color_;
 
 public:
 	/**
@@ -30,8 +32,16 @@ public:
 	 *
 	 * Parameters:
 	 * std::ostream& out: Stream that receives all output (default: std::cout)
+	 * bool color: Whether to emit ANSI SGR color codes (default: false)
 	 */
-	explicit TerminalRenderer(std::ostream& out = std::cout);
+	explicit TerminalRenderer(std::ostream& out = std::cout, bool color = false);
+
+	/**
+	 * Decides whether color should be on, following the NO_COLOR convention
+	 *
+	 * Returns bool: true unless NO_COLOR is set and non-empty
+	 */
+	static bool colorEnabledFromEnv();
 
 	/**
 	 * Destructor for the TerminalRenderer class

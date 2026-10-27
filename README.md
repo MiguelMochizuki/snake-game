@@ -27,6 +27,7 @@ A terminal-based implementation of the classic Snake game in C++ with persistent
 - **Cross-Platform Support** - Works on Linux, macOS, and Windows
 - **Pre-built Binaries** - Download ready-to-run executables for all platforms
 - **Docker Support** - Containerized deployment with persistent data volumes
+- **Color-Coded Rendering** - Arcade palette (cyan walls, green snake with a bright head, red food, yellow numbers); set `NO_COLOR` to a non-empty value to disable it
 - **Non-Blocking Input** - Smooth gameplay with WASD controls
 - **Game Statistics** - Tracks total games played and average score
 
@@ -207,6 +208,9 @@ make run-docker
 - **S** - Move Down
 - **D** - Move Right
 - **Q** - Quit Game
+
+### Colors
+The board uses the Arcade palette. Set `NO_COLOR` to any non-empty value (for example `NO_COLOR=1 ./snake`) to turn colors off; an empty value keeps them on, following [no-color.org](https://no-color.org).
 
 ### Game Over Screen
 After the game ends, you'll see:
@@ -401,7 +405,7 @@ To contribute or modify the game:
 
 ### Future Enhancements
 - [ ] Multiple difficulty levels
-- [ ] Color-coded rendering
+- [x] Color-coded rendering
 - [ ] Leaderboard system
 - [ ] Sound effects (terminal beep)
 - [ ] Network multiplayer mode

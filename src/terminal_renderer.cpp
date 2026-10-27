@@ -10,13 +10,118 @@
 #include <iomanip>
 #include <sstream>
 
+namespace {
+
+const char* const WALL = "\033[36m";
+const char* const BODY = "\033[32m";
+const char* const HEAD = "\033[1;92m";
+const char* const FOOD = "\033[1;91m";
+const char* const LABEL = "\033[1m";
+const char* const NUMBER = "\033[1;33m";
+const char* const DIM = "\033[2m";
+const char* const RESTART = "\033[92m";
+const char* const QUIT = "\033[91m";
+const char* const RESET = "\033[0m";
+
+/**
+ * Writes text into a stream as runs of same-styled characters
+ *
+ * Attributes:
+ * std::ostream& buf: Destination stream
+ * bool color: Whether styles are emitted at all
+ * const char* cur_: Style currently open (nullptr when plain)
+ */
+class Painter {
+	std::ostream& buf_;
+	bool color_;
+	const char* cur_ = nullptr;
+
+public:
+	/**
+	 * Parameters:
+	 * std::ostream& buf: Destination stream
+	 * bool color: Whether styles are emitted at all
+	 */
+	Painter(std::ostream& buf, bool color) : buf_(buf), color_(color) {
+	}
+
+	/**
+	 * Appends text in a style, opening or closing SGR runs only when the style changes
+	 *
+	 * Parameters:
+	 * const char* style: SGR sequence, or nullptr for plain text
+	 * const std::string& text: Text to append
+	 *
+	 * Returns void:
+	 */
+	void put(const char* style, const std::string& text) {
+		if (color_ && style != cur_) {
+			if (cur_) {
+				buf_ << RESET;
+			}
+			if (style) {
+				buf_ << style;
+			}
+			cur_ = style;
+		}
+		buf_ << text;
+	}
+
+	/**
+	 * Ends the line, closing any open style first
+	 *
+	 * Returns void:
+	 */
+	void endl() {
+		if (cur_) {
+			buf_ << RESET;
+			cur_ = nullptr;
+		}
+		buf_ << '\n';
+	}
+};
+
+/**
+ * Formats a number right-aligned in a field
+ *
+ * Parameters:
+ * T value: The number
+ * int width: Field width
+ * int precision: Digits after the point for floating values (-1 for integers)
+ *
+ * Returns std::string: The padded text
+ */
+template <typename T>
+std::string padded(T value, int width, int precision = -1) {
+	std::ostringstream s;
+	s << std::setw(width);
+	if (precision >= 0) {
+		s << std::fixed << std::setprecision(precision);
+	}
+	s << value;
+	return s.str();
+}
+
+}  // namespace
+
 /**
  * Constructor for the TerminalRenderer class
  *
  * Parameters:
  * std::ostream& out: Stream that receives all output
+ * bool color: Whether to emit ANSI SGR color codes
  */
-TerminalRenderer::TerminalRenderer(std::ostream& out) : out_(out) {
+TerminalRenderer::TerminalRenderer(std::ostream& out, bool color) : out_(out), color_(color) {
+}
+
+/**
+ * Decides whether color should be on, following the NO_COLOR convention
+ *
+ * Returns bool: true unless NO_COLOR is set and non-empty
+ */
+bool TerminalRenderer::colorEnabledFromEnv() {
+	const char* env = std::getenv("NO_COLOR");
+	return env == nullptr || *env == '\0';
 }
 
 /**
@@ -51,33 +156,47 @@ void TerminalRenderer::render(const GameState& state) {
 	int foodX = state.getFood().getX();
 	int foodY = state.getFood().getY();
 
-	std::ostringstream buf;
+	const SnakeSegment* head = state.getSnake().getHead();
+	int headX = head ? head->getX() : -1;
+	int headY = head ? head->getY() : -1;
 
-	for (int x = 0; x < cols + 2; ++x) {
-		buf << '#';
-	}
-	buf << '\n';
+	std::ostringstream buf;
+	Painter p(buf, color_);
+	const std::string rule(cols + 2, '#');
+
+	p.put(WALL, rule);
+	p.endl();
 
 	for (int y = 0; y < rows; ++y) {
-		buf << '#';
+		p.put(WALL, "#");
 		for (int x = 0; x < cols; ++x) {
-			if (grid[y * cols + x]) {
-				buf << (x == foodX && y == foodY ? '*' : 'O');
+			if (!grid[y * cols + x]) {
+				p.put(nullptr, " ");
+			} else if (x == foodX && y == foodY) {
+				p.put(FOOD, "*");
+			} else if (x == headX && y == headY) {
+				p.put(HEAD, "O");
 			} else {
-				buf << ' ';
+				p.put(BODY, "O");
 			}
 		}
-		buf << "#\n";
+		p.put(WALL, "#");
+		p.endl();
 	}
 
-	for (int x = 0; x < cols + 2; ++x) {
-		buf << '#';
-	}
-	buf << '\n';
+	p.put(WALL, rule);
+	p.endl();
 
-	buf << "Score: " << state.getScore() << '\n';
-	buf << "Best: " << state.getBestScore() << '\n';
-	buf << "Controls: WASD to move, Q to quit\n";
+	p.put(LABEL, "Score:");
+	p.put(nullptr, " ");
+	p.put(NUMBER, std::to_string(state.getScore()));
+	p.endl();
+	p.put(LABEL, "Best:");
+	p.put(nullptr, " ");
+	p.put(NUMBER, std::to_string(state.getBestScore()));
+	p.endl();
+	p.put(DIM, "Controls: WASD to move, Q to quit");
+	p.endl();
 
 	out_ << buf.str();
 }
@@ -93,17 +212,46 @@ void TerminalRenderer::render(const GameState& state) {
  */
 void TerminalRenderer::printGameOver(int finalScore, int bestScore, size_t totalGames, double averageScore) {
 	std::ostringstream buf;
+	Painter p(buf, color_);
+	const std::string rule(30, '=');
 	buf << "\n";
-	buf << "==============================\n";
-	buf << "         GAME OVER!           \n";
-	buf << "                              \n";
-	buf << "  Final Score:  " << std::setw(5) << finalScore << "\n";
-	buf << "  Best Score:   " << std::setw(5) << bestScore << "\n";
-	buf << "  Games Played: " << std::setw(5) << totalGames << "\n";
-	buf << "  Average Score:" << std::setw(6) << std::fixed << std::setprecision(1) << averageScore << "\n";
-	buf << "                              \n";
-	buf << "  [R] Restart  [Q] Quit       \n";
-	buf << "==============================\n";
+	p.put(WALL, rule);
+	p.endl();
+	p.put(nullptr, "         ");
+	p.put(FOOD, "GAME OVER!");
+	p.put(nullptr, "           ");
+	p.endl();
+	p.put(nullptr, std::string(30, ' '));
+	p.endl();
+	p.put(nullptr, "  ");
+	p.put(LABEL, "Final Score:");
+	p.put(nullptr, "  ");
+	p.put(NUMBER, padded(finalScore, 5));
+	p.endl();
+	p.put(nullptr, "  ");
+	p.put(LABEL, "Best Score:");
+	p.put(nullptr, "   ");
+	p.put(NUMBER, padded(bestScore, 5));
+	p.endl();
+	p.put(nullptr, "  ");
+	p.put(LABEL, "Games Played:");
+	p.put(nullptr, " ");
+	p.put(NUMBER, padded(totalGames, 5));
+	p.endl();
+	p.put(nullptr, "  ");
+	p.put(LABEL, "Average Score:");
+	p.put(NUMBER, padded(averageScore, 6, 1));
+	p.endl();
+	p.put(nullptr, std::string(30, ' '));
+	p.endl();
+	p.put(nullptr, "  ");
+	p.put(RESTART, "[R]");
+	p.put(nullptr, " Restart  ");
+	p.put(QUIT, "[Q]");
+	p.put(nullptr, " Quit       ");
+	p.endl();
+	p.put(WALL, rule);
+	p.endl();
 	out_ << buf.str();
 }
 

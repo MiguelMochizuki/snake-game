@@ -4,11 +4,17 @@
  * Description: Main entry point
  */
 #include "game_engine.hpp"
+#include "terminal_renderer.hpp"
 #include <cctype>
 #include <cerrno>
 #include <cstdint>
 #include <cstdlib>
 #include <ctime>
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#endif
 
 /**
  * Reads the frame duration from SNAKE_FRAME_MS
@@ -55,7 +61,15 @@ static unsigned readSeed() {
  * Returns int: Exit status
  */
 int main() {
-	GameEngine engine(20, 20, readFrameMs(), readSeed());
+#ifdef _WIN32
+	// Enable ANSI escape processing; failure is ignored (output stays usable)
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+	DWORD mode = 0;
+	if (console != INVALID_HANDLE_VALUE && GetConsoleMode(console, &mode)) {
+		SetConsoleMode(console, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+	}
+#endif
+	GameEngine engine(20, 20, readFrameMs(), readSeed(), TerminalRenderer::colorEnabledFromEnv());
 	engine.run();
 	return 0;
 }
