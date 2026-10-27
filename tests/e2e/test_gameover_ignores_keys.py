@@ -1,7 +1,7 @@
 """
 test_gameover_ignores_keys.py
 Author: Miguel Mochizuki Silva
-Description: E2E: on the game-over panel only r and q act; r typed just before death does not restart
+Description: E2E: on the game-over panel only r and q act; an r typed just before death does not restart
 """
 import os
 import sys
@@ -12,12 +12,10 @@ from harness import Game, UNREGISTERED_KEYS, quit_game, strip_ansi
 # 100 ms frames; the head starts at x=10 and dies on the move past x=19
 with tempfile.TemporaryDirectory() as tmp, Game(sys.argv[1], cwd=tmp, frame_ms=100) as game:
 	game.wait_frames(2)
-	# Stream r (one byte per 0.2 ms pump, ~500 per frame) once the head is near the wall, so some
-	# land between the fatal tick's input poll and the flush; without the flush one would restart the game
-	while "GAME OVER!" not in strip_ansi(game.out):
-		if game.frame_count() and game.last_frame()[10].rindex("O") >= 17:
-			os.write(game.master, b"r")
-		game._pump(0.0002)
+	# One r typed while the snake is still alive: it must not restart the game after death
+	while game.frame_count() == 0 or game.last_frame()[10].rindex("O") < 17:
+		game._pump(0.01)
+	os.write(game.master, b"r")
 	game.wait_for("GAME OVER!")
 	game.wait_for("Quit")
 	game.drain()

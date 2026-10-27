@@ -20,12 +20,14 @@
  * Attributes:
  * std::deque<std::vector<Key>> batches: Results of successive poll() calls
  * std::deque<std::optional<Key>> waits: Results of successive waitKey() calls, nullopt once empty
+ * std::deque<Key> stale: Keys waitKey() serves before `waits`; flush() discards them
  * int flushCount: Number of flush() calls
  */
 class FakeKeySource : public IKeySource {
 public:
 	std::deque<std::vector<Key>> batches;
 	std::deque<std::optional<Key>> waits;
+	std::deque<Key> stale;
 	int flushCount = 0;
 
 	/**
@@ -48,6 +50,11 @@ public:
 	 * Returns std::optional<Key>: The key, or nullopt when the script is exhausted
 	 */
 	std::optional<Key> waitKey() override {
+		if (!stale.empty()) {
+			Key k = stale.front();
+			stale.pop_front();
+			return k;
+		}
 		if (waits.empty()) {
 			return std::nullopt;
 		}
@@ -57,9 +64,10 @@ public:
 	}
 
 	/**
-	 * Counts the call
+	 * Counts the call and discards the stale keys
 	 */
 	void flush() override {
+		stale.clear();
 		++flushCount;
 	}
 };
@@ -122,6 +130,13 @@ TEST_F(EngineInputTest, ReadTickIgnoresRestartAndUnknown) {
 TEST_F(EngineInputTest, AwaitRestartOnR) {
 	keys.waits = {charKey('w'), specialKey(KeyKind::Up), specialKey(KeyKind::Unknown), charKey('r')};
 	EXPECT_TRUE(GameEngine::awaitRestart(keys, input));
+}
+
+TEST_F(EngineInputTest, AwaitRestartFlushesFirst) {
+	keys.stale = {charKey('r')};
+	keys.waits = {charKey('q')};
+	EXPECT_FALSE(GameEngine::awaitRestart(keys, input));
+	EXPECT_EQ(keys.flushCount, 1);
 }
 
 TEST_F(EngineInputTest, AwaitQuitOnQAndCtrlC) {
