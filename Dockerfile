@@ -42,7 +42,7 @@ RUN mkdir -p build && \
 FROM builder AS test
 
 # Second ctest run fails loudly if no e2e tests were registered
-RUN ctest --test-dir build --output-on-failure && \
+RUN ctest --test-dir build --output-on-failure -LE e2e && \
     ctest --test-dir build -L e2e --no-tests=error --output-on-failure && \
     touch /tests-passed
 

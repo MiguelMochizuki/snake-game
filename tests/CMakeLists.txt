@@ -20,7 +20,7 @@ target_compile_definitions(snake_unit_tests PRIVATE
 snake_set_warnings(snake_unit_tests)
 
 include(GoogleTest)
-gtest_discover_tests(snake_unit_tests PROPERTIES LABELS unit)
+gtest_discover_tests(snake_unit_tests PROPERTIES LABELS unit TIMEOUT 30)
 
 # End-to-end tests (Linux only): every tests/e2e/test_*.py is registered automatically
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")

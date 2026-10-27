@@ -93,6 +93,7 @@ TEST(TerminalRendererColor, HeadDistinct) {
 
 TEST(TerminalRendererColor, EmptyNoColorKeepsColor) {
 #ifdef _WIN32
+	// _putenv_s(name, "") deletes the variable on Windows, so "set but empty" is POSIX-only
 	const char* old = std::getenv("NO_COLOR");
 	std::string saved = old ? old : "";
 	_putenv_s("NO_COLOR", "");
