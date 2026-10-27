@@ -82,7 +82,7 @@ public:
 	static TickInput readTick(IKeySource& keys, const IInputHandler& handler);
 
 	/**
-	 * Waits on the game over screen for restart or quit
+	 * Discards keys typed before the prompt, then waits on the game over screen for restart or quit
 	 *
 	 * Parameters:
 	 * IKeySource& keys: Source of key presses
