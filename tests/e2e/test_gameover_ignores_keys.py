@@ -1,7 +1,7 @@
 """
 test_gameover_ignores_keys.py
 Author: Miguel Mochizuki Silva
-Description: E2E: on the game-over panel only r and q act; an r typed just before death does not restart
+Description: E2E: on the game-over panel only r and q act; smoke check that a stray r during play does not restart
 """
 import os
 import sys
@@ -12,9 +12,9 @@ from harness import Game, UNREGISTERED_KEYS, quit_game, strip_ansi
 # 100 ms frames; the head starts at x=10 and dies on the move past x=19
 with tempfile.TemporaryDirectory() as tmp, Game(sys.argv[1], cwd=tmp, frame_ms=100) as game:
 	game.wait_frames(2)
-	# One r typed while the snake is still alive: it must not restart the game after death
-	while game.frame_count() == 0 or game.last_frame()[10].rindex("O") < 17:
-		game._pump(0.01)
+	# One r typed while the snake is still alive: it must not restart the game after death.
+	# Smoke check only; the unit test AwaitRestartFlushesFirst pins the flush
+	game._until(lambda: game.frame_count() and game.last_frame()[10].rindex("O") >= 17, 5.0, "the head near the wall")
 	os.write(game.master, b"r")
 	game.wait_for("GAME OVER!")
 	game.wait_for("Quit")
