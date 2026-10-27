@@ -85,6 +85,10 @@ $(DOCKER_CACHE): Dockerfile $(shell find . -name "*.cpp" -o -name "*.h" -o -name
 .PHONY: docker
 docker: $(DOCKER_CACHE)
 
+.PHONY: test-docker
+test-docker:
+	@docker build --target test -t $(DOCKER_IMAGE)-test .
+
 .PHONY: run-docker
 run-docker: docker
 	@echo "$(GREEN)Running Snake Game in Docker with persistent scores...$(NC)"
@@ -129,6 +133,7 @@ help:
 	@echo ""
 	@echo "$(BLUE)Docker targets:$(NC)"
 	@echo "  make docker         - Build Docker image (only if changed)"
+	@echo "  make test-docker    - Run the test suite in Docker (test stage only)"
 	@echo "  make run-docker     - Build and run in Docker (only if changed)"
 	@echo "  make clean-docker   - Remove Docker image, container and cache"
 	@echo "  make clean-docker-data - Remove Docker data volume"
