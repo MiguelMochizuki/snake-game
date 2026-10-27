@@ -6,6 +6,8 @@
 #include <gtest/gtest.h>
 
 #include <deque>
+#include <string>
+#include <functional>
 #include <memory>
 
 #include "arrow_input_handler.hpp"
@@ -21,6 +23,7 @@
  * std::deque<std::vector<Key>> batches: Results of successive poll() calls
  * std::deque<std::optional<Key>> waits: Results of successive waitKey() calls, nullopt once empty
  * std::deque<Key> stale: Keys waitKey() serves before `waits`; flush() discards them
+ * std::vector<std::string> log: Ordered events ("flush" from flush(), "panel" from the tests' panel callback)
  * int flushCount: Number of flush() calls
  */
 class FakeKeySource : public IKeySource {
@@ -28,6 +31,7 @@ public:
 	std::deque<std::vector<Key>> batches;
 	std::deque<std::optional<Key>> waits;
 	std::deque<Key> stale;
+	std::vector<std::string> log;
 	int flushCount = 0;
 
 	/**
@@ -68,6 +72,7 @@ public:
 	 */
 	void flush() override {
 		stale.clear();
+		log.push_back("flush");
 		++flushCount;
 	}
 };
@@ -83,6 +88,7 @@ class EngineInputTest : public ::testing::Test {
 protected:
 	CompositeInputHandler input;
 	FakeKeySource keys;
+	std::function<void()> noPanel = []() {};
 
 	/**
 	 * Registers the three handlers
@@ -129,25 +135,32 @@ TEST_F(EngineInputTest, ReadTickIgnoresRestartAndUnknown) {
 
 TEST_F(EngineInputTest, AwaitRestartOnR) {
 	keys.waits = {charKey('w'), specialKey(KeyKind::Up), specialKey(KeyKind::Unknown), charKey('r')};
-	EXPECT_TRUE(GameEngine::awaitRestart(keys, input));
+	EXPECT_TRUE(GameEngine::awaitRestart(keys, input, noPanel));
 }
 
 TEST_F(EngineInputTest, AwaitRestartFlushesFirst) {
 	keys.stale = {charKey('r')};
 	keys.waits = {charKey('q')};
-	EXPECT_FALSE(GameEngine::awaitRestart(keys, input));
+	EXPECT_FALSE(GameEngine::awaitRestart(keys, input, [this]() { keys.log.push_back("panel"); }));
 	EXPECT_EQ(keys.flushCount, 1);
+	EXPECT_EQ(keys.log, (std::vector<std::string>{"flush", "panel"}));
+}
+
+TEST_F(EngineInputTest, AwaitRestartKeepsKeysTypedAfterPanel) {
+	keys.stale = {charKey('r')};
+	keys.waits = {specialKey(KeyKind::CtrlC)};
+	EXPECT_FALSE(GameEngine::awaitRestart(keys, input, noPanel));
 }
 
 TEST_F(EngineInputTest, AwaitQuitOnQAndCtrlC) {
 	keys.waits = {charKey('a'), charKey('q')};
-	EXPECT_FALSE(GameEngine::awaitRestart(keys, input));
+	EXPECT_FALSE(GameEngine::awaitRestart(keys, input, noPanel));
 	keys.waits = {specialKey(KeyKind::CtrlC)};
-	EXPECT_FALSE(GameEngine::awaitRestart(keys, input));
+	EXPECT_FALSE(GameEngine::awaitRestart(keys, input, noPanel));
 }
 
 TEST_F(EngineInputTest, AwaitEofQuits) {
-	EXPECT_FALSE(GameEngine::awaitRestart(keys, input));
+	EXPECT_FALSE(GameEngine::awaitRestart(keys, input, noPanel));
 }
 
 TEST(GameEngineDirection, IsOppositePairs) {

@@ -12,6 +12,7 @@
 #include "terminal_renderer.hpp"
 #include "score_manager.hpp"
 #include <ctime>
+#include <functional>
 #include <optional>
 
 /**
@@ -82,15 +83,17 @@ public:
 	static TickInput readTick(IKeySource& keys, const IInputHandler& handler);
 
 	/**
-	 * Discards keys typed before the prompt, then waits on the game over screen for restart or quit
+	 * Discards keys typed before the prompt, shows the game over panel, then waits for restart or quit
 	 *
 	 * Parameters:
 	 * IKeySource& keys: Source of key presses
 	 * const IInputHandler& handler: Maps keys to actions
+	 * const std::function<void()>& showPanel: Draws the game over panel, called after the flush
 	 *
 	 * Returns bool: true on Restart; false on Quit or EOF. Moves and unmapped keys are ignored
 	 */
-	static bool awaitRestart(IKeySource& keys, const IInputHandler& handler);
+	static bool awaitRestart(IKeySource& keys, const IInputHandler& handler,
+		const std::function<void()>& showPanel);
 
 	/**
 	 * Tells whether two directions are opposite

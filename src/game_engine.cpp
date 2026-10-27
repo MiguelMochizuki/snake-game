@@ -60,16 +60,19 @@ TickInput GameEngine::readTick(IKeySource& keys, const IInputHandler& handler) {
 }
 
 /**
- * Discards keys typed before the prompt, then waits on the game over screen for restart or quit
+ * Discards keys typed before the prompt, shows the game over panel, then waits for restart or quit
  *
  * Parameters:
  * IKeySource& keys: Source of key presses
  * const IInputHandler& handler: Maps keys to actions
+ * const std::function<void()>& showPanel: Draws the game over panel, called after the flush
  *
  * Returns bool: true on Restart; false on Quit or EOF. Moves and unmapped keys are ignored
  */
-bool GameEngine::awaitRestart(IKeySource& keys, const IInputHandler& handler) {
+bool GameEngine::awaitRestart(IKeySource& keys, const IInputHandler& handler,
+		const std::function<void()>& showPanel) {
 	keys.flush();
+	showPanel();
 	while (true) {
 		std::optional<Key> key = keys.waitKey();
 		if (!key) {
@@ -141,13 +144,14 @@ void GameEngine::run() {
 		int finalScore = state_.getFinalScore();
 		scoreManager_.saveScore(finalScore);
 
-		renderer_.printGameOver(
-			finalScore,
-			scoreManager_.getBestScore(),
-			scoreManager_.getTotalGames(),
-			scoreManager_.getAverageScore()
-		);
-		restart = awaitRestart(keys_, input_);
+		restart = awaitRestart(keys_, input_, [&]() {
+			renderer_.printGameOver(
+				finalScore,
+				scoreManager_.getBestScore(),
+				scoreManager_.getTotalGames(),
+				scoreManager_.getAverageScore()
+			);
+		});
 
 		if (restart) {
 			state_.reset();
