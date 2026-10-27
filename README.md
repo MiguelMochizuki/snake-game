@@ -203,11 +203,13 @@ make run-docker
 ```
 
 ### Game Controls
-- **W** - Move Up
-- **A** - Move Left
-- **S** - Move Down
-- **D** - Move Right
-- **Q** - Quit Game
+- **W** or **Up arrow** - Move Up
+- **A** or **Left arrow** - Move Left
+- **S** or **Down arrow** - Move Down
+- **D** or **Right arrow** - Move Right
+- **Q** or **Ctrl+C** - Quit Game
+
+Only these keys have any effect; every other key is ignored.
 
 ### Colors
 The board uses the Arcade palette. Set `NO_COLOR` to any non-empty value (for example `NO_COLOR=1 ./snake`) to turn colors off; an empty value keeps them on, following [no-color.org](https://no-color.org).

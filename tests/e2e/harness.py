@@ -16,6 +16,20 @@ import time
 ANSI_RE = re.compile(r"\033\[[0-9;]*[A-Za-z]")
 FRAME_END = "Controls: WASD to move, Q to quit"
 
+# Keys with no effect in any state: function/navigation keys, modified keys, control bytes, UTF-8, other characters
+UNREGISTERED_KEYS = [
+	b"\x1bOP", b"\x1b[15~", b"\x1b[24~",
+	b"\x1b[H", b"\x1b[F",
+	b"\x1b[5~", b"\x1b[6~",
+	b"\x1b[2~", b"\x1b[3~",
+	b"\x1b[1;5A",
+	b"\x1bq", b"\x1bd",
+	b"\x1a", b"\x1c", b"\x13", b"\x11",
+	b"\xc3\xa9",
+	b"\t", b"\r",
+	b"x", b"1", b" ",
+]
+
 
 def scale():
 	"""
@@ -125,15 +139,15 @@ class Game:
 
 	def send(self, keys):
 		"""
-		Sends keys to the game. The WASDInputHandler constructor switches the tty to raw mode
-		with TCSAFLUSH before frame 1, discarding anything typed earlier, so this first waits
-		for frame 2 as a margin (free once the game is past it)
+		Sends keys to the game. TerminalKeySource (built in main before frame 1) switches the tty
+		to raw mode with TCSAFLUSH, discarding anything typed earlier, so this first waits for
+		frame 2 as a margin (free once the game is past it)
 
 		Parameters:
-		str keys: Characters to type
+		str | bytes keys: Characters to type (a str is UTF-8 encoded, bytes are written as-is)
 		"""
 		self.wait_frames(2)
-		os.write(self.master, keys.encode())
+		os.write(self.master, keys.encode() if isinstance(keys, str) else keys)
 
 	def drain(self):
 		"""
