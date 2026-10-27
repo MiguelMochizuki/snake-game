@@ -3,13 +3,19 @@
  * Author: Miguel Mochizuki Silva
  * Description: Main entry point
  */
+#include "arrow_input_handler.hpp"
+#include "command_input_handler.hpp"
+#include "composite_input_handler.hpp"
 #include "game_engine.hpp"
+#include "terminal_key_source.hpp"
+#include "wasd_input_handler.hpp"
 #include "terminal_renderer.hpp"
 #include <cctype>
 #include <cerrno>
 #include <cstdint>
 #include <cstdlib>
 #include <ctime>
+#include <memory>
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -69,7 +75,12 @@ int main() {
 		SetConsoleMode(console, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 	}
 #endif
-	GameEngine engine(20, 20, readFrameMs(), readSeed(), TerminalRenderer::colorEnabledFromEnv());
+	TerminalKeySource keys;
+	CompositeInputHandler input;
+	input.add(std::make_unique<WASDInputHandler>());
+	input.add(std::make_unique<ArrowInputHandler>());
+	input.add(std::make_unique<CommandInputHandler>());
+	GameEngine engine(keys, input, 20, 20, readFrameMs(), readSeed(), TerminalRenderer::colorEnabledFromEnv());
 	engine.run();
 	return 0;
 }

@@ -10,7 +10,7 @@ FetchContent_MakeAvailable(googletest)
 # Unit tests: every tests/unit/*.cpp is picked up automatically
 file(GLOB UNIT_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/unit/*.cpp)
 if(WIN32)
-	list(REMOVE_ITEM UNIT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/unit/wasd_input_handler_test.cpp)
+	list(REMOVE_ITEM UNIT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/unit/terminal_key_source_test.cpp)
 endif()
 
 add_executable(snake_unit_tests ${UNIT_SOURCES})
