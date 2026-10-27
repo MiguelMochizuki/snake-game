@@ -14,6 +14,7 @@ A terminal-based implementation of the classic Snake game in C++ with persistent
 - [Game Controls](#-game-controls)
 - [Score Management](#-score-management)
 - [Building with CMake](#-building-with-cmake)
+- [Testing](#testing)
 - [CI/CD](#-cicd)
 - [License](#-license)
 - [Author](#-author)
@@ -85,6 +86,11 @@ snake-game/
 │   ├── snake_segment.hpp  # Snake body segment
 │   ├── terminal_renderer.hpp # Terminal rendering
 │   └── wasd_input_handler.hpp # Input handling
+├── tests/                  # Regression suite (see Testing)
+│   ├── CMakeLists.txt
+│   ├── unit/               # GoogleTest unit tests
+│   ├── golden/             # Golden renderer snapshots
+│   └── e2e/                # Python 3 pty end-to-end scripts
 └── src/                    # Source files
     ├── main.cpp           # Program entry point
     ├── entity.cpp
@@ -102,7 +108,7 @@ snake-game/
 
 ### Local Build
 - **C++17 Compiler** (g++ 7+, clang 5+, or MSVC 2017+)
-- **CMake** 3.10 or higher
+- **CMake** 3.14 or higher
 - **Make** (or Ninja)
 - **POSIX-compliant system** (Linux/macOS) or Windows with MinGW/MSVC
 
@@ -277,17 +283,53 @@ docker run --rm -it -v $(pwd)/data:/app/data miguelmochizuki/snake-game
 - Minimal Alpine base image
 - Only necessary runtime dependencies
 
+## Testing
+
+The regression suite has three layers, all registered with CTest:
+
+- **Unit** (`tests/unit/`): GoogleTest tests for the game classes, score persistence, input handling and the terminal renderer. CMake fetches GoogleTest, so the first configure needs network access.
+- **Golden** (`tests/golden/`): snapshots of renderer output that the renderer tests compare against.
+- **End-to-end** (`tests/e2e/`): Python 3 standard-library scripts that run `snake` in a pseudo-terminal and drive it. Each `test_*.py` is registered automatically as `e2e_<name>`.
+
+End-to-end tests run on Linux only (x86-64 and ARM64, natively and inside Docker); unit tests run on Linux, macOS and Windows.
+
+The end-to-end tests need Python 3 on Linux.
+
+### Running the tests
+```bash
+make test-local                      # build, then ctest --output-on-failure in build/
+make test-docker                     # docker build --target test (runs the suite in the image)
+ctest --test-dir build -L unit       # unit tests only
+ctest --test-dir build -L e2e        # end-to-end tests only
+ctest --test-dir build -R <name>     # a single test, e.g. -R e2e_wall_death
+```
+
+`make docker` and `make run-docker` build the image through the `test` stage, so the whole suite runs during the image build. If any test fails, the image is not built.
+
+### Updating golden snapshots
+When a renderer change is intentional, regenerate the snapshots and review the diff before committing:
+```bash
+SNAKE_UPDATE_GOLDEN=1 ctest --test-dir build -R TerminalRenderer
+git diff tests/golden/
+```
+
+### Test environment variables
+- `SNAKE_E2E_TIMEOUT_SCALE` (integer, default 1): multiplies end-to-end timeouts. Raise it on slow hosts. The Docker build uses 10.
+- `SNAKE_FRAME_MS` (0-10000, default 200) and `SNAKE_SEED` (unsigned): test hooks read by the binary to set the frame time and the random seed. Normal play does not need them.
+
 ## CI/CD
 
 The project uses a single GitHub Actions workflow for continuous integration and delivery:
 
 ### Build
-On every push to `main` or pull request, binaries are built for all supported platforms:
+On every push to `main` or pull request, binaries are built for all supported platforms. Linux ARM64 is built natively on an ARM64 runner, not cross-compiled:
 - Linux x86-64
 - Linux ARM64
 - Windows x86-64
 - Windows ARM64
 - macOS Universal
+
+Tests run on every platform job; a failure blocks both the GitHub release and the Docker image. The Docker image build runs the suite for amd64 and arm64 (arm64 under emulation), so a failing test also stops the image from being published.
 
 ### Release
 When a tag matching `v*` is pushed, the workflow additionally:
