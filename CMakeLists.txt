@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 
 project(SnakeGame VERSION 1.0.0 LANGUAGES CXX)
 
@@ -10,8 +10,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Source files
-set(SOURCES
+# Source files (everything except main.cpp goes in the core library)
+set(CORE_SOURCES
 	src/entity.cpp
 	src/food.cpp
 	src/snake_segment.cpp
@@ -21,31 +21,36 @@ set(SOURCES
 	src/terminal_renderer.cpp
 	src/game_engine.cpp
 	src/score_manager.cpp
-	src/main.cpp
 )
 
-# Include directories
-include_directories(include)
+# Compiler warnings, shared by all targets (including tests)
+function(snake_set_warnings target)
+	if(MSVC)
+		target_compile_options(${target} PRIVATE /W4)
+	else()
+		target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
+	endif()
+endfunction()
 
-# Executable
-add_executable(snake ${SOURCES})
-
-# Compiler warnings
-if(MSVC)
-	target_compile_options(snake PRIVATE /W4)
-else()
-	target_compile_options(snake PRIVATE -Wall -Wextra -Wpedantic)
+# Core library
+add_library(snake_core STATIC ${CORE_SOURCES})
+target_include_directories(snake_core PUBLIC include)
+snake_set_warnings(snake_core)
+if(UNIX)
+	target_link_libraries(snake_core PUBLIC pthread)
 endif()
 
-# Platform-specific settings
-if(WIN32)
-	# Windows specific settings if needed
-elseif(UNIX)
-	# Unix specific settings if needed
-	target_link_libraries(snake pthread)
+# Executable
+add_executable(snake src/main.cpp)
+target_link_libraries(snake PRIVATE snake_core)
+snake_set_warnings(snake)
+
+# Tests
+include(CTest)
+if(BUILD_TESTING)
+	add_subdirectory(tests)
 endif()
 
 # Print build information
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
-message(STATUS "Source files: ${SOURCES}")

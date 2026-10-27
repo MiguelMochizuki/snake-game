@@ -51,6 +51,11 @@ run-local: local
 	@echo "$(GREEN)Running Snake Game...$(NC)"
 	@$(EXECUTABLE)
 
+.PHONY: test-local
+test-local: local
+	@cmake --build $(BUILD_DIR)
+	@cd $(BUILD_DIR) && ctest --output-on-failure
+
 .PHONY: clean-local
 clean-local:
 	@echo "$(YELLOW)Cleaning build files...$(NC)"
@@ -117,6 +122,7 @@ help:
 	@echo "$(BLUE)Local targets:$(NC)"
 	@echo "  make local          - Build the game locally (only if changed)"
 	@echo "  make run-local      - Build and run the game locally (only if changed)"
+	@echo "  make test-local     - Build and run the test suite locally"
 	@echo "  make clean-local    - Remove build files"
 	@echo "  make clean-local-data - Remove local data files"
 	@echo "  make rebuild-local  - Clean and rebuild locally"
