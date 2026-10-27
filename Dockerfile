@@ -27,7 +27,7 @@ COPY src/ ./src/
 # Build the project
 RUN mkdir -p build && \
     cd build && \
-    cmake .. && \
+    cmake -DBUILD_TESTING=OFF .. && \
     make
 
 # ==============================
