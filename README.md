@@ -43,7 +43,7 @@ Pre-built binaries are available for download from the [Releases](https://github
 | Windows | ARM64 | `snake-windows-arm64.exe` |
 | macOS | Universal (x86_64 + ARM64) | `snake-macos-universal` |
 
-> **Latest release:** [v1.1.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.1.0) — Flattened occupancy bitmask for reduced memory usage; string-buffered terminal output for smoother rendering.
+> **Latest release:** [v1.2.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.2.0) — Color-coded rendering (disable with `NO_COLOR`); game-over screen exits on input EOF; restart runs as a loop; regression test suite gating releases and the Docker image.
 
 ### Running Downloaded Binaries
 
@@ -344,8 +344,8 @@ Because `docker-publish` runs in parallel with `build`, the Docker image is buil
 
 ### Creating a New Release
 ```bash
-git tag -a v1.1.0 -m "Release v1.1.0"
-git push origin v1.1.0
+git tag -a v1.2.0 -m "Release v1.2.0"
+git push origin v1.2.0
 ```
 
 The release and Docker image will be created automatically.
@@ -354,6 +354,7 @@ The release and Docker image will be created automatically.
 
 | Version | Highlights |
 |---------|------------|
+| [v1.2.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.2.0) | Color-coded rendering with `NO_COLOR` support; game-over EOF exit and loop-based restart; Makefile tracks headers; CTest regression suite (unit, golden, Linux e2e) on every platform and inside Docker |
 | [v1.1.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.1.0) | Flattened occupancy bitmask (reduced memory); string-buffered terminal output (smoother rendering) |
 | [v1.0.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.0.0) | Initial release: cross-platform builds, Docker support, score persistence |
 
