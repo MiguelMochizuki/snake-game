@@ -12,7 +12,7 @@
 	#include <unistd.h>
 	#include <fcntl.h>
 	#include <errno.h>
-	#include <poll.h>
+	#include <sys/select.h>
 
 	static struct termios originalTerm;
 	static int originalFlags = -1;
@@ -113,10 +113,11 @@ void WASDInputHandler::processInput() {
 
 /**
  * Reads a character blocking (for game over screen). The tty is in non-blocking raw mode
- * (read() returns 0 when no key is pending), so this polls for readiness first: a read of 0
- * after poll() reported readable is a real EOF
+ * (read() returns 0 or fails with EAGAIN when no key is pending), so on POSIX this waits with
+ * select() and retries on EAGAIN/EINTR; a read of 0 right after select() reported readable
+ * is a real EOF
  *
- * Returns char: The character read, or 0 on EOF/error
+ * Returns char: The character read, or 0 on EOF/error (POSIX only)
  */
 char WASDInputHandler::readCharBlocking() {
 	ensureTerminal();
@@ -125,19 +126,29 @@ char WASDInputHandler::readCharBlocking() {
 	return _getch();
 #else
 	char c;
+	bool selected = false;
 	while (true) {
-		if (read(STDIN_FILENO, &c, 1) > 0) {
+		ssize_t n = read(STDIN_FILENO, &c, 1);
+		if (n > 0) {
 			return c;
 		}
-		struct pollfd pfd = {STDIN_FILENO, POLLIN, 0};
-		int ready = poll(&pfd, 1, -1);
-		if (ready < 0 && errno == EINTR) {
-			continue;
-		}
-		if (ready < 0) {
+		if (n == 0 && selected) {
 			return 0;
 		}
-		return read(STDIN_FILENO, &c, 1) > 0 ? c : 0;
+		if (n < 0 && errno == EINTR) {
+			continue;
+		}
+		if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+			return 0;
+		}
+		fd_set fds;
+		FD_ZERO(&fds);
+		FD_SET(STDIN_FILENO, &fds);
+		int ready = select(STDIN_FILENO + 1, &fds, nullptr, nullptr, nullptr);
+		if (ready < 0 && errno != EINTR) {
+			return 0;
+		}
+		selected = ready > 0;
 	}
 #endif
 }
