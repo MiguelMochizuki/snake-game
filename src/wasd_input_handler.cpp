@@ -12,6 +12,7 @@
 	#include <unistd.h>
 	#include <fcntl.h>
 	#include <errno.h>
+	#include <poll.h>
 
 	static struct termios originalTerm;
 	static int originalFlags = -1;
@@ -111,9 +112,11 @@ void WASDInputHandler::processInput() {
 }
 
 /**
- * Reads a character blocking (for game over screen)
+ * Reads a character blocking (for game over screen). The tty is in non-blocking raw mode
+ * (read() returns 0 when no key is pending), so this polls for readiness first: a read of 0
+ * after poll() reported readable is a real EOF
  *
- * Returns char: The character read
+ * Returns char: The character read, or 0 on EOF/error
  */
 char WASDInputHandler::readCharBlocking() {
 	ensureTerminal();
@@ -122,10 +125,20 @@ char WASDInputHandler::readCharBlocking() {
 	return _getch();
 #else
 	char c;
-	if (read(STDIN_FILENO, &c, 1) > 0) {
-		return c;
+	while (true) {
+		if (read(STDIN_FILENO, &c, 1) > 0) {
+			return c;
+		}
+		struct pollfd pfd = {STDIN_FILENO, POLLIN, 0};
+		int ready = poll(&pfd, 1, -1);
+		if (ready < 0 && errno == EINTR) {
+			continue;
+		}
+		if (ready < 0) {
+			return 0;
+		}
+		return read(STDIN_FILENO, &c, 1) > 0 ? c : 0;
 	}
-	return 0;
 #endif
 }
 

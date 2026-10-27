@@ -10,6 +10,9 @@
 #include <string>
 #include <unistd.h>
 
+#include <sstream>
+
+#include "terminal_renderer.hpp"
 #include "wasd_input_handler.hpp"
 
 /**
@@ -125,6 +128,15 @@ TEST_F(InputTest, ReadCharBlockingEofReturnsZero) {
 	feed("");
 	WASDInputHandler h;
 	EXPECT_EQ(h.readCharBlocking(), 0);
+}
+
+// Game-over screen must quit on EOF instead of spinning forever
+TEST_F(InputTest, ShowGameOverReturnsFalseOnEof) {
+	ASSERT_NO_FATAL_FAILURE(feed(""));
+	WASDInputHandler h;
+	std::ostringstream os;
+	TerminalRenderer r(os);
+	EXPECT_FALSE(r.showGameOver(0, 0, 1, 0.0, h));
 }
 
 #endif

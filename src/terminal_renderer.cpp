@@ -117,7 +117,7 @@ void TerminalRenderer::printGameOver(int finalScore, int bestScore, size_t total
  * double averageScore: Average score
  * WASDInputHandler& inputHandler: Reference to the input handler
  *
- * Returns bool: true if restart was requested (R key)
+ * Returns bool: true if restart was requested (R key); false on Q or when input hits EOF
  */
 bool TerminalRenderer::showGameOver(int finalScore, int bestScore, size_t totalGames,
                                    double averageScore, WASDInputHandler& inputHandler) {
@@ -127,7 +127,7 @@ bool TerminalRenderer::showGameOver(int finalScore, int bestScore, size_t totalG
 		char choice = inputHandler.readCharBlocking();
 		if (choice == 'r' || choice == 'R') {
 			return true;
-		} else if (choice == 'q' || choice == 'Q') {
+		} else if (choice == 'q' || choice == 'Q' || choice == 0) {
 			return false;
 		}
 	}
