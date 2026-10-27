@@ -17,9 +17,12 @@
 
 /**
  * Constructor for the ScoreManager class
+ *
+ * Parameters:
+ * const std::string& dataDir: Directory for storing score files
  */
-ScoreManager::ScoreManager() : bestScore_(0), checksum_(0) {
-	dataDir_ = "data";
+ScoreManager::ScoreManager(const std::string& dataDir) : bestScore_(0), checksum_(0) {
+	dataDir_ = dataDir;
 	historyFile_ = dataDir_ + "/score_history.txt";
 	bestFile_ = dataDir_ + "/best_score.txt";
 	checksumFile_ = dataDir_ + "/score_checksum.txt";

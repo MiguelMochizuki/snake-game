@@ -41,8 +41,9 @@ public:
 	 * int rows: Number of rows in the board (default: 20)
 	 * int cols: Number of columns in the board (default: 20)
 	 * int speedMs: Game speed in milliseconds (default: 200)
+	 * unsigned seed: Seed for food placement (default: current time)
 	 */
-	GameEngine(int rows = 20, int cols = 20, int speedMs = 200);
+	GameEngine(int rows = 20, int cols = 20, int speedMs = 200, unsigned seed = static_cast<unsigned>(std::time(nullptr)));
 
 	/**
 	 * Destructor for the GameEngine class
