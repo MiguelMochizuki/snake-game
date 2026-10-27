@@ -115,15 +115,22 @@ void WASDInputHandler::processInput() {
  * Reads a character blocking (for game over screen). The tty is in non-blocking raw mode
  * (read() returns 0 or fails with EAGAIN when no key is pending), so on POSIX this waits with
  * select() and retries on EAGAIN/EINTR; a read of 0 right after select() reported readable
- * is a real EOF
+ * is a real EOF. On Windows, extended-key prefixes (0 / 0xE0) and their scan code are skipped
  *
- * Returns char: The character read, or 0 on EOF/error (POSIX only)
+ * Returns char: The character read, or 0 on EOF/error (never 0 on Windows)
  */
 char WASDInputHandler::readCharBlocking() {
 	ensureTerminal();
 
 #ifdef _WIN32
-	return _getch();
+	while (true) {
+		int c = _getch();
+		if (c == 0 || c == 0xE0) {
+			_getch();
+			continue;
+		}
+		return static_cast<char>(c);
+	}
 #else
 	char c;
 	bool selected = false;
