@@ -21,6 +21,9 @@ set(CORE_SOURCES
 	src/terminal_renderer.cpp
 	src/game_engine.cpp
 	src/score_manager.cpp
+	src/arrow_input_handler.cpp
+	src/command_input_handler.cpp
+	src/composite_input_handler.cpp
 )
 
 # Compiler warnings, shared by all targets (including tests)

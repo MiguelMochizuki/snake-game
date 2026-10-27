@@ -6,15 +6,7 @@
 #ifndef WASD_INPUT_HANDLER_HPP
 #define WASD_INPUT_HANDLER_HPP
 
-/**
- * Direction enum for snake movement
- */
-enum class Direction {
-	UP = 0,
-	DOWN = 1,
-	LEFT = 2,
-	RIGHT = 3
-};
+#include "input_handler.hpp"
 
 /**
  * Input state structure to hold all input information
