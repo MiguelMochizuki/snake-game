@@ -47,7 +47,7 @@ jobs:
             cmake-generator: Visual Studio
             cmake-arch: ARM64
           - name: macOS Universal
-            runs-on: macos-14
+            runs-on: macos-15
             artifact-name: snake-macos-universal
             binary-path: build/bin/snake
             final-name: snake-macos-universal
