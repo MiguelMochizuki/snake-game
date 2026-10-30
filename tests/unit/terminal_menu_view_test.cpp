@@ -137,6 +137,20 @@ TEST(TerminalMenuView, ShowsEachLevelBetweenBrackets) {
 	EXPECT_NE(plain(render({MenuItem::Level, Level::Hard, {0, 0, 0}}, false)).find("<Hard>"), std::string::npos);
 }
 
+TEST(TerminalMenuView, BannerIsBoxedAndCentered) {
+	std::vector<std::string> ls = lines(plain(render(DEFAULT_SNAPSHOT, false)));
+	EXPECT_EQ(ls[2], "#   ##############   #");
+	EXPECT_EQ(ls[3], "#   # SNAKE GAME #   #");
+	EXPECT_EQ(ls[4], "#   ##############   #");
+}
+
+TEST(TerminalMenuView, ContentAlignsWithTheBannerLeftEdge) {
+	std::vector<std::string> ls = lines(plain(render(DEFAULT_SNAPSHOT, false)));
+	for (const char* needle : {"OOOOOOO", "> Start", "Best:", "Games:", "Avg:"}) {
+		EXPECT_EQ(lineWith(ls, needle).find_first_not_of("# "), 4u) << needle;
+	}
+}
+
 TEST(TerminalMenuView, StatsLines) {
 	std::vector<std::string> ls = lines(plain(render(DEFAULT_SNAPSHOT, false)));
 	EXPECT_NE(lineWith(ls, "Best:").find("42"), std::string::npos);
