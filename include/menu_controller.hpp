@@ -10,6 +10,7 @@
 #include "key_source.hpp"
 #include "menu_model.hpp"
 #include "menu_view.hpp"
+#include "score_source.hpp"
 
 /**
  * What the player decided on the menu
@@ -17,25 +18,29 @@
  * Attributes:
  * bool start: true to play, false to quit
  * int speedMs: Frame time of the chosen level, meaningful only when start is true
+ * Level level: Level chosen
+ * bool sound: Whether sound was left on
  */
 struct MenuResult {
 	bool start;
 	int speedMs;
+	Level level;
+	bool sound;
 };
 
 /**
- * Runs the menu until the player starts, quits or the key source ends
+ * Runs the menu and its screens until the player starts, quits or the key source ends
  *
  * Parameters:
  * IKeySource& keys: Source of key presses
  * const IInputHandler& input: Maps keys to actions
  * IMenuView& view: Draws the menu
  * MenuModel& model: Menu state, updated as keys arrive
- * const MenuStats& stats: Score figures to show
+ * const IScoreSource& scores: Where the menu reads the figures and leaderboards from
  *
  * Returns MenuResult: start true with the chosen speed; false on Quit, Ctrl+C or EOF
  */
 MenuResult runMenu(IKeySource& keys, const IInputHandler& input, IMenuView& view,
-	MenuModel& model, const MenuStats& stats);
+	MenuModel& model, const IScoreSource& scores);
 
 #endif

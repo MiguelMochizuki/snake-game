@@ -105,8 +105,7 @@ int main() {
 			// Read the scores afresh: the round that just ended may have changed them
 			ScoreManager scores;
 			TerminalMenuView view(std::cout, color);
-			MenuResult choice = runMenu(keys, input, view, menu,
-				MenuStats{scores.bestScore(Level::Normal), scores.totalGames(Level::Normal), scores.averageScore(Level::Normal)});
+			MenuResult choice = runMenu(keys, input, view, menu, scores);
 			if (!choice.start) {
 				return 0;
 			}

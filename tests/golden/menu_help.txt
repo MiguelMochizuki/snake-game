@@ -1,0 +1,21 @@
+[2J[H######################
+#                    #
+#   HOW TO PLAY      #
+#                    #
+#   Steer: WASD or   #
+#   the arrow keys   #
+#                    #
+#   Eat the red *    #
+#   to grow and      #
+#   score points.    #
+#                    #
+#   Hitting a wall   #
+#   or yourself      #
+#   ends the game.   #
+#                    #
+#   After a game:    #
+#   R again, M menu  #
+#   Q quit           #
+#                    #
+######################
+Enter back

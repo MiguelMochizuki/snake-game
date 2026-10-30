@@ -40,6 +40,23 @@ public:
 	 * Returns void:
 	 */
 	void show(const MenuSnapshot& snapshot) override;
+
+	/**
+	 * Clears the screen and draws the top scores of a level
+	 *
+	 * Parameters:
+	 * const LeaderboardSnapshot& snapshot: What to draw
+	 *
+	 * Returns void:
+	 */
+	void showLeaderboard(const LeaderboardSnapshot& snapshot) override;
+
+	/**
+	 * Clears the screen and draws the how-to-play page
+	 *
+	 * Returns void:
+	 */
+	void showHelp() override;
 };
 
 #endif
