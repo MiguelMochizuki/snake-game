@@ -7,7 +7,7 @@
 
 namespace {
 
-const int ITEM_COUNT = 3;
+const int ITEM_COUNT = 6;
 
 }  // namespace
 
@@ -27,6 +27,15 @@ MenuItem MenuModel::selected() const {
  */
 Level MenuModel::level() const {
 	return level_;
+}
+
+/**
+ * Tells whether sound is on
+ *
+ * Returns bool: true if sound is on
+ */
+bool MenuModel::sound() const {
+	return sound_;
 }
 
 /**
@@ -58,11 +67,15 @@ MenuOutcome MenuModel::apply(Action action) {
 		case Action::MoveLeft:
 			if (selected_ == MenuItem::Level) {
 				level_ = nextLevel(level_, -1);
+			} else if (selected_ == MenuItem::Sound) {
+				sound_ = !sound_;
 			}
 			break;
 		case Action::MoveRight:
 			if (selected_ == MenuItem::Level) {
 				level_ = nextLevel(level_, 1);
+			} else if (selected_ == MenuItem::Sound) {
+				sound_ = !sound_;
 			}
 			break;
 		case Action::Confirm:
@@ -71,6 +84,15 @@ MenuOutcome MenuModel::apply(Action action) {
 			}
 			if (selected_ == MenuItem::Quit) {
 				return MenuOutcome::Quit;
+			}
+			if (selected_ == MenuItem::Leaderboard) {
+				return MenuOutcome::OpenLeaderboard;
+			}
+			if (selected_ == MenuItem::Help) {
+				return MenuOutcome::OpenHelp;
+			}
+			if (selected_ == MenuItem::Sound) {
+				sound_ = !sound_;
 			}
 			break;
 		case Action::Quit:

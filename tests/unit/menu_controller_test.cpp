@@ -165,7 +165,7 @@ TEST_F(MenuControllerTest, WasdKeysWorkToo) {
 
 TEST_F(MenuControllerTest, QuitRowAndQKeyDoNotStart) {
 	RecordingView view(&log);
-	EXPECT_FALSE(run({specialKey(KeyKind::Down), specialKey(KeyKind::Down), enter()}, view).start);
+	EXPECT_FALSE(run({specialKey(KeyKind::Up), enter()}, view).start);
 	MenuModel fresh;
 	model = fresh;
 	RecordingView view2(&log);
