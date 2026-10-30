@@ -95,9 +95,10 @@ void TerminalMenuView::show(const MenuSnapshot& snapshot) {
 	p.put(WALL, rule);
 	p.endl();
 	frameRow(p, {});
-	frameRow(p, {{BODY, "  _       _       _ "}});
-	frameRow(p, {{BODY, " (_  |\\| |_| |/  |_ "}});
-	frameRow(p, {{BODY, "  _) | | | | |\\  |_ "}});
+	const std::string box(14, '#');
+	frameRow(p, {{nullptr, "   "}, {BODY, box}});
+	frameRow(p, {{nullptr, "   "}, {BODY, "#"}, {HEAD, " SNAKE GAME "}, {BODY, "#"}});
+	frameRow(p, {{nullptr, "   "}, {BODY, box}});
 	frameRow(p, {});
 	frameRow(p, {{nullptr, "   "}, {BODY, "OOOOOO"}, {HEAD, "O"}, {nullptr, "   "}, {FOOD, "*"}});
 	frameRow(p, {});
