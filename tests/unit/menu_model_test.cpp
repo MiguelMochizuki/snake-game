@@ -14,17 +14,18 @@ TEST(MenuModel, StartsOnStartWithNormalLevel) {
 	EXPECT_EQ(m.speedMs(), 200);
 }
 
-TEST(MenuModel, NavigationWraps) {
+TEST(MenuModel, NavigationWrapsOverSixRows) {
 	MenuModel m;
 	EXPECT_EQ(m.apply(Action::MoveUp), MenuOutcome::None);
 	EXPECT_EQ(m.selected(), MenuItem::Quit);
-	m.apply(Action::MoveDown);
-	EXPECT_EQ(m.selected(), MenuItem::Start);
-	m.apply(Action::MoveDown);
-	EXPECT_EQ(m.selected(), MenuItem::Level);
-	m.apply(Action::MoveDown);
-	m.apply(Action::MoveDown);
-	EXPECT_EQ(m.selected(), MenuItem::Start);
+	const MenuItem order[] = {MenuItem::Start, MenuItem::Level, MenuItem::Leaderboard,
+		MenuItem::Help, MenuItem::Sound, MenuItem::Quit};
+	for (int i = 0; i < 6; ++i) {
+		m.apply(Action::MoveDown);
+		EXPECT_EQ(m.selected(), order[i]);
+	}
+	m.apply(Action::MoveUp);
+	EXPECT_EQ(m.selected(), MenuItem::Sound);
 }
 
 TEST(MenuModel, LevelCyclesBothWaysOnLevelRow) {
@@ -59,7 +60,42 @@ TEST(MenuModel, ConfirmOutcomes) {
 	m.apply(Action::MoveDown);
 	EXPECT_EQ(m.apply(Action::Confirm), MenuOutcome::None);
 	m.apply(Action::MoveDown);
+	EXPECT_EQ(m.apply(Action::Confirm), MenuOutcome::OpenLeaderboard);
+	m.apply(Action::MoveDown);
+	EXPECT_EQ(m.apply(Action::Confirm), MenuOutcome::OpenHelp);
+	m.apply(Action::MoveDown);
+	EXPECT_EQ(m.apply(Action::Confirm), MenuOutcome::None);
+	m.apply(Action::MoveDown);
 	EXPECT_EQ(m.apply(Action::Confirm), MenuOutcome::Quit);
+}
+
+TEST(MenuModel, SoundStartsOnAndToggles) {
+	MenuModel m;
+	EXPECT_TRUE(m.sound());
+	for (int i = 0; i < 4; ++i) m.apply(Action::MoveDown);
+	ASSERT_EQ(m.selected(), MenuItem::Sound);
+	EXPECT_EQ(m.apply(Action::MoveRight), MenuOutcome::None);
+	EXPECT_FALSE(m.sound());
+	EXPECT_EQ(m.apply(Action::MoveLeft), MenuOutcome::None);
+	EXPECT_TRUE(m.sound());
+	m.apply(Action::Confirm);
+	EXPECT_FALSE(m.sound());
+	m.apply(Action::Confirm);
+	EXPECT_TRUE(m.sound());
+}
+
+TEST(MenuModel, LeftRightDoNothingOnScreenRows) {
+	MenuModel m;
+	m.apply(Action::MoveDown);
+	m.apply(Action::MoveDown);
+	ASSERT_EQ(m.selected(), MenuItem::Leaderboard);
+	m.apply(Action::MoveRight);
+	m.apply(Action::MoveLeft);
+	m.apply(Action::MoveDown);
+	ASSERT_EQ(m.selected(), MenuItem::Help);
+	m.apply(Action::MoveRight);
+	EXPECT_EQ(m.level(), Level::Normal);
+	EXPECT_TRUE(m.sound());
 }
 
 TEST(MenuModel, QuitActionQuitsFromAnyRow) {
