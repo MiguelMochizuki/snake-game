@@ -1,40 +1,18 @@
 # Snake Game
 
-A terminal-based implementation of the classic Snake game in C++ with persistent score tracking and Docker support.
-
-## Table of Contents
-- [Features](#-features)
-- [Downloads](#-downloads)
-- [Project Structure](#-project-structure)
-- [Prerequisites](#-prerequisites)
-- [Installation](#-installation)
-  - [Local Build](#local-build)
-  - [Docker Build](#docker-build)
-- [Usage](#-usage)
-- [Game Controls](#-game-controls)
-- [Score Management](#-score-management)
-- [Building with CMake](#-building-with-cmake)
-- [Testing](#testing)
-- [CI/CD](#-cicd)
-- [License](#-license)
-- [Author](#-author)
+The classic Snake game for the terminal, written in C++. It saves your scores between sessions and also runs in Docker.
 
 ## Features
 
-- **Classic Snake Gameplay** - Control a snake to eat food and grow
-- **Score Persistence** - Best score and game history are saved between sessions
-- **Terminal-Based Rendering** - Clean, real-time display using ANSI escape codes with string-buffered output for minimal flicker
-- **Cross-Platform Support** - Works on Linux, macOS, and Windows
-- **Pre-built Binaries** - Download ready-to-run executables for all platforms
-- **Docker Support** - Containerized deployment with persistent data volumes
-- **Color-Coded Rendering** - Arcade palette (cyan walls, green snake with a bright head, red food, yellow numbers); set `NO_COLOR` to a non-empty value to disable it
-- **Start Menu** - Title screen with Start, Quit and a difficulty level (Easy, Normal, Hard), plus your best score, games played and average
-- **Non-Blocking Input** - Smooth gameplay with WASD or arrow controls
-- **Game Statistics** - Tracks total games played and average score
+- Start menu with Start, Quit and three levels: Easy, Normal and Hard
+- Arrow keys or WASD
+- Best score, games played and average score, saved between sessions
+- Colored board (cyan walls, green snake with a bright head, red food, yellow numbers)
+- Linux, macOS and Windows binaries, plus a Docker image
 
-## Downloads
+## Download
 
-Pre-built binaries are available for download from the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page:
+Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v1.4.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.4.0), which adds the start menu and difficulty levels.
 
 | Platform | Architecture | Binary |
 |----------|-------------|--------|
@@ -44,107 +22,28 @@ Pre-built binaries are available for download from the [Releases](https://github
 | Windows | ARM64 | `snake-windows-arm64.exe` |
 | macOS | Universal (x86_64 + ARM64) | `snake-macos-universal` |
 
-> **Latest release:** [v1.4.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.4.0) — Start menu with Start/Quit, Easy/Normal/Hard difficulty and your best score, games played and average; Enter key support.
+On Linux and macOS, make the file executable and run it:
 
-### Running Downloaded Binaries
-
-**Linux/macOS:**
 ```bash
-# Make executable
-chmod +x snake-*
-
-# Run
+chmod +x snake-linux-x86_64
 ./snake-linux-x86_64
 ```
 
-**Windows:**
-```cmd
-# Double-click or run from command prompt
-snake-windows-x86_64.exe
-```
+On Windows, double-click the `.exe` or run it from a terminal that supports ANSI escape codes, such as Windows Terminal.
 
-## Project Structure
+## Build from source
 
-```
-snake-game/
-├── CMakeLists.txt          # CMake build configuration
-├── Dockerfile              # Multi-stage Docker build
-├── DOCKER_HUB.md           # Docker Hub repository description
-├── Makefile                # Build orchestration
-├── LICENSE                 # MIT License
-├── .github/
-│   └── workflows/
-│       └── build-and-release.yml  # CI build, release & Docker publish
-├── data/                   # Score persistence directory
-│   ├── best_score.txt     # Best score storage
-│   └── score_history.txt  # All scores history
-├── include/                # Header files
-│   ├── entity.hpp         # Abstract base class for entities
-│   ├── food.hpp           # Food entity
-│   ├── game_engine.hpp    # Main game loop orchestrator
-│   ├── game_state.hpp     # Complete game state management
-│   ├── score_manager.hpp  # Score persistence
-│   ├── snake.hpp          # Snake entity
-│   ├── snake_segment.hpp  # Snake body segment
-│   ├── terminal_renderer.hpp # Terminal rendering
-│   ├── menu_model.hpp     # Start menu state (no I/O)
-│   ├── menu_view.hpp      # Menu view interface (IMenuView) and snapshot
-│   ├── menu_controller.hpp # Menu loop over keys, handlers and view
-│   ├── terminal_menu_view.hpp # ASCII menu view
-│   ├── terminal_painter.hpp # Shared ANSI styles and painter
-│   └── wasd_input_handler.hpp # Input handling
-├── tests/                  # Regression suite (see Testing)
-│   ├── CMakeLists.txt
-│   ├── unit/               # GoogleTest unit tests
-│   ├── golden/             # Golden renderer snapshots
-│   └── e2e/                # Python 3 pty end-to-end scripts
-└── src/                    # Source files
-    ├── main.cpp           # Program entry point
-    ├── entity.cpp
-    ├── food.cpp
-    ├── game_engine.cpp
-    ├── game_state.cpp
-    ├── score_manager.cpp
-    ├── snake.cpp
-    ├── snake_segment.cpp
-    ├── terminal_renderer.cpp
-    ├── menu_model.cpp
-    ├── menu_controller.cpp
-    ├── terminal_menu_view.cpp
-    └── wasd_input_handler.cpp
-```
+You need a C++17 compiler (g++ 7+, clang 5+ or MSVC 2017+), CMake 3.14+ and Make or Ninja.
 
-## Prerequisites
-
-### Local Build
-- **C++17 Compiler** (g++ 7+, clang 5+, or MSVC 2017+)
-- **CMake** 3.14 or higher
-- **Make** (or Ninja)
-- **POSIX-compliant system** (Linux/macOS) or Windows with MinGW/MSVC
-
-### Docker Build
-- **Docker** 20.10 or higher
-
-## Installation
-
-### Local Build
-
-#### Using Make (Recommended)
 ```bash
-# Build the game
-make local
-
-# Build and run
-make run-local
-
-# Clean build artifacts
-make clean-local
-
-# Rebuild from scratch
-make rebuild-local
+make run-local       # build and play
+make local           # build only: build/bin/snake
+make rebuild-local   # clean build
+make clean-local     # remove build files
 ```
 
-#### Using CMake Directly
+Without Make:
+
 ```bash
 mkdir build && cd build
 cmake ..
@@ -152,288 +51,142 @@ make
 ./bin/snake
 ```
 
-#### Platform-Specific Notes
+For a different build type, pass `-DCMAKE_BUILD_TYPE=Debug` (or `Release`, the default, or `RelWithDebInfo`) to `cmake`. All targets compile with `-Wall -Wextra -Wpedantic` (`/W4` on MSVC).
 
-**Linux/macOS:**
-```bash
-# Install dependencies (Ubuntu/Debian)
-sudo apt-get install build-essential cmake
+On Ubuntu or Debian, `sudo apt-get install build-essential cmake` installs the dependencies. On macOS, use `brew install cmake`. On Windows with MinGW, run `cmake -G "MinGW Makefiles" ..`, then `mingw32-make`.
 
-# Install dependencies (macOS with Homebrew)
-brew install cmake
-```
+## Docker
 
-**Windows (MinGW/MSVC):**
-```bash
-# Using CMake with MinGW
-cmake -G "MinGW Makefiles" ..
-mingw32-make
-./bin/snake.exe
-```
-
-### Docker Build
-
-#### Using Make
-```bash
-# Build Docker image
-make docker
-
-# Run in Docker with persistent scores
-make run-docker
-
-# Clean Docker artifacts
-make clean-docker
-
-# Rebuild Docker image
-make rebuild-docker
-```
-
-#### Using Docker Directly
-```bash
-# Build the image
-docker build -t snake-game .
-
-# Run with volume for persistence
-docker run --rm -it -v $(pwd)/data:/app/data snake-game
-```
-
-## Usage
-
-### Starting the Game
-```bash
-# Local
-make run-local
-
-# Docker
-make run-docker
-
-# Downloaded binary
-./snake-<platform>
-```
-
-### Start Menu
-The game opens on a menu instead of starting right away:
-
-- **W** / **S** or **Up** / **Down** - Move the selection
-- **A** / **D** or **Left** / **Right** - Change the level on the Level row (Easy 300 ms, Normal 200 ms, Hard 100 ms per step)
-- **Enter** - Select (Start begins the game, Quit exits)
-- **Q** or **Ctrl+C** - Quit
-
-The menu also shows your best score, games played and average score (last 10 games).
-
-### Game Controls
-- **W** or **Up arrow** - Move Up
-- **A** or **Left arrow** - Move Left
-- **S** or **Down arrow** - Move Down
-- **D** or **Right arrow** - Move Right
-- **Q** or **Ctrl+C** - Quit Game
-
-Only these keys have any effect; every other key is ignored.
-
-### Colors
-The board uses the Arcade palette. Set `NO_COLOR` to any non-empty value (for example `NO_COLOR=1 ./snake`) to turn colors off; an empty value keeps them on, following [no-color.org](https://no-color.org).
-
-### Game Over Screen
-After the game ends, you'll see:
-- Final Score
-- Best Score
-- Total Games Played
-- Average Score (last 10 games)
-
-Press **R** to restart or **Q** to quit.
-
-## Score Management
-
-The game automatically saves scores to the `data/` directory:
-
-- `best_score.txt` - Stores your highest score
-- `score_history.txt` - Records all scores from every game session
-
-### Viewing Scores
-```bash
-# View best score
-cat data/best_score.txt
-
-# View score history
-cat data/score_history.txt
-```
-
-## Building with CMake
-
-### Build Types
-```bash
-# Release build (default)
-cmake -DCMAKE_BUILD_TYPE=Release ..
-
-# Debug build
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-
-# RelWithDebInfo build
-cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
-```
-
-### CMake Options
-| Option | Description | Default |
-|--------|-------------|---------|
-| `CMAKE_BUILD_TYPE` | Build configuration | Release |
-| `CMAKE_CXX_STANDARD` | C++ standard version | 17 |
-
-### Compiler Warnings
-The project enables strict compiler warnings:
-- GCC/Clang: `-Wall -Wextra -Wpedantic`
-- MSVC: `/W4`
-
-## Docker Details
-
-### Multi-Stage Build
-The Dockerfile uses a multi-stage build for minimal image size:
-1. **Builder Stage**: Alpine with build tools (CMake, g++)
-2. **Runtime Stage**: Minimal Alpine with runtime libraries
-
-### Volume Persistence
-```bash
-# The data directory is persisted via volume
--v $(pwd)/data:/app/data
-```
-
-### Pre-built Image on Docker Hub
-A pre-built Docker image is available on Docker Hub at [miguelmochizuki/snake-game](https://hub.docker.com/repository/docker/miguelmochizuki/snake-game/general):
 ```bash
 docker pull miguelmochizuki/snake-game
 docker run --rm -it -v $(pwd)/data:/app/data miguelmochizuki/snake-game
 ```
 
-### Security
-- Runs as non-root user (`snakeuser`)
-- Minimal Alpine base image
-- Only necessary runtime dependencies
+The image is published for linux/amd64 and linux/arm64. Without the `-v` option, scores are lost when the container exits.
 
-## Testing
+To build the image yourself (Docker 20.10 or newer):
 
-The regression suite has three layers, all registered with CTest:
-
-- **Unit** (`tests/unit/`): GoogleTest tests for the game classes, score persistence, input handling and the terminal renderer. CMake fetches GoogleTest, so the first configure needs network access.
-- **Golden** (`tests/golden/`): snapshots of renderer and start menu output that the renderer and menu view tests compare against.
-- **End-to-end** (`tests/e2e/`): Python 3 standard-library scripts that run `snake` in a pseudo-terminal and drive it. Each `test_*.py` is registered automatically as `e2e_<name>`.
-
-End-to-end tests run on Linux only (x86-64 and ARM64, natively and inside Docker); unit tests run on Linux, macOS and Windows.
-
-The end-to-end tests need Python 3 on Linux.
-
-### Running the tests
 ```bash
-make test-local                      # build, then ctest --output-on-failure in build/
-make test-docker                     # docker build --target test (runs the suite in the image)
-ctest --test-dir build -L unit       # unit tests only
-ctest --test-dir build -L e2e        # end-to-end tests only
-ctest --test-dir build -R <name>     # a single test, e.g. -R e2e_wall_death
+make run-docker      # build the image and play with a persistent score volume
+make docker          # build only
+make rebuild-docker  # clean build
+make clean-docker    # remove the image and container
 ```
 
-`make docker` and `make run-docker` build the image through the `test` stage, so the whole suite runs during the image build. If any test fails, the image is not built.
+The image builds in two stages (Alpine with build tools, then a minimal Alpine runtime) and runs as the non-root user `snakeuser`.
 
-### Updating golden snapshots
-When a renderer change is intentional, regenerate the snapshots and review the diff before committing:
+## How to play
+
+The game opens on a menu. Pick a level, then start.
+
+| Key | In the menu | In the game |
+|-----|-------------|-------------|
+| W / Up arrow | Move selection up | Move up |
+| S / Down arrow | Move selection down | Move down |
+| A / Left arrow | Previous level (on the Level row) | Move left |
+| D / Right arrow | Next level (on the Level row) | Move right |
+| Enter | Choose the selected row | Nothing |
+| Q / Ctrl+C | Quit | End the game |
+
+The levels set the time per step: Easy 300 ms, Normal 200 ms, Hard 100 ms. The menu also shows your best score, games played and average over the last 10 games. Any other key does nothing.
+
+After a game ends, you see your final score and the same statistics. Press **R** to play again (straight away, without the menu) or **Q** to quit.
+
+Set `NO_COLOR` to any non-empty value to turn colors off, for example `NO_COLOR=1 ./snake`. An empty value keeps them on, as [no-color.org](https://no-color.org) describes.
+
+### Scores
+
+Scores are saved in the `data/` directory, which the game creates:
+
+- `best_score.txt` holds your highest score.
+- `score_history.txt` holds the score of every game.
+
+## Code layout
+
+- `src/` and `include/` hold the game. `GameEngine` runs the loop, `GameState` holds the snake and food, and `TerminalRenderer` draws the board.
+- Input goes through a key source and a set of handlers (WASD, arrows and commands), so the engine never reads the terminal directly.
+- The menu is split the same way: `MenuModel` holds its state, `IMenuView` draws it (`TerminalMenuView` does so in ASCII), and `runMenu` connects them to the keys. A different interface, such as a GUI, would need only another `IMenuView`.
+- `tests/` holds the unit, golden and end-to-end tests.
+
+## Tests
+
+The suite has three parts, all run by CTest:
+
+- **Unit** (`tests/unit/`): GoogleTest tests for the game classes, scores, input handling, the renderer and the menu. CMake downloads GoogleTest, so the first configure needs network access.
+- **Golden** (`tests/golden/`): saved renderer and menu output that the tests compare against.
+- **End-to-end** (`tests/e2e/`): Python 3 scripts that run `snake` in a pseudo-terminal and press keys. Each `test_*.py` registers itself as `e2e_<name>`. They run on Linux only (x86-64 and ARM64, natively and in Docker), while the unit tests also run on macOS and Windows.
+
+```bash
+make test-local                      # build, then run everything
+make test-docker                     # run the suite inside the Docker build
+ctest --test-dir build -L unit       # unit tests only
+ctest --test-dir build -L e2e        # end-to-end tests only
+ctest --test-dir build -R <name>     # one test, e.g. -R e2e_wall_death
+```
+
+`make docker` and `make run-docker` build through the test stage, so a failing test stops the image from being built.
+
+If you change the renderer or menu on purpose, regenerate the golden files and check the diff before committing:
+
 ```bash
 SNAKE_UPDATE_GOLDEN=1 ctest --test-dir build -R "TerminalRenderer|TerminalMenuView"
 git diff tests/golden/
 ```
 
-### Test environment variables
-- `SNAKE_E2E_TIMEOUT_SCALE` (integer, default 1): multiplies end-to-end timeouts and game frame time. Raise it on slow hosts. The Docker build uses 10.
-- `SNAKE_FRAME_MS` (0-10000), `SNAKE_SEED` (unsigned) and `SNAKE_SKIP_MENU` (any non-empty value): test hooks read by the binary to set the frame time, set the random seed and skip the start menu. A valid `SNAKE_FRAME_MS` overrides the level chosen in the menu; without the menu the frame time defaults to 200. The e2e harness sets `SNAKE_SKIP_MENU=1` by default. Normal play does not need any of them.
+### Environment variables
 
-## CI/CD
+Normal play needs none of these. The tests use them to make the game predictable.
 
-The project uses a single GitHub Actions workflow for continuous integration and delivery:
+- `SNAKE_FRAME_MS` (0 to 10000) sets the time per step. When valid, it overrides the level picked in the menu. Without the menu it defaults to 200.
+- `SNAKE_SEED` (unsigned integer) sets the random seed for food placement.
+- `SNAKE_SKIP_MENU` (any non-empty value) starts the game without the menu. The end-to-end harness sets it to `1` by default.
+- `SNAKE_E2E_TIMEOUT_SCALE` (integer, default 1) multiplies the end-to-end timeouts and the step time. Raise it on slow machines. The Docker build uses 10.
 
-### Build
-On every push to `main` or pull request, binaries are built for all supported platforms. Linux ARM64 is built natively on an ARM64 runner, not cross-compiled:
-- Linux x86-64
-- Linux ARM64
-- Windows x86-64
-- Windows ARM64
-- macOS Universal
+## CI and releases
 
-Tests run on every platform job; a platform-job failure blocks the GitHub release. The Docker image is gated separately: the test suite runs inside its build (amd64 and arm64, arm64 under emulation), so a failing test stops the image build.
+One GitHub Actions workflow handles both. On every push to `main` and every pull request, it builds and tests Linux x86-64, Linux ARM64 (on a native ARM64 runner), Windows x86-64, Windows ARM64 and macOS Universal. The Docker image runs the whole suite as part of its build, for amd64 and arm64 (arm64 under emulation).
 
-### Release
-When a tag matching `v*` is pushed, the workflow additionally:
-1. Creates a GitHub Release attaching all pre-built binaries
-2. Builds and publishes a multi-platform Docker image to Docker Hub
+To publish a release, push a tag that starts with `v`:
 
-Because `docker-publish` runs in parallel with `build`, the Docker image is built **while** platform binaries are being compiled.
-
-### Creating a New Release
 ```bash
 git tag -a v1.4.0 -m "Release v1.4.0"
 git push origin v1.4.0
 ```
 
-The release and Docker image will be created automatically.
+The workflow then creates a GitHub release with all the binaries and publishes the Docker image to Docker Hub. A failing platform job blocks the release. The image builds at the same time as the binaries.
 
-### Version History
+### Version history
 
-| Version | Highlights |
-|---------|------------|
-| [v1.4.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.4.0) | Start menu (Start, Level, Quit, best/games/average) behind a swappable `IMenuView`; Easy/Normal/Hard speeds; Enter key; `SNAKE_SKIP_MENU` test hook |
-| [v1.3.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.3.0) | Arrow keys via composite input handlers; strict key handling (escape sequences, Windows extended keys, Ctrl+C/Z/S); average over the last 10 games |
-| [v1.2.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.2.0) | Color-coded rendering with `NO_COLOR` support; game-over EOF exit and loop-based restart; Makefile tracks headers; CTest regression suite (unit, golden, Linux e2e) on every platform and inside Docker |
-| [v1.1.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.1.0) | Flattened occupancy bitmask (reduced memory); string-buffered terminal output (smoother rendering) |
-| [v1.0.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.0.0) | Initial release: cross-platform builds, Docker support, score persistence |
+| Version | What changed |
+|---------|--------------|
+| [v1.4.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.4.0) | Start menu with Easy, Normal and Hard levels and score statistics, behind an `IMenuView` interface; Enter key; `SNAKE_SKIP_MENU` test hook |
+| [v1.3.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.3.0) | Arrow keys; strict key handling (escape sequences, Windows extended keys, Ctrl+C/Z/S); average over the last 10 games |
+| [v1.2.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.2.0) | Colors with `NO_COLOR` support; exit on end of input at game over; the Makefile tracks headers; CTest suite (unit, golden, Linux end-to-end) on every platform and in Docker |
+| [v1.1.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.1.0) | Smaller memory use (flattened occupancy bitmask); buffered terminal output for smoother drawing |
+| [v1.0.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.0.0) | First release: cross-platform builds, Docker, saved scores |
 
-### Docker Hub
-A pre-built multi-platform image (linux/amd64, linux/arm64) is available at:
+## Troubleshooting
+
+**Input does not work.** The terminal must support raw input mode. On Windows, use one that understands ANSI escape codes, such as Windows Terminal or ConEmu.
+
+**Docker permission errors.** Add your user to the `docker` group, then log out and back in:
+
 ```bash
-docker pull miguelmochizuki/snake-game
-docker run --rm -it -v $(pwd)/data:/app/data miguelmochizuki/snake-game
-```
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👤 Author
-
-**Miguel Mochizuki Silva**
-
----
-
-## Additional Notes
-
-### Troubleshooting
-
-**Issue**: Terminal input not working correctly
-- Ensure your terminal supports raw input mode
-- On Windows, use a terminal that supports ANSI escape codes (Windows Terminal, ConEmu)
-
-**Issue**: Docker permission errors
-```bash
-# Add your user to the docker group
 sudo usermod -aG docker $USER
-# Log out and back in
 ```
 
-**Issue**: Scores not persisting in Docker
-- Ensure the `data/` directory is mounted as a volume
-- Check permissions: `chmod 755 data/`
+**Scores are not saved in Docker.** Mount `data/` as a volume (`-v $(pwd)/data:/app/data`) and check its permissions with `chmod 755 data/`.
 
-### Development
+## Contributing
 
-To contribute or modify the game:
+Fork the repository, make your changes on a branch, run `make test-local` (and try the game with `make run-docker`), then open a pull request.
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test with `make run-docker`
-5. Submit a pull request
+Ideas not done yet: a leaderboard, sound (terminal beep) and network multiplayer.
 
-### Future Enhancements
-- [x] Multiple difficulty levels
-- [x] Color-coded rendering
-- [ ] Leaderboard system
-- [ ] Sound effects (terminal beep)
-- [ ] Network multiplayer mode
+## License
 
----
+MIT. See [LICENSE](LICENSE).
 
-**Enjoy the game! 🐍**
+## Author
+
+Miguel Mochizuki Silva

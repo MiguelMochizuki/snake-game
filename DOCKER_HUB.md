@@ -1,54 +1,44 @@
 # Snake Game
 
-A terminal-based classic Snake game with persistent score tracking. Built in C++ with CMake.
+The classic Snake game for the terminal, written in C++ with CMake. It saves your scores between sessions.
 
-## Quick Start
+## Quick start
 
 ```bash
 docker pull miguelmochizuki/snake-game
 docker run --rm -it miguelmochizuki/snake-game
 ```
 
-Scores are saved inside the container but are lost by default. To persist scores between runs, mount a volume:
+Scores stay inside the container and are lost when it exits. To keep them, mount a volume:
 
 ```bash
 docker run --rm -it -v $(pwd)/data:/app/data miguelmochizuki/snake-game
 ```
 
-## Start Menu
+## How to play
 
-The game opens on a menu. Use **W**/**S** (or the arrow keys) to move, **A**/**D** (or Left/Right) to change the level (Easy, Normal, Hard), and **Enter** to select Start or Quit. The menu also shows your best score, games played and average score.
+The game opens on a menu. Use W/S or the up/down arrows to move, A/D or left/right to change the level (Easy, Normal, Hard), and Enter to pick Start or Quit. The menu also shows your best score, games played and average score.
 
-## Game Controls
+| Key | In the game |
+|-----|-------------|
+| W or Up arrow | Move up |
+| A or Left arrow | Move left |
+| S or Down arrow | Move down |
+| D or Right arrow | Move right |
+| Q or Ctrl+C | End the game |
 
-| Key | Action |
-|-----|--------|
-| W or Up arrow | Move Up |
-| A or Left arrow | Move Left |
-| S or Down arrow | Move Down |
-| D or Right arrow | Move Right |
-| Q or Ctrl+C | Quit |
+When a game ends, press **R** to play again or **Q** to quit.
 
-After game over, press **R** to restart or **Q** to quit.
-
-## Features
-
-- Classic snake gameplay with real-time terminal rendering
-- Persistent score tracking (best score + game history)
-- Start menu with Easy, Normal and Hard levels
-- Smooth WASD or arrow controls with non-blocking input
-- Game statistics (total games, average score)
+Set `NO_COLOR=1` to turn colors off.
 
 ## Platforms
 
-This image supports both **linux/amd64** and **linux/arm64** architectures.
+The image supports linux/amd64 and linux/arm64.
 
 ## Security
 
-- Runs as non-root user `snakeuser`
-- Minimal Alpine base image
-- Only runtime libraries included (multi-stage build)
+The container runs as the non-root user `snakeuser` on a minimal Alpine base. A multi-stage build keeps only the runtime libraries in the final image.
 
 ## Source
 
-Source code and full documentation available at [github.com/miguelmochizuki/snake-game](https://github.com/miguelmochizuki/snake-game)
+The source code and full documentation are at [github.com/miguelmochizuki/snake-game](https://github.com/miguelmochizuki/snake-game).
