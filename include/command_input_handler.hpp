@@ -9,7 +9,7 @@
 #include "input_handler.hpp"
 
 /**
- * Maps q, Q and Ctrl+C to Quit, and r, R to Restart
+ * Maps q, Q and Ctrl+C to Quit, r, R to Restart, and Enter to Confirm
  */
 class CommandInputHandler : public IInputHandler {
 public:
@@ -19,7 +19,7 @@ public:
 	 * Parameters:
 	 * const Key& key: The key pressed
 	 *
-	 * Returns std::optional<Action>: Quit or Restart, or nullopt for any other key
+	 * Returns std::optional<Action>: Quit, Restart or Confirm, or nullopt for any other key
 	 */
 	std::optional<Action> handle(const Key& key) const override;
 };

@@ -17,6 +17,9 @@ std::optional<Action> CommandInputHandler::handle(const Key& key) const {
 	if (key.kind == KeyKind::CtrlC) {
 		return Action::Quit;
 	}
+	if (key.kind == KeyKind::Enter) {
+		return Action::Confirm;
+	}
 	if (key.kind != KeyKind::Char) {
 		return std::nullopt;
 	}

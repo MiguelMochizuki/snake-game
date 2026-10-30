@@ -7,6 +7,7 @@
 
 Key KeyDecoder::decodeSingle(int c) {
 	if (c == 0x03) return specialKey(KeyKind::CtrlC);
+	if (c == 0x0D || c == 0x0A) return specialKey(KeyKind::Enter);
 	if (c >= 0x20 && c <= 0x7E) return charKey(static_cast<char>(c));
 	return specialKey(KeyKind::Unknown);
 }

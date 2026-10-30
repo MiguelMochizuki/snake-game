@@ -78,7 +78,7 @@ public:
 	 * IKeySource& keys: Source of key presses
 	 * const IInputHandler& handler: Maps keys to actions
 	 *
-	 * Returns TickInput: quit if any key mapped to Quit, else the last move; Restart is ignored
+	 * Returns TickInput: quit if any key mapped to Quit, else the last move; Restart and Confirm are ignored
 	 */
 	static TickInput readTick(IKeySource& keys, const IInputHandler& handler);
 
