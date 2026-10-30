@@ -12,7 +12,7 @@ The classic Snake game for the terminal, written in C++. It saves your scores be
 
 ## Download
 
-Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v1.4.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.4.0), which adds the start menu and difficulty levels.
+Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v1.4.1](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.4.1), a documentation update to v1.4.0, which added the start menu and difficulty levels.
 
 | Platform | Architecture | Binary |
 |----------|-------------|--------|
@@ -149,8 +149,8 @@ One GitHub Actions workflow handles both. On every push to `main` and every pull
 To publish a release, push a tag that starts with `v`:
 
 ```bash
-git tag -a v1.4.0 -m "Release v1.4.0"
-git push origin v1.4.0
+git tag -a v1.4.1 -m "Release v1.4.1"
+git push origin v1.4.1
 ```
 
 The workflow then creates a GitHub release with all the binaries and publishes the Docker image to Docker Hub. A failing platform job blocks the release. The image builds at the same time as the binaries.
@@ -159,6 +159,7 @@ The workflow then creates a GitHub release with all the binaries and publishes t
 
 | Version | What changed |
 |---------|--------------|
+| [v1.4.1](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.4.1) | Rewritten README and Docker Hub page; no code changes |
 | [v1.4.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.4.0) | Start menu with Easy, Normal and Hard levels and score statistics, behind an `IMenuView` interface; Enter key; `SNAKE_SKIP_MENU` test hook |
 | [v1.3.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.3.0) | Arrow keys; strict key handling (escape sequences, Windows extended keys, Ctrl+C/Z/S); average over the last 10 games |
 | [v1.2.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.2.0) | Colors with `NO_COLOR` support; exit on end of input at game over; the Makefile tracks headers; CTest suite (unit, golden, Linux end-to-end) on every platform and in Docker |
