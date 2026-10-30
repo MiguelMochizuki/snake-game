@@ -21,7 +21,7 @@ with tempfile.TemporaryDirectory() as tmp, Game(sys.argv[1], cwd=tmp, env=MENU) 
 # Missing score checksum wipes the history: the menu shows zeros instead of crashing
 with tempfile.TemporaryDirectory() as tmp:
 	play_once(sys.argv[1], tmp)
-	os.remove(os.path.join(tmp, "data", "score_checksum.txt"))
+	os.remove(os.path.join(tmp, "data", "scores_v2.checksum"))
 	with Game(sys.argv[1], cwd=tmp, env=MENU) as game:
 		game.wait_for(r"Best:\s+0 ")
 		game.wait_for(r"Games:\s+0 ")

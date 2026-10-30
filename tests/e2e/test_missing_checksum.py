@@ -12,6 +12,6 @@ from harness import play_once
 
 with tempfile.TemporaryDirectory() as tmp:
 	play_once(sys.argv[1], tmp)
-	os.remove(os.path.join(tmp, "data", "score_checksum.txt"))
+	os.remove(os.path.join(tmp, "data", "scores_v2.checksum"))
 	panel = play_once(sys.argv[1], tmp)
 	assert re.search(r"Games Played:\s+1\n", panel), panel

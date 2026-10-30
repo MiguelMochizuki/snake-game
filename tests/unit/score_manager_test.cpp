@@ -13,6 +13,8 @@
 
 #include "score_manager.hpp"
 
+#include <cstdint>
+
 #ifdef _WIN32
 	#include <process.h>
 	#define SNAKE_GETPID _getpid
@@ -90,126 +92,149 @@ protected:
 	}
 };
 
-TEST_F(ScoreManagerTest, FreshDirCreatesFiles) {
-	ScoreManager m(dir());
-	EXPECT_EQ(m.getBestScore(), 0);
-	EXPECT_TRUE(m.getHistory().empty());
-	EXPECT_EQ(read("best_score.txt"), "0\n");
-	EXPECT_EQ(read("score_history.txt"), "");
-	EXPECT_TRUE(fs::exists(dir_ / "score_checksum.txt"));
+/**
+ * Computes the checksum the pre-2.0 game wrote, so migration can be tested with genuine old files
+ *
+ * Parameters:
+ * int best: Content of best_score.txt
+ * const std::vector<int>& history: Content of score_history.txt
+ *
+ * Returns uint64_t: The old checksum
+ */
+static uint64_t oldChecksum(int best, const std::vector<int>& history) {
+	const uint64_t seed = 0x9E3779B97F4A7C15ULL;
+	uint64_t hash = seed;
+	hash ^= static_cast<uint64_t>(best) + seed + (hash << 6) + (hash >> 2);
+	for (int score : history) {
+		hash ^= static_cast<uint64_t>(score) + seed + (hash << 6) + (hash >> 2);
+	}
+	return hash;
 }
 
-TEST_F(ScoreManagerTest, SaveScoreAppendsAndUpdatesBest) {
+TEST_F(ScoreManagerTest, FreshDirCreatesV2Files) {
 	ScoreManager m(dir());
-	m.saveScore(3);
-	m.saveScore(1);
-	EXPECT_EQ(read("score_history.txt"), "3\n1\n");
-	EXPECT_EQ(read("best_score.txt"), "3\n");
-	EXPECT_EQ(m.getBestScore(), 3);
-	EXPECT_EQ(m.getTotalGames(), 2u);
+	EXPECT_EQ(m.bestScore(Level::Normal), 0);
+	EXPECT_EQ(m.totalGames(Level::Normal), 0u);
+	EXPECT_EQ(read("scores_v2.txt"), "");
+	EXPECT_TRUE(fs::exists(dir_ / "scores_v2.checksum"));
 }
 
-TEST_F(ScoreManagerTest, AverageScore) {
+TEST_F(ScoreManagerTest, ScoresAreKeptPerLevel) {
 	ScoreManager m(dir());
-	EXPECT_DOUBLE_EQ(m.getAverageScore(), 0.0);
-	m.saveScore(3);
-	m.saveScore(4);
-	EXPECT_DOUBLE_EQ(m.getAverageScore(), 3.5);
+	m.saveScore(Level::Easy, 5);
+	m.saveScore(Level::Hard, 9);
+	m.saveScore(Level::Easy, 7);
+	EXPECT_EQ(m.bestScore(Level::Easy), 7);
+	EXPECT_EQ(m.totalGames(Level::Easy), 2u);
+	EXPECT_DOUBLE_EQ(m.averageScore(Level::Easy), 6.0);
+	EXPECT_EQ(m.bestScore(Level::Hard), 9);
+	EXPECT_EQ(m.totalGames(Level::Hard), 1u);
+	EXPECT_EQ(m.bestScore(Level::Normal), 0);
+	EXPECT_EQ(m.totalGames(Level::Normal), 0u);
+	EXPECT_DOUBLE_EQ(m.averageScore(Level::Normal), 0.0);
+}
+
+TEST_F(ScoreManagerTest, FileHoldsOneLinePerGame) {
+	ScoreManager m(dir());
+	m.saveScore(Level::Normal, 5);
+	m.saveScore(Level::Easy, 1);
+	EXPECT_EQ(read("scores_v2.txt"), "N 5\nE 1\n");
+}
+
+TEST_F(ScoreManagerTest, AverageUsesLastTenGamesOfTheLevel) {
+	ScoreManager m(dir());
+	m.saveScore(Level::Normal, 100);
+	m.saveScore(Level::Normal, 100);
+	for (int s = 1; s <= 10; ++s) m.saveScore(Level::Normal, s);
+	m.saveScore(Level::Hard, 1000);
+	EXPECT_DOUBLE_EQ(m.averageScore(Level::Normal), 5.5);
+	EXPECT_EQ(m.totalGames(Level::Normal), 12u);
 }
 
 TEST_F(ScoreManagerTest, AverageUsesAllGamesBelowWindow) {
 	ScoreManager m(dir());
-	for (int s : {1, 2, 3}) m.saveScore(s);
-	EXPECT_DOUBLE_EQ(m.getAverageScore(), 2.0);
+	for (int s : {1, 2, 3}) m.saveScore(Level::Normal, s);
+	EXPECT_DOUBLE_EQ(m.averageScore(Level::Normal), 2.0);
 }
 
-TEST_F(ScoreManagerTest, AverageExactlyWindow) {
+TEST_F(ScoreManagerTest, TopScoresDescendingKeepsTiesAndCaps) {
 	ScoreManager m(dir());
-	for (int s = 1; s <= 10; ++s) m.saveScore(s);
-	EXPECT_DOUBLE_EQ(m.getAverageScore(), 5.5);
+	EXPECT_TRUE(m.topScores(Level::Normal, 10).empty());
+	for (int s : {5, 9, 9, 1}) m.saveScore(Level::Normal, s);
+	m.saveScore(Level::Easy, 50);
+	EXPECT_EQ(m.topScores(Level::Normal, 10), (std::vector<int>{9, 9, 5, 1}));
+	EXPECT_EQ(m.topScores(Level::Normal, 2), (std::vector<int>{9, 9}));
+	EXPECT_EQ(m.topScores(Level::Easy, 10), (std::vector<int>{50}));
 }
 
-TEST_F(ScoreManagerTest, AverageUsesLastTenOnly) {
+TEST_F(ScoreManagerTest, StatsMatchTheGetters) {
 	ScoreManager m(dir());
-	m.saveScore(100); m.saveScore(100);           // outside the window
-	for (int s = 1; s <= 10; ++s) m.saveScore(s);
-	EXPECT_DOUBLE_EQ(m.getAverageScore(), 5.5);
-	EXPECT_EQ(m.getTotalGames(), 12u);
-}
-
-TEST_F(ScoreManagerTest, AverageWindowSurvivesReload) {
-	{ ScoreManager m(dir()); for (int s = 1; s <= 12; ++s) m.saveScore(s); }
-	ScoreManager m2(dir());
-	EXPECT_DOUBLE_EQ(m2.getAverageScore(), 7.5);  // mean of 3..12
-}
-
-TEST_F(ScoreManagerTest, AverageAfterTamperIsZero) {
-	{
-		ScoreManager m(dir());
-		for (int s = 1; s <= 12; ++s) m.saveScore(s);
-	}
-	std::string tampered = "50\n";
-	for (int i = 1; i < 12; ++i) tampered += "1\n";
-	write("score_history.txt", tampered);
-	ScoreManager m2(dir());
-	EXPECT_DOUBLE_EQ(m2.getAverageScore(), 0.0);
-	EXPECT_EQ(m2.getTotalGames(), 12u);
+	m.saveScore(Level::Hard, 4);
+	m.saveScore(Level::Hard, 8);
+	ScoreStats st = m.stats(Level::Hard);
+	EXPECT_EQ(st.best, 8);
+	EXPECT_EQ(st.games, 2u);
+	EXPECT_DOUBLE_EQ(st.average, 6.0);
 }
 
 TEST_F(ScoreManagerTest, PersistsAcrossInstances) {
 	{
 		ScoreManager m(dir());
-		m.saveScore(5);
+		m.saveScore(Level::Hard, 5);
+		for (int s = 1; s <= 12; ++s) m.saveScore(Level::Normal, s);
 	}
 	ScoreManager m2(dir());
-	EXPECT_EQ(m2.getBestScore(), 5);
-	EXPECT_EQ(m2.getTotalGames(), 1u);
+	EXPECT_EQ(m2.bestScore(Level::Hard), 5);
+	EXPECT_EQ(m2.totalGames(Level::Normal), 12u);
+	EXPECT_DOUBLE_EQ(m2.averageScore(Level::Normal), 7.5);
 }
 
 TEST_F(ScoreManagerTest, MissingChecksumWipesHistory) {
 	{
 		ScoreManager m(dir());
-		m.saveScore(5);
-		m.saveScore(7);
+		m.saveScore(Level::Normal, 5);
+		m.saveScore(Level::Easy, 7);
 	}
-	fs::remove(dir_ / "score_checksum.txt");
+	fs::remove(dir_ / "scores_v2.checksum");
 	ScoreManager m2(dir());
-	EXPECT_EQ(m2.getTotalGames(), 0u);
-	EXPECT_EQ(m2.getBestScore(), 0);
-	EXPECT_EQ(read("best_score.txt"), "0\n");
-	EXPECT_EQ(read("score_history.txt"), "");
-	EXPECT_TRUE(fs::exists(dir_ / "score_checksum.txt"));
+	EXPECT_EQ(m2.totalGames(Level::Normal), 0u);
+	EXPECT_EQ(m2.totalGames(Level::Easy), 0u);
+	EXPECT_EQ(read("scores_v2.txt"), "");
+	EXPECT_TRUE(fs::exists(dir_ / "scores_v2.checksum"));
 }
 
-TEST_F(ScoreManagerTest, TamperedHistoryZeroesScoresKeepsCount) {
+TEST_F(ScoreManagerTest, EditedScoreZeroesScoresKeepsRecords) {
 	{
 		ScoreManager m(dir());
-		m.saveScore(5);
-		m.saveScore(7);
+		m.saveScore(Level::Normal, 5);
+		m.saveScore(Level::Easy, 7);
 	}
-	write("score_history.txt", "50\n7\n");
+	write("scores_v2.txt", "N 50\nE 7\n");
 	{
 		ScoreManager m2(dir());
-		EXPECT_EQ(m2.getTotalGames(), 2u);
-		EXPECT_EQ(m2.getHistory(), (std::vector<int>{0, 0}));
-		EXPECT_EQ(m2.getBestScore(), 0);
+		EXPECT_EQ(m2.totalGames(Level::Normal), 1u);
+		EXPECT_EQ(m2.totalGames(Level::Easy), 1u);
+		EXPECT_EQ(m2.bestScore(Level::Normal), 0);
+		EXPECT_EQ(m2.bestScore(Level::Easy), 0);
 	}
-	// Checksum was rewritten, so a third instance sees a consistent state
+	// The checksum was rewritten, so a third instance sees the same consistent state
 	ScoreManager m3(dir());
-	EXPECT_EQ(m3.getTotalGames(), 2u);
-	EXPECT_EQ(m3.getHistory(), (std::vector<int>{0, 0}));
+	EXPECT_EQ(m3.totalGames(Level::Normal), 1u);
+	EXPECT_EQ(m3.bestScore(Level::Normal), 0);
 }
 
-TEST_F(ScoreManagerTest, GarbageFileContentIsTreatedAsTamper) {
+TEST_F(ScoreManagerTest, GarbageLinesAreSkipped) {
 	{
 		ScoreManager m(dir());
-		m.saveScore(5);
+		m.saveScore(Level::Normal, 5);
+		m.saveScore(Level::Hard, 8);
 	}
-	write("best_score.txt", "abc");
+	write("scores_v2.txt", "N 5\nhello\nX 4\nN abc\n\nH 8\n");
 	EXPECT_NO_THROW({
 		ScoreManager m2(dir());
-		EXPECT_EQ(m2.getBestScore(), 0);
-		EXPECT_EQ(m2.getTotalGames(), 1u);
+		EXPECT_EQ(m2.totalGames(Level::Normal), 1u);
+		EXPECT_EQ(m2.bestScore(Level::Normal), 5);
+		EXPECT_EQ(m2.bestScore(Level::Hard), 8);
 	});
 }
 
@@ -221,8 +246,56 @@ TEST_F(ScoreManagerTest, DataDirIsAFileDoesNotThrow) {
 	}
 	EXPECT_NO_THROW({
 		ScoreManager m(file.string());
-		m.saveScore(3);
-		EXPECT_EQ(m.getBestScore(), 3);
+		m.saveScore(Level::Normal, 3);
+		EXPECT_EQ(m.bestScore(Level::Normal), 3);
 	});
 	EXPECT_TRUE(fs::is_regular_file(file));
+}
+
+TEST_F(ScoreManagerTest, MigratesValidOldFilesAsNormalAndLeavesThemAlone) {
+	write("score_history.txt", "3\n8\n");
+	write("best_score.txt", "8\n");
+	write("score_checksum.txt", std::to_string(oldChecksum(8, {3, 8})) + "\n");
+	{
+		ScoreManager m(dir());
+		EXPECT_EQ(m.totalGames(Level::Normal), 2u);
+		EXPECT_EQ(m.bestScore(Level::Normal), 8);
+		EXPECT_EQ(m.totalGames(Level::Easy), 0u);
+		EXPECT_EQ(m.totalGames(Level::Hard), 0u);
+	}
+	EXPECT_EQ(read("score_history.txt"), "3\n8\n");
+	EXPECT_EQ(read("best_score.txt"), "8\n");
+	EXPECT_EQ(read("score_checksum.txt"), std::to_string(oldChecksum(8, {3, 8})) + "\n");
+	// A second run reads the v2 file and does not import again
+	ScoreManager m2(dir());
+	EXPECT_EQ(m2.totalGames(Level::Normal), 2u);
+}
+
+TEST_F(ScoreManagerTest, OldFilesWithBadChecksumImportNothing) {
+	write("score_history.txt", "3\n8\n");
+	write("best_score.txt", "8\n");
+	write("score_checksum.txt", "12345\n");
+	ScoreManager m(dir());
+	EXPECT_EQ(m.totalGames(Level::Normal), 0u);
+	EXPECT_EQ(m.bestScore(Level::Normal), 0);
+}
+
+TEST_F(ScoreManagerTest, OldFilesWithoutChecksumImportNothing) {
+	write("score_history.txt", "3\n8\n");
+	write("best_score.txt", "8\n");
+	ScoreManager m(dir());
+	EXPECT_EQ(m.totalGames(Level::Normal), 0u);
+}
+
+TEST_F(ScoreManagerTest, ExistingV2FileWinsOverOldFiles) {
+	{
+		ScoreManager m(dir());
+		m.saveScore(Level::Hard, 4);
+	}
+	write("score_history.txt", "3\n8\n");
+	write("best_score.txt", "8\n");
+	write("score_checksum.txt", std::to_string(oldChecksum(8, {3, 8})) + "\n");
+	ScoreManager m2(dir());
+	EXPECT_EQ(m2.totalGames(Level::Normal), 0u);
+	EXPECT_EQ(m2.bestScore(Level::Hard), 4);
 }

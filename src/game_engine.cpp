@@ -22,7 +22,7 @@
  */
 GameEngine::GameEngine(IKeySource& keys, const IInputHandler& input, int rows, int cols, int speedMs, unsigned seed, bool color)
 	: scoreManager_()
-	, state_(rows, cols, scoreManager_.getBestScore(), seed)
+	, state_(rows, cols, scoreManager_.bestScore(Level::Normal), seed)
 	, keys_(keys)
 	, input_(input)
 	, renderer_(std::cout, color)
@@ -159,14 +159,14 @@ GameEnd GameEngine::run() {
 		}
 
 		int finalScore = state_.getFinalScore();
-		scoreManager_.saveScore(finalScore);
+		scoreManager_.saveScore(Level::Normal, finalScore);
 
 		end = awaitChoice(keys_, input_, [&]() {
 			renderer_.printGameOver(
 				finalScore,
-				scoreManager_.getBestScore(),
-				scoreManager_.getTotalGames(),
-				scoreManager_.getAverageScore()
+				scoreManager_.bestScore(Level::Normal),
+				scoreManager_.totalGames(Level::Normal),
+				scoreManager_.averageScore(Level::Normal)
 			);
 		});
 

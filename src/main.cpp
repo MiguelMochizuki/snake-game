@@ -106,7 +106,7 @@ int main() {
 			ScoreManager scores;
 			TerminalMenuView view(std::cout, color);
 			MenuResult choice = runMenu(keys, input, view, menu,
-				MenuStats{scores.getBestScore(), scores.getTotalGames(), scores.getAverageScore()});
+				MenuStats{scores.bestScore(Level::Normal), scores.totalGames(Level::Normal), scores.averageScore(Level::Normal)});
 			if (!choice.start) {
 				return 0;
 			}
