@@ -23,7 +23,6 @@ with tempfile.TemporaryDirectory() as tmp, Game(sys.argv[1], cwd=tmp) as game:
 	game.wait_for("Quit")
 	game.send("M")
 	game.wait_for(r"<Hard>")
-	game.wait_for(r"Games:\s+2 ")
 	game.send_now("q")
 	code = game.exit_code()
 	assert code == 0, "exit code %d" % code

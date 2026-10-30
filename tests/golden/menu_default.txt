@@ -8,6 +8,9 @@
 #                    #
 #   > Start          #
 #     Level <Normal> #
+#     Leaderboard    #
+#     How to play    #
+#     Sound <On>     #
 #     Quit           #
 #                    #
 #   Best:     42     #
@@ -15,5 +18,5 @@
 #   Avg:     4.3     #
 #                    #
 ######################
-W/S pick, A/D level
+W/S pick, A/D change
 Enter go, Q quit

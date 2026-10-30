@@ -1,0 +1,21 @@
+[2J[H[36m######################[0m
+[36m#[0m                    [36m#[0m
+[36m#[0m   [1;92mHOW TO PLAY[0m      [36m#[0m
+[36m#[0m                    [36m#[0m
+[36m#[0m   Steer: WASD or   [36m#[0m
+[36m#[0m   the arrow keys   [36m#[0m
+[36m#[0m                    [36m#[0m
+[36m#[0m   Eat the red *    [36m#[0m
+[36m#[0m   to grow and      [36m#[0m
+[36m#[0m   score points.    [36m#[0m
+[36m#[0m                    [36m#[0m
+[36m#[0m   Hitting a wall   [36m#[0m
+[36m#[0m   or yourself      [36m#[0m
+[36m#[0m   ends the game.   [36m#[0m
+[36m#[0m                    [36m#[0m
+[36m#[0m   After a game:    [36m#[0m
+[36m#[0m   R again, M menu  [36m#[0m
+[36m#[0m   Q quit           [36m#[0m
+[36m#[0m                    [36m#[0m
+[36m######################[0m
+[2mEnter back[0m

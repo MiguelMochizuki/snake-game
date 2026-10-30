@@ -53,6 +53,25 @@ std::vector<Segment> itemRow(bool selected, const std::string& label) {
 }
 
 /**
+ * Builds a menu row whose value is shown between angle brackets
+ *
+ * Parameters:
+ * bool selected: Whether the row is selected
+ * const std::string& label: Row label
+ * const std::string& value: Value shown in yellow
+ *
+ * Returns std::vector<Segment>: The row's segments
+ */
+std::vector<Segment> valueRow(bool selected, const std::string& label, const std::string& value) {
+	std::vector<Segment> row = itemRow(selected, label);
+	row.push_back({nullptr, " "});
+	row.push_back({selected ? LABEL : nullptr, "<"});
+	row.push_back({NUMBER, value});
+	row.push_back({selected ? LABEL : nullptr, ">"});
+	return row;
+}
+
+/**
  * Builds a stats row: label then a right-aligned yellow number
  *
  * Parameters:
@@ -89,7 +108,6 @@ void TerminalMenuView::show(const MenuSnapshot& snapshot) {
 	std::ostringstream buf;
 	Painter p(buf, color_);
 	const std::string rule(INNER + 2, '#');
-	const bool onLevel = snapshot.selected == MenuItem::Level;
 
 	buf << "\033[2J\033[H";
 	p.put(WALL, rule);
@@ -104,12 +122,10 @@ void TerminalMenuView::show(const MenuSnapshot& snapshot) {
 	frameRow(p, {});
 
 	frameRow(p, itemRow(snapshot.selected == MenuItem::Start, "Start"));
-	std::vector<Segment> level = itemRow(onLevel, "Level");
-	level.push_back({nullptr, " "});
-	level.push_back({onLevel ? LABEL : nullptr, "<"});
-	level.push_back({NUMBER, levelName(snapshot.level)});
-	level.push_back({onLevel ? LABEL : nullptr, ">"});
-	frameRow(p, level);
+	frameRow(p, valueRow(snapshot.selected == MenuItem::Level, "Level", levelName(snapshot.level)));
+	frameRow(p, itemRow(snapshot.selected == MenuItem::Leaderboard, "Leaderboard"));
+	frameRow(p, itemRow(snapshot.selected == MenuItem::Help, "How to play"));
+	frameRow(p, valueRow(snapshot.selected == MenuItem::Sound, "Sound", snapshot.sound ? "On" : "Off"));
 	frameRow(p, itemRow(snapshot.selected == MenuItem::Quit, "Quit"));
 
 	frameRow(p, {});
@@ -119,9 +135,82 @@ void TerminalMenuView::show(const MenuSnapshot& snapshot) {
 	frameRow(p, {});
 	p.put(WALL, rule);
 	p.endl();
-	p.put(DIM, "W/S pick, A/D level");
+	p.put(DIM, "W/S pick, A/D change");
 	p.endl();
 	p.put(DIM, "Enter go, Q quit");
+	p.endl();
+
+	out_ << buf.str();
+}
+
+/**
+ * Clears the screen and draws the top scores of a level
+ *
+ * Parameters:
+ * const LeaderboardSnapshot& snapshot: What to draw
+ *
+ * Returns void:
+ */
+void TerminalMenuView::showLeaderboard(const LeaderboardSnapshot& snapshot) {
+	std::ostringstream buf;
+	Painter p(buf, color_);
+	const std::string rule(INNER + 2, '#');
+
+	buf << "\033[2J\033[H";
+	p.put(WALL, rule);
+	p.endl();
+	frameRow(p, {});
+	frameRow(p, {{nullptr, "   "}, {HEAD, "TOP SCORES"}});
+	frameRow(p, {{nullptr, "   "}, {LABEL, "<"}, {NUMBER, levelName(snapshot.level)}, {LABEL, ">"}});
+	frameRow(p, {});
+	if (snapshot.scores.empty()) {
+		frameRow(p, {{nullptr, "   "}, {DIM, "No games yet"}});
+	}
+	for (std::size_t i = 0; i < snapshot.scores.size(); ++i) {
+		frameRow(p, {{nullptr, "   "}, {LABEL, padded(i + 1, 2) + "."}, {nullptr, "  "},
+			{NUMBER, std::to_string(snapshot.scores[i])}});
+	}
+	frameRow(p, {});
+	p.put(WALL, rule);
+	p.endl();
+	p.put(DIM, "A/D level, Enter back");
+	p.endl();
+
+	out_ << buf.str();
+}
+
+/**
+ * Clears the screen and draws the how-to-play page
+ *
+ * Returns void:
+ */
+void TerminalMenuView::showHelp() {
+	std::ostringstream buf;
+	Painter p(buf, color_);
+	const std::string rule(INNER + 2, '#');
+	const std::vector<std::string> text = {
+		"", "Steer: WASD or", "the arrow keys", "",
+		"Eat the red *", "to grow and", "score points.", "",
+		"Hitting a wall", "or yourself", "ends the game.", "",
+		"After a game:", "R again, M menu", "Q quit",
+	};
+
+	buf << "\033[2J\033[H";
+	p.put(WALL, rule);
+	p.endl();
+	frameRow(p, {});
+	frameRow(p, {{nullptr, "   "}, {HEAD, "HOW TO PLAY"}});
+	for (const std::string& line : text) {
+		if (line.empty()) {
+			frameRow(p, {});
+		} else {
+			frameRow(p, {{nullptr, "   "}, {nullptr, line}});
+		}
+	}
+	frameRow(p, {});
+	p.put(WALL, rule);
+	p.endl();
+	p.put(DIM, "Enter back");
 	p.endl();
 
 	out_ << buf.str();
