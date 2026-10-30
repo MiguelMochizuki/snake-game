@@ -44,7 +44,7 @@ Pre-built binaries are available for download from the [Releases](https://github
 | Windows | ARM64 | `snake-windows-arm64.exe` |
 | macOS | Universal (x86_64 + ARM64) | `snake-macos-universal` |
 
-> **Latest release:** [v1.3.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.3.0) — Arrow keys alongside WASD; only registered keys have any effect (fixes ← steering right, Windows PgDn quitting, Ctrl+C leaving the terminal raw); average score over the last 10 games.
+> **Latest release:** [v1.4.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.4.0) — Start menu with Start/Quit, Easy/Normal/Hard difficulty and your best score, games played and average; Enter key support.
 
 ### Running Downloaded Binaries
 
@@ -313,7 +313,7 @@ docker run --rm -it -v $(pwd)/data:/app/data miguelmochizuki/snake-game
 The regression suite has three layers, all registered with CTest:
 
 - **Unit** (`tests/unit/`): GoogleTest tests for the game classes, score persistence, input handling and the terminal renderer. CMake fetches GoogleTest, so the first configure needs network access.
-- **Golden** (`tests/golden/`): snapshots of renderer output that the renderer tests compare against.
+- **Golden** (`tests/golden/`): snapshots of renderer and start menu output that the renderer and menu view tests compare against.
 - **End-to-end** (`tests/e2e/`): Python 3 standard-library scripts that run `snake` in a pseudo-terminal and drive it. Each `test_*.py` is registered automatically as `e2e_<name>`.
 
 End-to-end tests run on Linux only (x86-64 and ARM64, natively and inside Docker); unit tests run on Linux, macOS and Windows.
@@ -334,7 +334,7 @@ ctest --test-dir build -R <name>     # a single test, e.g. -R e2e_wall_death
 ### Updating golden snapshots
 When a renderer change is intentional, regenerate the snapshots and review the diff before committing:
 ```bash
-SNAKE_UPDATE_GOLDEN=1 ctest --test-dir build -R TerminalRenderer
+SNAKE_UPDATE_GOLDEN=1 ctest --test-dir build -R "TerminalRenderer|TerminalMenuView"
 git diff tests/golden/
 ```
 
@@ -365,8 +365,8 @@ Because `docker-publish` runs in parallel with `build`, the Docker image is buil
 
 ### Creating a New Release
 ```bash
-git tag -a v1.3.0 -m "Release v1.3.0"
-git push origin v1.3.0
+git tag -a v1.4.0 -m "Release v1.4.0"
+git push origin v1.4.0
 ```
 
 The release and Docker image will be created automatically.
@@ -375,6 +375,7 @@ The release and Docker image will be created automatically.
 
 | Version | Highlights |
 |---------|------------|
+| [v1.4.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.4.0) | Start menu (Start, Level, Quit, best/games/average) behind a swappable `IMenuView`; Easy/Normal/Hard speeds; Enter key; `SNAKE_SKIP_MENU` test hook |
 | [v1.3.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.3.0) | Arrow keys via composite input handlers; strict key handling (escape sequences, Windows extended keys, Ctrl+C/Z/S); average over the last 10 games |
 | [v1.2.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.2.0) | Color-coded rendering with `NO_COLOR` support; game-over EOF exit and loop-based restart; Makefile tracks headers; CTest regression suite (unit, golden, Linux e2e) on every platform and inside Docker |
 | [v1.1.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.1.0) | Flattened occupancy bitmask (reduced memory); string-buffered terminal output (smoother rendering) |
