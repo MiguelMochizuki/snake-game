@@ -141,39 +141,53 @@ TEST_F(EngineInputTest, ReadTickIgnoresEnter) {
 	EXPECT_FALSE(t.move);
 }
 
-TEST_F(EngineInputTest, AwaitRestartIgnoresEnter) {
+TEST_F(EngineInputTest, AwaitChoiceIgnoresEnter) {
 	keys.waits = {specialKey(KeyKind::Enter), charKey('r')};
-	EXPECT_TRUE(GameEngine::awaitRestart(keys, input, noPanel));
+	EXPECT_EQ(GameEngine::awaitChoice(keys, input, noPanel), GameEnd::Restart);
 }
 
-TEST_F(EngineInputTest, AwaitRestartOnR) {
+TEST_F(EngineInputTest, AwaitChoiceOnR) {
 	keys.waits = {charKey('w'), specialKey(KeyKind::Up), specialKey(KeyKind::Unknown), charKey('r')};
-	EXPECT_TRUE(GameEngine::awaitRestart(keys, input, noPanel));
+	EXPECT_EQ(GameEngine::awaitChoice(keys, input, noPanel), GameEnd::Restart);
 }
 
-TEST_F(EngineInputTest, AwaitRestartFlushesFirst) {
+TEST_F(EngineInputTest, AwaitChoiceOnMGoesToMenu) {
+	keys.waits = {charKey('w'), charKey('x'), charKey('M')};
+	EXPECT_EQ(GameEngine::awaitChoice(keys, input, noPanel), GameEnd::Menu);
+	keys.waits = {charKey('m')};
+	EXPECT_EQ(GameEngine::awaitChoice(keys, input, noPanel), GameEnd::Menu);
+}
+
+TEST_F(EngineInputTest, ReadTickIgnoresMenuKey) {
+	keys.batches = {{charKey('m'), charKey('M')}};
+	TickInput t = GameEngine::readTick(keys, input);
+	EXPECT_FALSE(t.quit);
+	EXPECT_FALSE(t.move);
+}
+
+TEST_F(EngineInputTest, AwaitChoiceFlushesFirst) {
 	keys.stale = {charKey('r')};
 	keys.waits = {charKey('q')};
-	EXPECT_FALSE(GameEngine::awaitRestart(keys, input, [this]() { keys.log.push_back("panel"); }));
+	EXPECT_EQ(GameEngine::awaitChoice(keys, input, [this]() { keys.log.push_back("panel"); }), GameEnd::Quit);
 	EXPECT_EQ(keys.flushCount, 1);
 	EXPECT_EQ(keys.log, (std::vector<std::string>{"flush", "panel"}));
 }
 
-TEST_F(EngineInputTest, AwaitRestartKeepsKeysTypedAfterPanel) {
+TEST_F(EngineInputTest, AwaitChoiceKeepsKeysTypedAfterPanel) {
 	keys.stale = {charKey('r')};
 	keys.waits = {specialKey(KeyKind::CtrlC)};
-	EXPECT_FALSE(GameEngine::awaitRestart(keys, input, noPanel));
+	EXPECT_EQ(GameEngine::awaitChoice(keys, input, noPanel), GameEnd::Quit);
 }
 
 TEST_F(EngineInputTest, AwaitQuitOnQAndCtrlC) {
 	keys.waits = {charKey('a'), charKey('q')};
-	EXPECT_FALSE(GameEngine::awaitRestart(keys, input, noPanel));
+	EXPECT_EQ(GameEngine::awaitChoice(keys, input, noPanel), GameEnd::Quit);
 	keys.waits = {specialKey(KeyKind::CtrlC)};
-	EXPECT_FALSE(GameEngine::awaitRestart(keys, input, noPanel));
+	EXPECT_EQ(GameEngine::awaitChoice(keys, input, noPanel), GameEnd::Quit);
 }
 
 TEST_F(EngineInputTest, AwaitEofQuits) {
-	EXPECT_FALSE(GameEngine::awaitRestart(keys, input, noPanel));
+	EXPECT_EQ(GameEngine::awaitChoice(keys, input, noPanel), GameEnd::Quit);
 }
 
 TEST(GameEngineDirection, IsOppositePairs) {

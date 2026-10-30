@@ -74,6 +74,12 @@ TEST(MenuModel, RestartIsIgnored) {
 	EXPECT_EQ(m.apply(Action::Restart), MenuOutcome::None);
 }
 
+TEST(MenuModel, MenuKeyIsIgnored) {
+	MenuModel m;
+	EXPECT_EQ(m.apply(Action::Menu), MenuOutcome::None);
+	EXPECT_EQ(m.selected(), MenuItem::Start);
+}
+
 TEST(MenuModel, LevelNames) {
 	EXPECT_STREQ(levelName(Level::Easy), "Easy");
 	EXPECT_STREQ(levelName(Level::Normal), "Normal");

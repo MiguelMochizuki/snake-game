@@ -96,20 +96,25 @@ int main() {
 	input.add(std::make_unique<ArrowInputHandler>());
 	input.add(std::make_unique<CommandInputHandler>());
 	const bool color = TerminalRenderer::colorEnabledFromEnv();
-	int speedMs = 200;
-	if (!skipMenu()) {
-		ScoreManager scores;
-		TerminalMenuView view(std::cout, color);
-		MenuModel menu;
-		MenuResult choice = runMenu(keys, input, view, menu,
-			MenuStats{scores.getBestScore(), scores.getTotalGames(), scores.getAverageScore()});
-		if (!choice.start) {
-			return 0;
+	GameEngine engine(keys, input, 20, 20, 200, readSeed(), color);
+	MenuModel menu;
+	bool showMenu = !skipMenu();
+	do {
+		int speedMs = 200;
+		if (showMenu) {
+			// Read the scores afresh: the round that just ended may have changed them
+			ScoreManager scores;
+			TerminalMenuView view(std::cout, color);
+			MenuResult choice = runMenu(keys, input, view, menu,
+				MenuStats{scores.getBestScore(), scores.getTotalGames(), scores.getAverageScore()});
+			if (!choice.start) {
+				return 0;
+			}
+			speedMs = choice.speedMs;
 		}
-		speedMs = choice.speedMs;
-	}
-	// A valid SNAKE_FRAME_MS (test hook) overrides the chosen level
-	GameEngine engine(keys, input, 20, 20, readFrameMs().value_or(speedMs), readSeed(), color);
-	engine.run();
+		// A valid SNAKE_FRAME_MS (test hook) overrides the chosen level
+		engine.setSpeed(readFrameMs().value_or(speedMs));
+		showMenu = true;
+	} while (engine.run() == GameEnd::Menu);
 	return 0;
 }

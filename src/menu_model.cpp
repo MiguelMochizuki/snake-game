@@ -100,6 +100,7 @@ MenuOutcome MenuModel::apply(Action action) {
 		case Action::Quit:
 			return MenuOutcome::Quit;
 		case Action::Restart:
+		case Action::Menu:
 			break;
 	}
 	return MenuOutcome::None;
