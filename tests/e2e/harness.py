@@ -72,11 +72,11 @@ class Game:
 		Parameters:
 		str binary: Path to the snake executable
 		str cwd: Working directory (score files go to cwd/data)
-		dict env: Extra environment variables, applied after the SNAKE_* defaults
+		dict env: Extra environment variables, applied after the SNAKE_* defaults (SNAKE_SKIP_MENU defaults to "1"; pass "" to see the menu)
 		int frame_ms: Frame time in ms; SNAKE_FRAME_MS gets frame_ms * scale() so slow hosts slow the game too
 		int seed: Value for SNAKE_SEED
 		"""
-		full_env = dict(os.environ, SNAKE_FRAME_MS=str(int(frame_ms * scale())), SNAKE_SEED=str(seed))
+		full_env = dict(os.environ, SNAKE_FRAME_MS=str(int(frame_ms * scale())), SNAKE_SEED=str(seed), SNAKE_SKIP_MENU="1")
 		full_env.update(env or {})
 		self.master, self.slave = os.openpty()
 		self.out = ""
@@ -148,6 +148,16 @@ class Game:
 		str | bytes keys: Characters to type (a str is UTF-8 encoded, bytes are written as-is)
 		"""
 		self.wait_frames(2)
+		os.write(self.master, keys.encode() if isinstance(keys, str) else keys)
+
+	def send_now(self, keys):
+		"""
+		Sends keys without waiting for a game frame, for screens that are not the board (the start menu).
+		Wait for something the screen printed first: the terminal is in raw mode by then, so the keys are not discarded
+
+		Parameters:
+		str | bytes keys: Characters to type (a str is UTF-8 encoded, bytes are written as-is)
+		"""
 		os.write(self.master, keys.encode() if isinstance(keys, str) else keys)
 
 	def drain(self):
