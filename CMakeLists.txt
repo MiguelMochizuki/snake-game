@@ -27,6 +27,7 @@ set(CORE_SOURCES
 	src/key_decoder.cpp
 	src/menu_model.cpp
 	src/terminal_menu_view.cpp
+	src/menu_controller.cpp
 	src/terminal_key_source.cpp
 )
 
