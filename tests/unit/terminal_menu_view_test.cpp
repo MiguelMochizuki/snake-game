@@ -1,0 +1,160 @@
+/**
+ * terminal_menu_view_test.cpp
+ * Author: Miguel Mochizuki Silva
+ * Description: Golden and behaviour tests for TerminalMenuView
+ */
+#include <gtest/gtest.h>
+
+#include <regex>
+#include <sstream>
+#include <string>
+#include <vector>
+
+#include "golden.hpp"
+#include "terminal_menu_view.hpp"
+
+namespace {
+
+const std::string CLEAR = "\033[2J\033[H";
+
+/**
+ * Renders a snapshot through a TerminalMenuView
+ *
+ * Parameters:
+ * const MenuSnapshot& snapshot: What to draw
+ * bool color: Whether the view emits colors
+ *
+ * Returns std::string: Everything the view wrote
+ */
+std::string render(const MenuSnapshot& snapshot, bool color) {
+	std::ostringstream os;
+	TerminalMenuView view(os, color);
+	view.show(snapshot);
+	return os.str();
+}
+
+/**
+ * Removes SGR color sequences and the leading screen clear
+ *
+ * Parameters:
+ * const std::string& s: Raw view output
+ *
+ * Returns std::string: Plain text
+ */
+std::string plain(const std::string& s) {
+	std::string t = std::regex_replace(s, std::regex("\033\\[[0-9;]*m"), "");
+	if (t.rfind(CLEAR, 0) == 0) {
+		t.erase(0, CLEAR.size());
+	}
+	return t;
+}
+
+/**
+ * Splits text into lines
+ *
+ * Parameters:
+ * const std::string& s: The text
+ *
+ * Returns std::vector<std::string>: The lines without newlines
+ */
+std::vector<std::string> lines(const std::string& s) {
+	std::vector<std::string> out;
+	std::istringstream in(s);
+	std::string line;
+	while (std::getline(in, line)) {
+		out.push_back(line);
+	}
+	return out;
+}
+
+/**
+ * Finds the first line containing a text
+ *
+ * Parameters:
+ * const std::vector<std::string>& ls: The lines
+ * const std::string& needle: Text to look for
+ *
+ * Returns std::string: The line, or empty if none contains it
+ */
+std::string lineWith(const std::vector<std::string>& ls, const std::string& needle) {
+	for (const std::string& l : ls) {
+		if (l.find(needle) != std::string::npos) {
+			return l;
+		}
+	}
+	return "";
+}
+
+const MenuSnapshot DEFAULT_SNAPSHOT{MenuItem::Start, Level::Normal, MenuStats{42, 7, 4.3}};
+
+}  // namespace
+
+TEST(TerminalMenuView, PlainMatchesGolden) {
+	expectGolden("menu_default.txt", render(DEFAULT_SNAPSHOT, false));
+}
+
+TEST(TerminalMenuView, ColorMatchesGolden) {
+	expectGolden("menu_default_color.txt", render(DEFAULT_SNAPSHOT, true));
+}
+
+TEST(TerminalMenuView, ColorStripsToPlain) {
+	EXPECT_EQ(plain(render(DEFAULT_SNAPSHOT, true)), plain(render(DEFAULT_SNAPSHOT, false)));
+}
+
+TEST(TerminalMenuView, FrameRowsAreExactly22ColumnsAndFitTheBoard) {
+	for (MenuItem item : {MenuItem::Start, MenuItem::Level, MenuItem::Quit}) {
+		for (Level level : {Level::Easy, Level::Normal, Level::Hard}) {
+			std::vector<std::string> ls = lines(plain(render({item, level, {123456, 99999, 1234.5}}, false)));
+			int framed = 0;
+			for (const std::string& l : ls) {
+				EXPECT_LE(l.size(), 22u) << l;
+				if (!l.empty() && l[0] == '#') {
+					EXPECT_EQ(l.size(), 22u) << l;
+					EXPECT_EQ(l.back(), '#') << l;
+					++framed;
+				}
+			}
+			EXPECT_GT(framed, 0);
+			EXPECT_LE(ls.size(), 24u);
+		}
+	}
+}
+
+TEST(TerminalMenuView, MarkerFollowsSelectionWithoutColor) {
+	std::vector<std::string> start = lines(plain(render({MenuItem::Start, Level::Normal, {0, 0, 0}}, false)));
+	EXPECT_NE(lineWith(start, "> Start"), "");
+	EXPECT_EQ(lineWith(start, "> Level"), "");
+	std::vector<std::string> level = lines(plain(render({MenuItem::Level, Level::Normal, {0, 0, 0}}, false)));
+	EXPECT_NE(lineWith(level, "> Level"), "");
+	EXPECT_EQ(lineWith(level, "> Start"), "");
+	std::vector<std::string> quit = lines(plain(render({MenuItem::Quit, Level::Normal, {0, 0, 0}}, false)));
+	EXPECT_NE(lineWith(quit, "> Quit"), "");
+}
+
+TEST(TerminalMenuView, ShowsEachLevelBetweenBrackets) {
+	EXPECT_NE(plain(render({MenuItem::Level, Level::Easy, {0, 0, 0}}, false)).find("<Easy>"), std::string::npos);
+	EXPECT_NE(plain(render({MenuItem::Level, Level::Normal, {0, 0, 0}}, false)).find("<Normal>"), std::string::npos);
+	EXPECT_NE(plain(render({MenuItem::Level, Level::Hard, {0, 0, 0}}, false)).find("<Hard>"), std::string::npos);
+}
+
+TEST(TerminalMenuView, StatsLines) {
+	std::vector<std::string> ls = lines(plain(render(DEFAULT_SNAPSHOT, false)));
+	EXPECT_NE(lineWith(ls, "Best:").find("42"), std::string::npos);
+	EXPECT_NE(lineWith(ls, "Games:").find("7"), std::string::npos);
+	EXPECT_NE(lineWith(ls, "Avg:").find("4.3"), std::string::npos);
+}
+
+TEST(TerminalMenuView, PlainOutputHasNoEscapeBesidesTheClear) {
+	std::string out = render(DEFAULT_SNAPSHOT, false);
+	ASSERT_EQ(out.rfind(CLEAR, 0), 0u);
+	EXPECT_EQ(out.find('\033', CLEAR.size()), std::string::npos);
+}
+
+TEST(TerminalMenuView, ColorOutputUsesTheGamePalette) {
+	std::string out = render(DEFAULT_SNAPSHOT, true);
+	EXPECT_NE(out.find("\033[36m"), std::string::npos);    // cyan frame
+	EXPECT_NE(out.find("\033[32m"), std::string::npos);    // green snake and title
+	EXPECT_NE(out.find("\033[1;92m"), std::string::npos);  // bright head
+	EXPECT_NE(out.find("\033[1;91m"), std::string::npos);  // red food
+	EXPECT_NE(out.find("\033[1;33m"), std::string::npos);  // yellow numbers
+}
