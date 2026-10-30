@@ -4,105 +4,14 @@
  * Description: Terminal renderer implementation
  */
 #include "terminal_renderer.hpp"
+#include "terminal_painter.hpp"
 #include "wasd_input_handler.hpp"
 #include <iostream>
 #include <cstdlib>
 #include <iomanip>
 #include <sstream>
 
-namespace {
-
-const char* const WALL = "\033[36m";
-const char* const BODY = "\033[32m";
-const char* const HEAD = "\033[1;92m";
-const char* const FOOD = "\033[1;91m";
-const char* const LABEL = "\033[1m";
-const char* const NUMBER = "\033[1;33m";
-const char* const DIM = "\033[2m";
-const char* const RESTART = "\033[92m";
-const char* const QUIT = "\033[91m";
-const char* const RESET = "\033[0m";
-
-/**
- * Writes text into a stream as runs of same-styled characters
- *
- * Attributes:
- * std::ostream& buf: Destination stream
- * bool color: Whether styles are emitted at all
- * const char* cur_: Style currently open (nullptr when plain)
- */
-class Painter {
-	std::ostream& buf_;
-	bool color_;
-	const char* cur_ = nullptr;
-
-public:
-	/**
-	 * Parameters:
-	 * std::ostream& buf: Destination stream
-	 * bool color: Whether styles are emitted at all
-	 */
-	Painter(std::ostream& buf, bool color) : buf_(buf), color_(color) {
-	}
-
-	/**
-	 * Appends text in a style, opening or closing SGR runs only when the style changes
-	 *
-	 * Parameters:
-	 * const char* style: SGR sequence, or nullptr for plain text
-	 * const std::string& text: Text to append
-	 *
-	 * Returns void:
-	 */
-	void put(const char* style, const std::string& text) {
-		if (color_ && style != cur_) {
-			if (cur_) {
-				buf_ << RESET;
-			}
-			if (style) {
-				buf_ << style;
-			}
-			cur_ = style;
-		}
-		buf_ << text;
-	}
-
-	/**
-	 * Ends the line, closing any open style first
-	 *
-	 * Returns void:
-	 */
-	void endl() {
-		if (cur_) {
-			buf_ << RESET;
-			cur_ = nullptr;
-		}
-		buf_ << '\n';
-	}
-};
-
-/**
- * Formats a number right-aligned in a field
- *
- * Parameters:
- * T value: The number
- * int width: Field width
- * int precision: Digits after the point for floating values (-1 for integers)
- *
- * Returns std::string: The padded text
- */
-template <typename T>
-std::string padded(T value, int width, int precision = -1) {
-	std::ostringstream s;
-	s << std::setw(width);
-	if (precision >= 0) {
-		s << std::fixed << std::setprecision(precision);
-	}
-	s << value;
-	return s.str();
-}
-
-}  // namespace
+using namespace terminal;
 
 /**
  * Constructor for the TerminalRenderer class
