@@ -1,139 +1,134 @@
 /**
  * score_manager.hpp
  * Author: Miguel Mochizuki Silva
- * Description: Score management and persistence
+ * Description: Class ScoreManager headers
  */
 #ifndef SCORE_MANAGER_HPP
 #define SCORE_MANAGER_HPP
 
-#include <string>
-#include <vector>
-#include <fstream>
-#include <iostream>
-#include <algorithm>
-#include <ctime>
+#include "level.hpp"
+#include "score_source.hpp"
 #include <cstddef>
 #include <cstdint>
+#include <string>
+#include <utility>
+#include <vector>
 
 /**
- * Manages score persistence including best score and score history
+ * Saves and reads game scores per level, with a checksum against hand edits
  *
  * Attributes:
- * std::string dataDir_: Directory for storing score files
- * std::string historyFile_: Path to score history file
- * std::string bestFile_: Path to best score file
- * std::string checksumFile_: Path to integrity checksum file
- * int bestScore_: Current best score
- * std::vector<int> scoreHistory_: History of all scores
- * uint64_t checksum_: Stored integrity checksum
+ * std::string dataDir_: Directory holding the score files
+ * std::string scoresFile_: scores_v2.txt, one "E|N|H score" line per game, oldest first
+ * std::string checksumFile_: scores_v2.checksum
+ * std::vector<std::pair<Level, int>> records_: Every game, oldest first
+ * uint64_t checksum_: Checksum read from the file
  */
-class ScoreManager {
+class ScoreManager : public IScoreSource {
 public:
-	/**
-	 * Number of most recent games the average score is computed over
-	 */
 	static constexpr std::size_t AVERAGE_WINDOW = 10;
 
 private:
 	std::string dataDir_;
-	std::string historyFile_;
-	std::string bestFile_;
+	std::string scoresFile_;
 	std::string checksumFile_;
-	int bestScore_;
-	std::vector<int> scoreHistory_;
+	std::vector<std::pair<Level, int>> records_;
 	uint64_t checksum_;
 
 	/**
-	 * Creates data directory if it doesn't exist
+	 * Creates the data directory if it does not exist
 	 */
 	void createDataDirectory();
 
 	/**
-	 * Loads best score from file
+	 * Reads the v2 score file, skipping lines that are not "E|N|H score"
 	 */
-	void loadBestScore();
+	void loadRecords();
 
 	/**
-	 * Loads score history from file
+	 * Imports the pre-2.0 files as Normal games when their checksum is valid; the old files are left untouched
 	 */
-	void loadHistory();
+	void migrateOldFiles();
 
 	/**
-	 * Computes integrity checksum from in-memory scores
+	 * Computes the checksum of the records
+	 *
+	 * Returns uint64_t: The checksum
 	 */
 	uint64_t computeChecksum() const;
 
 	/**
-	 * Loads stored checksum from file
+	 * Reads the checksum file
 	 *
-	 * Returns bool: true if checksum file existed and was read
+	 * Returns bool: true if the file existed
 	 */
 	bool loadChecksum();
 
 	/**
-	 * Writes integrity checksum to file
+	 * Computes and writes the checksum file
 	 */
 	void writeChecksum();
 
 	/**
-	 * Resets all scores to zero, keeping play count. Rewrites both score files.
+	 * Rewrites the whole score file from the records
 	 */
-	void resetScoresToZero();
-
-	/**
-	 * Clears all history entirely. Rewrites both score files from scratch.
-	 */
-	void clearAllHistory();
+	void writeRecords() const;
 
 public:
 	/**
 	 * Constructor for the ScoreManager class
 	 *
 	 * Parameters:
-	 * const std::string& dataDir: Directory for storing score files (default: "data")
+	 * const std::string& dataDir: Directory for the score files (default: "data")
 	 */
 	explicit ScoreManager(const std::string& dataDir = "data");
 
 	/**
 	 * Destructor for the ScoreManager class
 	 */
-	~ScoreManager() = default;
+	~ScoreManager() override = default;
 
 	/**
-	 * Gets the average score over the last AVERAGE_WINDOW games (or all games if fewer)
-	 *
-	 * Returns double: Average score, or 0 if no scores
-	 */
-	double getAverageScore() const;
-
-	/**
-	 * Gets the best score
-	 *
-	 * Returns int: The best score
-	 */
-	int getBestScore() const;
-
-	/**
-	 * Gets the score history
-	 *
-	 * Returns const std::vector<int>&: Const reference to score history
-	 */
-	const std::vector<int>& getHistory() const;
-
-	/**
-	 * Gets the total number of games played
-	 *
-	 * Returns size_t: Number of games
-	 */
-	size_t getTotalGames() const;
-
-	/**
-	 * Saves a new score
+	 * Gets the best score of a level
 	 *
 	 * Parameters:
-	 * int score: The score to save
+	 * Level level: The level
+	 *
+	 * Returns int: The best score, 0 if the level has no games
 	 */
-	void saveScore(int score);
+	int bestScore(Level level) const;
+
+	/**
+	 * Gets the number of games played on a level
+	 *
+	 * Parameters:
+	 * Level level: The level
+	 *
+	 * Returns std::size_t: The number of games
+	 */
+	std::size_t totalGames(Level level) const;
+
+	/**
+	 * Gets the average of the last AVERAGE_WINDOW games of a level
+	 *
+	 * Parameters:
+	 * Level level: The level
+	 *
+	 * Returns double: The average, 0.0 if the level has no games
+	 */
+	double averageScore(Level level) const;
+
+	/**
+	 * Saves the score of a finished game
+	 *
+	 * Parameters:
+	 * Level level: The level it was played on
+	 * int score: The final score
+	 */
+	void saveScore(Level level, int score);
+
+	ScoreStats stats(Level level) const override;
+	std::vector<int> topScores(Level level, std::size_t n) const override;
 };
 
 #endif

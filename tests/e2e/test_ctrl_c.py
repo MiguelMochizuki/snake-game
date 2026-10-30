@@ -16,9 +16,9 @@ def history_lines(tmp):
 	Parameters:
 	str tmp: The game's working directory
 
-	Returns int: Number of lines in data/score_history.txt
+	Returns int: Number of lines in data/scores_v2.txt
 	"""
-	with open(os.path.join(tmp, "data", "score_history.txt")) as f:
+	with open(os.path.join(tmp, "data", "scores_v2.txt")) as f:
 		return len(f.read().splitlines())
 
 

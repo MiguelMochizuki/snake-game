@@ -39,14 +39,14 @@ TEST(ScoreManagerDir, UsesGivenDirectory) {
 	fs::create_directories(tmp);
 	{
 		ScoreManager m(tmp.string());
-		m.saveScore(5);
+		m.saveScore(Level::Normal, 5);
 	}
-	std::ifstream in(tmp / "best_score.txt");
+	std::ifstream in(tmp / "scores_v2.txt");
 	std::stringstream content;
 	content << in.rdbuf();
 	in.close();
 	fs::remove_all(tmp);
-	EXPECT_EQ(content.str(), "5\n");
+	EXPECT_EQ(content.str(), "N 5\n");
 }
 
 TEST(TerminalRendererStream, WritesToGivenStream) {
