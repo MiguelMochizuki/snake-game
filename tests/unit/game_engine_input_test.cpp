@@ -134,6 +134,18 @@ TEST_F(EngineInputTest, ReadTickIgnoresRestartAndUnknown) {
 	EXPECT_FALSE(t.move);
 }
 
+TEST_F(EngineInputTest, ReadTickIgnoresEnter) {
+	keys.batches = {{specialKey(KeyKind::Enter)}};
+	TickInput t = GameEngine::readTick(keys, input);
+	EXPECT_FALSE(t.quit);
+	EXPECT_FALSE(t.move);
+}
+
+TEST_F(EngineInputTest, AwaitRestartIgnoresEnter) {
+	keys.waits = {specialKey(KeyKind::Enter), charKey('r')};
+	EXPECT_TRUE(GameEngine::awaitRestart(keys, input, noPanel));
+}
+
 TEST_F(EngineInputTest, AwaitRestartOnR) {
 	keys.waits = {charKey('w'), specialKey(KeyKind::Up), specialKey(KeyKind::Unknown), charKey('r')};
 	EXPECT_TRUE(GameEngine::awaitRestart(keys, input, noPanel));

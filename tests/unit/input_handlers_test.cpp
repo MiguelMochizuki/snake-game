@@ -13,6 +13,7 @@
 #include "command_input_handler.hpp"
 #include "composite_input_handler.hpp"
 #include "input_handler.hpp"
+#include "wasd_input_handler.hpp"
 
 /**
  * Test-only handler that maps one key to one action and ignores everything else
@@ -77,6 +78,16 @@ TEST(ArrowInputHandler, ArrowMapsOnlyArrows) {
 	}
 	EXPECT_EQ(h.handle(specialKey(KeyKind::CtrlC)), std::nullopt);
 	EXPECT_EQ(h.handle(specialKey(KeyKind::Unknown)), std::nullopt);
+}
+
+TEST(CommandInputHandler, EnterMapsToConfirm) {
+	CommandInputHandler h;
+	EXPECT_EQ(h.handle(specialKey(KeyKind::Enter)), Action::Confirm);
+}
+
+TEST(InputHandlers, EnterIgnoredByMovementHandlers) {
+	EXPECT_EQ(WASDInputHandler().handle(specialKey(KeyKind::Enter)), std::nullopt);
+	EXPECT_EQ(ArrowInputHandler().handle(specialKey(KeyKind::Enter)), std::nullopt);
 }
 
 TEST(CommandInputHandler, CommandMapsOnlyCommands) {

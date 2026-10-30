@@ -21,7 +21,7 @@ enum class Direction {
 /**
  * Kind of key pressed
  */
-enum class KeyKind { Char, Up, Down, Left, Right, CtrlC, Unknown };
+enum class KeyKind { Char, Up, Down, Left, Right, CtrlC, Enter, Unknown };
 
 /**
  * A decoded key press
@@ -74,7 +74,7 @@ inline Key specialKey(KeyKind k) {
 /**
  * Game action a key can trigger
  */
-enum class Action { MoveUp, MoveDown, MoveLeft, MoveRight, Quit, Restart };
+enum class Action { MoveUp, MoveDown, MoveLeft, MoveRight, Quit, Restart, Confirm };
 
 /**
  * Maps a key to an action

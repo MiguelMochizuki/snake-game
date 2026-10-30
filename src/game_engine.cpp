@@ -38,7 +38,7 @@ GameEngine::GameEngine(IKeySource& keys, const IInputHandler& input, int rows, i
  * IKeySource& keys: Source of key presses
  * const IInputHandler& handler: Maps keys to actions
  *
- * Returns TickInput: quit if any key mapped to Quit, else the last move; Restart is ignored
+ * Returns TickInput: quit if any key mapped to Quit, else the last move; Restart and Confirm are ignored
  */
 TickInput GameEngine::readTick(IKeySource& keys, const IInputHandler& handler) {
 	TickInput tick;
@@ -54,6 +54,7 @@ TickInput GameEngine::readTick(IKeySource& keys, const IInputHandler& handler) {
 			case Action::MoveRight: tick.move = Direction::RIGHT; break;
 			case Action::Quit: tick.quit = true; break;
 			case Action::Restart: break;
+			case Action::Confirm: break;
 		}
 	}
 	return tick;

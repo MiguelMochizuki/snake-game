@@ -92,6 +92,16 @@ TEST(KeyDecoder, ControlBytesUnknown) {
 	}
 }
 
+TEST(KeyDecoder, EnterFromCarriageReturnAndNewline) {
+	KeyDecoder d;
+	EXPECT_EQ(d.feed("\r"), (Keys{sk(KeyKind::Enter)}));
+	EXPECT_EQ(d.feed("\n"), (Keys{sk(KeyKind::Enter)}));
+}
+
+TEST(KeyDecoder, WindowsEnter) {
+	EXPECT_EQ(KeyDecoder::decodeWindows('\r', 0), sk(KeyKind::Enter));
+}
+
 TEST(KeyDecoder, Utf8Unknown) {
 	KeyDecoder d;
 	EXPECT_EQ(d.feed("\xc3\xa9"), (Keys{sk(KeyKind::Unknown), sk(KeyKind::Unknown)}));
