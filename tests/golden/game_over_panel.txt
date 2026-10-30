@@ -2,6 +2,7 @@
 ==============================
          GAME OVER!           
                               
+  Level:         Hard
   Final Score:      3
   Best Score:      12
   Games Played:     7

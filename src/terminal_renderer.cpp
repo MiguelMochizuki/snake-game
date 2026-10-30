@@ -114,12 +114,11 @@ void TerminalRenderer::render(const GameState& state) {
  * Prints the game over panel with statistics
  *
  * Parameters:
+ * Level level: The level that was played
  * int finalScore: The final score
- * int bestScore: The best score
- * size_t totalGames: Total number of games played
- * double averageScore: Average score
+ * const ScoreStats& stats: Best, games played and average of that level
  */
-void TerminalRenderer::printGameOver(int finalScore, int bestScore, size_t totalGames, double averageScore) {
+void TerminalRenderer::printGameOver(Level level, int finalScore, const ScoreStats& stats) {
 	std::ostringstream buf;
 	Painter p(buf, color_);
 	const std::string rule(30, '=');
@@ -132,6 +131,12 @@ void TerminalRenderer::printGameOver(int finalScore, int bestScore, size_t total
 	p.endl();
 	p.put(nullptr, std::string(30, ' '));
 	p.endl();
+	const std::string name = levelName(level);
+	p.put(nullptr, "  ");
+	p.put(LABEL, "Level:");
+	p.put(nullptr, std::string(13 - name.size(), ' '));
+	p.put(NUMBER, name);
+	p.endl();
 	p.put(nullptr, "  ");
 	p.put(LABEL, "Final Score:");
 	p.put(nullptr, "  ");
@@ -140,16 +145,16 @@ void TerminalRenderer::printGameOver(int finalScore, int bestScore, size_t total
 	p.put(nullptr, "  ");
 	p.put(LABEL, "Best Score:");
 	p.put(nullptr, "   ");
-	p.put(NUMBER, padded(bestScore, 5));
+	p.put(NUMBER, padded(stats.best, 5));
 	p.endl();
 	p.put(nullptr, "  ");
 	p.put(LABEL, "Games Played:");
 	p.put(nullptr, " ");
-	p.put(NUMBER, padded(totalGames, 5));
+	p.put(NUMBER, padded(stats.games, 5));
 	p.endl();
 	p.put(nullptr, "  ");
 	p.put(LABEL, "Average Score:");
-	p.put(NUMBER, padded(averageScore, 6, 1));
+	p.put(NUMBER, padded(stats.average, 6, 1));
 	p.endl();
 	p.put(nullptr, std::string(30, ' '));
 	p.endl();

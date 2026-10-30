@@ -64,7 +64,7 @@ std::string coloredBoard() {
 std::string coloredPanel() {
 	std::ostringstream out;
 	TerminalRenderer renderer(out, true);
-	renderer.printGameOver(3, 12, 7, 4.2857);
+	renderer.printGameOver(Level::Hard, 3, {12, 7, 4.2857});
 	return out.str();
 }
 

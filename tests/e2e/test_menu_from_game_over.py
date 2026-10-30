@@ -23,6 +23,8 @@ with tempfile.TemporaryDirectory() as tmp, Game(sys.argv[1], cwd=tmp) as game:
 	game.wait_for("Quit")
 	game.send("M")
 	game.wait_for(r"<Hard>")
+	# Stats follow the level: Hard has one game, Normal still has one
+	game.wait_for(r"Games:\s+1 ")
 	game.send_now("q")
 	code = game.exit_code()
 	assert code == 0, "exit code %d" % code
