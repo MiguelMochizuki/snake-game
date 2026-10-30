@@ -15,15 +15,19 @@ Scores are saved inside the container but are lost by default. To persist scores
 docker run --rm -it -v $(pwd)/data:/app/data miguelmochizuki/snake-game
 ```
 
+## Start Menu
+
+The game opens on a menu. Use **W**/**S** (or the arrow keys) to move, **A**/**D** (or Left/Right) to change the level (Easy, Normal, Hard), and **Enter** to select Start or Quit. The menu also shows your best score, games played and average score.
+
 ## Game Controls
 
 | Key | Action |
 |-----|--------|
-| W | Move Up |
-| A | Move Left |
-| S | Move Down |
-| D | Move Right |
-| Q | Quit |
+| W or Up arrow | Move Up |
+| A or Left arrow | Move Left |
+| S or Down arrow | Move Down |
+| D or Right arrow | Move Right |
+| Q or Ctrl+C | Quit |
 
 After game over, press **R** to restart or **Q** to quit.
 
@@ -31,7 +35,8 @@ After game over, press **R** to restart or **Q** to quit.
 
 - Classic snake gameplay with real-time terminal rendering
 - Persistent score tracking (best score + game history)
-- Smooth WASD controls with non-blocking input
+- Start menu with Easy, Normal and Hard levels
+- Smooth WASD or arrow controls with non-blocking input
 - Game statistics (total games, average score)
 
 ## Platforms
