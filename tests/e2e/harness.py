@@ -43,14 +43,14 @@ def scale():
 
 def strip_ansi(s):
 	"""
-	Removes ANSI CSI sequences and carriage returns
+	Removes ANSI CSI sequences, carriage returns and bell characters
 
 	Parameters:
 	str s: Raw terminal output
 
 	Returns str: The text without escape sequences
 	"""
-	return ANSI_RE.sub("", s).replace("\r", "")
+	return ANSI_RE.sub("", s).replace("\r", "").replace("\a", "")
 
 
 class Game:
