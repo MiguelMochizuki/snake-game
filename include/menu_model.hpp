@@ -7,6 +7,7 @@
 #define MENU_MODEL_HPP
 
 #include "input_handler.hpp"
+#include "level.hpp"
 
 /**
  * Row of the start menu
@@ -14,24 +15,9 @@
 enum class MenuItem { Start, Level, Quit };
 
 /**
- * Difficulty level, from slowest to fastest
- */
-enum class Level { Easy, Normal, Hard };
-
-/**
  * What an action did to the menu
  */
 enum class MenuOutcome { None, Start, Quit };
-
-/**
- * Gets the display name of a level
- *
- * Parameters:
- * Level level: The level
- *
- * Returns const char*: "Easy", "Normal" or "Hard"
- */
-const char* levelName(Level level);
 
 /**
  * Start menu state machine

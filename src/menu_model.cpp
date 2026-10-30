@@ -8,26 +8,8 @@
 namespace {
 
 const int ITEM_COUNT = 3;
-const int LEVEL_COUNT = 3;
 
 }  // namespace
-
-/**
- * Gets the display name of a level
- *
- * Parameters:
- * Level level: The level
- *
- * Returns const char*: "Easy", "Normal" or "Hard"
- */
-const char* levelName(Level level) {
-	switch (level) {
-		case Level::Easy: return "Easy";
-		case Level::Normal: return "Normal";
-		case Level::Hard: return "Hard";
-	}
-	return "";
-}
 
 /**
  * Gets the selected row
@@ -53,12 +35,7 @@ Level MenuModel::level() const {
  * Returns int: 300 for Easy, 200 for Normal, 100 for Hard (milliseconds per frame)
  */
 int MenuModel::speedMs() const {
-	switch (level_) {
-		case Level::Easy: return 300;
-		case Level::Normal: return 200;
-		case Level::Hard: return 100;
-	}
-	return 200;
+	return levelSpeedMs(level_);
 }
 
 /**
@@ -71,7 +48,6 @@ int MenuModel::speedMs() const {
  */
 MenuOutcome MenuModel::apply(Action action) {
 	int item = static_cast<int>(selected_);
-	int level = static_cast<int>(level_);
 	switch (action) {
 		case Action::MoveUp:
 			selected_ = static_cast<MenuItem>((item + ITEM_COUNT - 1) % ITEM_COUNT);
@@ -81,12 +57,12 @@ MenuOutcome MenuModel::apply(Action action) {
 			break;
 		case Action::MoveLeft:
 			if (selected_ == MenuItem::Level) {
-				level_ = static_cast<Level>((level + LEVEL_COUNT - 1) % LEVEL_COUNT);
+				level_ = nextLevel(level_, -1);
 			}
 			break;
 		case Action::MoveRight:
 			if (selected_ == MenuItem::Level) {
-				level_ = static_cast<Level>((level + 1) % LEVEL_COUNT);
+				level_ = nextLevel(level_, 1);
 			}
 			break;
 		case Action::Confirm:
