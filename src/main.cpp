@@ -7,6 +7,9 @@
 #include "command_input_handler.hpp"
 #include "composite_input_handler.hpp"
 #include "game_engine.hpp"
+#include "menu_controller.hpp"
+#include "score_manager.hpp"
+#include "terminal_menu_view.hpp"
 #include "terminal_key_source.hpp"
 #include "wasd_input_handler.hpp"
 #include "terminal_renderer.hpp"
@@ -15,7 +18,9 @@
 #include <cstdint>
 #include <cstdlib>
 #include <ctime>
+#include <iostream>
 #include <memory>
+#include <optional>
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -25,20 +30,30 @@
 /**
  * Reads the frame duration from SNAKE_FRAME_MS
  *
- * Returns int: The parsed value if the whole string is an integer in [0, 10000], otherwise 200
+ * Returns std::optional<int>: The parsed value if the whole string is an integer in [0, 10000], otherwise nullopt
  */
-static int readFrameMs() {
+static std::optional<int> readFrameMs() {
 	const char* env = std::getenv("SNAKE_FRAME_MS");
 	if (!env || !std::isdigit(static_cast<unsigned char>(*env))) {
-		return 200;
+		return std::nullopt;
 	}
 	errno = 0;
 	char* end = nullptr;
 	long value = std::strtol(env, &end, 10);
 	if (errno != 0 || *end != '\0' || value < 0 || value > 10000) {
-		return 200;
+		return std::nullopt;
 	}
 	return static_cast<int>(value);
+}
+
+/**
+ * Tells whether the start menu is skipped, from SNAKE_SKIP_MENU
+ *
+ * Returns bool: true if SNAKE_SKIP_MENU is set and non-empty
+ */
+static bool skipMenu() {
+	const char* env = std::getenv("SNAKE_SKIP_MENU");
+	return env && *env;
 }
 
 /**
@@ -80,7 +95,21 @@ int main() {
 	input.add(std::make_unique<WASDInputHandler>());
 	input.add(std::make_unique<ArrowInputHandler>());
 	input.add(std::make_unique<CommandInputHandler>());
-	GameEngine engine(keys, input, 20, 20, readFrameMs(), readSeed(), TerminalRenderer::colorEnabledFromEnv());
+	const bool color = TerminalRenderer::colorEnabledFromEnv();
+	int speedMs = 200;
+	if (!skipMenu()) {
+		ScoreManager scores;
+		TerminalMenuView view(std::cout, color);
+		MenuModel menu;
+		MenuResult choice = runMenu(keys, input, view, menu,
+			MenuStats{scores.getBestScore(), scores.getTotalGames(), scores.getAverageScore()});
+		if (!choice.start) {
+			return 0;
+		}
+		speedMs = choice.speedMs;
+	}
+	// A valid SNAKE_FRAME_MS (test hook) overrides the chosen level
+	GameEngine engine(keys, input, 20, 20, readFrameMs().value_or(speedMs), readSeed(), color);
 	engine.run();
 	return 0;
 }

@@ -10,7 +10,7 @@ import tempfile
 
 from harness import scale
 
-env = dict(os.environ, SNAKE_FRAME_MS=str(int(30 * scale())), SNAKE_SEED="42")
+env = dict(os.environ, SNAKE_FRAME_MS=str(int(30 * scale())), SNAKE_SEED="42", SNAKE_SKIP_MENU="1")
 with tempfile.TemporaryDirectory() as tmp:
 	p = subprocess.Popen([os.path.abspath(sys.argv[1])], cwd=tmp, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE)
 	try:
