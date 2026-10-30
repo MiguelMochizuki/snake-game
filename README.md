@@ -28,7 +28,8 @@ A terminal-based implementation of the classic Snake game in C++ with persistent
 - **Pre-built Binaries** - Download ready-to-run executables for all platforms
 - **Docker Support** - Containerized deployment with persistent data volumes
 - **Color-Coded Rendering** - Arcade palette (cyan walls, green snake with a bright head, red food, yellow numbers); set `NO_COLOR` to a non-empty value to disable it
-- **Non-Blocking Input** - Smooth gameplay with WASD controls
+- **Start Menu** - Title screen with Start, Quit and a difficulty level (Easy, Normal, Hard), plus your best score, games played and average
+- **Non-Blocking Input** - Smooth gameplay with WASD or arrow controls
 - **Game Statistics** - Tracks total games played and average score
 
 ## Downloads
@@ -86,6 +87,11 @@ snake-game/
 │   ├── snake.hpp          # Snake entity
 │   ├── snake_segment.hpp  # Snake body segment
 │   ├── terminal_renderer.hpp # Terminal rendering
+│   ├── menu_model.hpp     # Start menu state (no I/O)
+│   ├── menu_view.hpp      # Menu view interface (IMenuView) and snapshot
+│   ├── menu_controller.hpp # Menu loop over keys, handlers and view
+│   ├── terminal_menu_view.hpp # ASCII menu view
+│   ├── terminal_painter.hpp # Shared ANSI styles and painter
 │   └── wasd_input_handler.hpp # Input handling
 ├── tests/                  # Regression suite (see Testing)
 │   ├── CMakeLists.txt
@@ -102,6 +108,9 @@ snake-game/
     ├── snake.cpp
     ├── snake_segment.cpp
     ├── terminal_renderer.cpp
+    ├── menu_model.cpp
+    ├── menu_controller.cpp
+    ├── terminal_menu_view.cpp
     └── wasd_input_handler.cpp
 ```
 
@@ -201,6 +210,16 @@ make run-docker
 # Downloaded binary
 ./snake-<platform>
 ```
+
+### Start Menu
+The game opens on a menu instead of starting right away:
+
+- **W** / **S** or **Up** / **Down** - Move the selection
+- **A** / **D** or **Left** / **Right** - Change the level on the Level row (Easy 300 ms, Normal 200 ms, Hard 100 ms per step)
+- **Enter** - Select (Start begins the game, Quit exits)
+- **Q** or **Ctrl+C** - Quit
+
+The menu also shows your best score, games played and average score (last 10 games).
 
 ### Game Controls
 - **W** or **Up arrow** - Move Up
@@ -321,7 +340,7 @@ git diff tests/golden/
 
 ### Test environment variables
 - `SNAKE_E2E_TIMEOUT_SCALE` (integer, default 1): multiplies end-to-end timeouts and game frame time. Raise it on slow hosts. The Docker build uses 10.
-- `SNAKE_FRAME_MS` (0-10000, default 200) and `SNAKE_SEED` (unsigned): test hooks read by the binary to set the frame time and the random seed. Normal play does not need them.
+- `SNAKE_FRAME_MS` (0-10000), `SNAKE_SEED` (unsigned) and `SNAKE_SKIP_MENU` (any non-empty value): test hooks read by the binary to set the frame time, set the random seed and skip the start menu. A valid `SNAKE_FRAME_MS` overrides the level chosen in the menu; without the menu the frame time defaults to 200. The e2e harness sets `SNAKE_SKIP_MENU=1` by default. Normal play does not need any of them.
 
 ## CI/CD
 
@@ -408,7 +427,7 @@ To contribute or modify the game:
 5. Submit a pull request
 
 ### Future Enhancements
-- [ ] Multiple difficulty levels
+- [x] Multiple difficulty levels
 - [x] Color-coded rendering
 - [ ] Leaderboard system
 - [ ] Sound effects (terminal beep)
