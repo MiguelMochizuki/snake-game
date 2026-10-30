@@ -27,7 +27,7 @@ The game opens on a menu. Use W/S or the up/down arrows to move, A/D or left/rig
 | D or Right arrow | Move right |
 | Q or Ctrl+C | End the game |
 
-When a game ends, press **R** to play again or **Q** to quit.
+When a game ends, press **R** to play again, **M** to go back to the menu or **Q** to quit.
 
 Set `NO_COLOR=1` to turn colors off.
 

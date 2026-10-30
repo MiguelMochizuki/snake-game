@@ -28,6 +28,11 @@ struct TickInput {
 };
 
 /**
+ * How a finished game ends
+ */
+enum class GameEnd { Restart, Menu, Quit };
+
+/**
  * Main game engine - orchestrates the game loop
  *
  * Attributes:
@@ -78,21 +83,21 @@ public:
 	 * IKeySource& keys: Source of key presses
 	 * const IInputHandler& handler: Maps keys to actions
 	 *
-	 * Returns TickInput: quit if any key mapped to Quit, else the last move; Restart and Confirm are ignored
+	 * Returns TickInput: quit if any key mapped to Quit, else the last move; Restart, Menu and Confirm are ignored
 	 */
 	static TickInput readTick(IKeySource& keys, const IInputHandler& handler);
 
 	/**
-	 * Discards keys typed before the prompt, shows the game over panel, then waits for restart or quit
+	 * Discards keys typed before the prompt, shows the game over panel, then waits for restart, menu or quit
 	 *
 	 * Parameters:
 	 * IKeySource& keys: Source of key presses
 	 * const IInputHandler& handler: Maps keys to actions
 	 * const std::function<void()>& showPanel: Draws the game over panel, called after the flush
 	 *
-	 * Returns bool: true on Restart; false on Quit or EOF. Moves and unmapped keys are ignored
+	 * Returns GameEnd: Restart or Menu on those keys; Quit on Quit or EOF. Moves and unmapped keys are ignored
 	 */
-	static bool awaitRestart(IKeySource& keys, const IInputHandler& handler,
+	static GameEnd awaitChoice(IKeySource& keys, const IInputHandler& handler,
 		const std::function<void()>& showPanel);
 
 	/**
@@ -107,9 +112,19 @@ public:
 	static bool isOpposite(Direction current, Direction next);
 
 	/**
-	 * Runs the main game loop
+	 * Sets the game speed for the next rounds
+	 *
+	 * Parameters:
+	 * int speedMs: Game speed in milliseconds per frame
 	 */
-	void run();
+	void setSpeed(int speedMs);
+
+	/**
+	 * Runs the main game loop, restarting on request, until the player asks for the menu or quits
+	 *
+	 * Returns GameEnd: Menu or Quit; the board is reset for the next run() after Menu
+	 */
+	GameEnd run();
 };
 
 #endif

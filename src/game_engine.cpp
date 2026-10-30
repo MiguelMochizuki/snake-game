@@ -55,36 +55,40 @@ TickInput GameEngine::readTick(IKeySource& keys, const IInputHandler& handler) {
 			case Action::Quit: tick.quit = true; break;
 			case Action::Restart: break;
 			case Action::Confirm: break;
+			case Action::Menu: break;
 		}
 	}
 	return tick;
 }
 
 /**
- * Discards keys typed before the prompt, shows the game over panel, then waits for restart or quit
+ * Discards keys typed before the prompt, shows the game over panel, then waits for restart, menu or quit
  *
  * Parameters:
  * IKeySource& keys: Source of key presses
  * const IInputHandler& handler: Maps keys to actions
  * const std::function<void()>& showPanel: Draws the game over panel, called after the flush
  *
- * Returns bool: true on Restart; false on Quit or EOF. Moves and unmapped keys are ignored
+ * Returns GameEnd: Restart or Menu on those keys; Quit on Quit or EOF. Moves and unmapped keys are ignored
  */
-bool GameEngine::awaitRestart(IKeySource& keys, const IInputHandler& handler,
+GameEnd GameEngine::awaitChoice(IKeySource& keys, const IInputHandler& handler,
 		const std::function<void()>& showPanel) {
 	keys.flush();
 	showPanel();
 	while (true) {
 		std::optional<Key> key = keys.waitKey();
 		if (!key) {
-			return false;
+			return GameEnd::Quit;
 		}
 		std::optional<Action> action = handler.handle(*key);
 		if (action == Action::Restart) {
-			return true;
+			return GameEnd::Restart;
+		}
+		if (action == Action::Menu) {
+			return GameEnd::Menu;
 		}
 		if (action == Action::Quit) {
-			return false;
+			return GameEnd::Quit;
 		}
 	}
 }
@@ -109,10 +113,22 @@ bool GameEngine::isOpposite(Direction current, Direction next) {
 }
 
 /**
- * Runs the main game loop
+ * Sets the game speed for the next rounds
+ *
+ * Parameters:
+ * int speedMs: Game speed in milliseconds per frame
  */
-void GameEngine::run() {
-	bool restart;
+void GameEngine::setSpeed(int speedMs) {
+	speedMs_ = speedMs;
+}
+
+/**
+ * Runs the main game loop, restarting on request, until the player asks for the menu or quits
+ *
+ * Returns GameEnd: Menu or Quit; the board is reset for the next run() after Menu
+ */
+GameEnd GameEngine::run() {
+	GameEnd end;
 	do {
 		renderer_.clear();
 		renderer_.render(state_);
@@ -145,7 +161,7 @@ void GameEngine::run() {
 		int finalScore = state_.getFinalScore();
 		scoreManager_.saveScore(finalScore);
 
-		restart = awaitRestart(keys_, input_, [&]() {
+		end = awaitChoice(keys_, input_, [&]() {
 			renderer_.printGameOver(
 				finalScore,
 				scoreManager_.getBestScore(),
@@ -154,11 +170,12 @@ void GameEngine::run() {
 			);
 		});
 
-		if (restart) {
+		if (end != GameEnd::Quit) {
 			state_.reset();
 			direction_ = Direction::RIGHT;
 			running_ = true;
 			renderer_.reset();
 		}
-	} while (restart);
+	} while (end == GameEnd::Restart);
+	return end;
 }

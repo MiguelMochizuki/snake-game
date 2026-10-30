@@ -80,6 +80,12 @@ TEST(ArrowInputHandler, ArrowMapsOnlyArrows) {
 	EXPECT_EQ(h.handle(specialKey(KeyKind::Unknown)), std::nullopt);
 }
 
+TEST(CommandInputHandler, MMapsToMenu) {
+	CommandInputHandler h;
+	EXPECT_EQ(h.handle(charKey('m')), Action::Menu);
+	EXPECT_EQ(h.handle(charKey('M')), Action::Menu);
+}
+
 TEST(CommandInputHandler, EnterMapsToConfirm) {
 	CommandInputHandler h;
 	EXPECT_EQ(h.handle(specialKey(KeyKind::Enter)), Action::Confirm);
@@ -99,7 +105,7 @@ TEST(CommandInputHandler, CommandMapsOnlyCommands) {
 	EXPECT_EQ(h.handle(charKey('R')), Action::Restart);
 
 	for (const Key& k : allCharKeys()) {
-		if (k == charKey('q') || k == charKey('Q') || k == charKey('r') || k == charKey('R')) {
+		if (k == charKey('q') || k == charKey('Q') || k == charKey('r') || k == charKey('R') || k == charKey('m') || k == charKey('M')) {
 			continue;
 		}
 		EXPECT_EQ(h.handle(k), std::nullopt);

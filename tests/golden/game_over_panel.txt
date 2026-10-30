@@ -7,5 +7,6 @@
   Games Played:     7
   Average Score:   4.3
                               
-  [R] Restart  [Q] Quit       
+  [R] Restart  [M] Menu       
+  [Q] Quit                    
 ==============================

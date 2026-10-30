@@ -156,8 +156,12 @@ void TerminalRenderer::printGameOver(int finalScore, int bestScore, size_t total
 	p.put(nullptr, "  ");
 	p.put(RESTART, "[R]");
 	p.put(nullptr, " Restart  ");
+	p.put(LABEL, "[M]");
+	p.put(nullptr, " Menu       ");
+	p.endl();
+	p.put(nullptr, "  ");
 	p.put(QUIT, "[Q]");
-	p.put(nullptr, " Quit       ");
+	p.put(nullptr, " Quit" + std::string(20, ' '));
 	p.endl();
 	p.put(WALL, rule);
 	p.endl();

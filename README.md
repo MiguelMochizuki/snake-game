@@ -4,7 +4,7 @@ The classic Snake game for the terminal, written in C++. It saves your scores be
 
 ## Features
 
-- Start menu with Start, Quit and three levels: Easy, Normal and Hard
+- Start menu with Start, Quit and three levels: Easy, Normal and Hard, which you can reach again from the game-over screen
 - Arrow keys or WASD
 - Best score, games played and average score, saved between sessions
 - Colored board (cyan walls, green snake with a bright head, red food, yellow numbers)
@@ -90,7 +90,7 @@ The game opens on a menu. Pick a level, then start.
 
 The levels set the time per step: Easy 300 ms, Normal 200 ms, Hard 100 ms. The menu also shows your best score, games played and average over the last 10 games. Any other key does nothing.
 
-After a game ends, you see your final score and the same statistics. Press **R** to play again (straight away, without the menu) or **Q** to quit.
+After a game ends, you see your final score and the same statistics. Press **R** to play again straight away, **M** to go back to the menu (for example to change the level; your choice is kept) or **Q** to quit.
 
 Set `NO_COLOR` to any non-empty value to turn colors off, for example `NO_COLOR=1 ./snake`. An empty value keeps them on, as [no-color.org](https://no-color.org) describes.
 

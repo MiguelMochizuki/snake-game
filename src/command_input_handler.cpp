@@ -26,6 +26,7 @@ std::optional<Action> CommandInputHandler::handle(const Key& key) const {
 	switch (key.ch) {
 		case 'q': case 'Q': return Action::Quit;
 		case 'r': case 'R': return Action::Restart;
+		case 'm': case 'M': return Action::Menu;
 		default: return std::nullopt;
 	}
 }
