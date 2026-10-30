@@ -77,3 +77,5 @@ with tempfile.TemporaryDirectory() as tmp, Game(sys.argv[1], cwd=tmp, frame_ms=1
 	panel = quit_game(game)
 	assert re.search(r"Final Score:\s+1\n", panel), panel
 	assert re.search(r"Best Score:\s+1\n", panel), panel
+	# One bell for the food, one for the game over
+	assert game.out.count("\a") == 2, game.out.count("\a")

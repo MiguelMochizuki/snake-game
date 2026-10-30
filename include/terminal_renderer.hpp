@@ -7,6 +7,8 @@
 #define TERMINAL_RENDERER_HPP
 
 #include "game_state.hpp"
+#include "level.hpp"
+#include "score_source.hpp"
 #include <cstddef>
 #include <iostream>
 
@@ -67,12 +69,11 @@ public:
 	 * Prints the game over panel with statistics
 	 *
 	 * Parameters:
+	 * Level level: The level that was played
 	 * int finalScore: The final score
-	 * int bestScore: The best score
-	 * size_t totalGames: Total number of games played
-	 * double averageScore: Average score
+	 * const ScoreStats& stats: Best, games played and average of that level
 	 */
-	void printGameOver(int finalScore, int bestScore, size_t totalGames, double averageScore);
+	void printGameOver(Level level, int finalScore, const ScoreStats& stats);
 };
 
 #endif

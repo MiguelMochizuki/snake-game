@@ -9,6 +9,8 @@
 #include "game_state.hpp"
 #include "input_handler.hpp"
 #include "key_source.hpp"
+#include "level.hpp"
+#include "sound.hpp"
 #include "terminal_renderer.hpp"
 #include "score_manager.hpp"
 #include <ctime>
@@ -44,6 +46,8 @@ enum class GameEnd { Restart, Menu, Quit };
  * Direction direction_: Current direction
  * bool running_: Flag indicating if the game is running
  * int speedMs_: Game speed in milliseconds per frame
+ * Level level_: Level that tags saved scores
+ * ISound* sound_: Sound effects, nullptr for silence
  */
 class GameEngine {
 private:
@@ -55,6 +59,8 @@ private:
 	Direction direction_;
 	bool running_;
 	int speedMs_;
+	Level level_ = Level::Normal;
+	ISound* sound_ = nullptr;
 
 public:
 	/**
@@ -112,12 +118,21 @@ public:
 	static bool isOpposite(Direction current, Direction next);
 
 	/**
-	 * Sets the game speed for the next rounds
+	 * Sets the level and game speed for the next rounds
 	 *
 	 * Parameters:
+	 * Level level: Level that tags the saved scores and sets the best score shown
 	 * int speedMs: Game speed in milliseconds per frame
 	 */
-	void setSpeed(int speedMs);
+	void setLevel(Level level, int speedMs);
+
+	/**
+	 * Sets the sound effects
+	 *
+	 * Parameters:
+	 * ISound* sound: Receives eat and game over events, must outlive the engine; nullptr for silence
+	 */
+	void setSound(ISound* sound);
 
 	/**
 	 * Runs the main game loop, restarting on request, until the player asks for the menu or quits

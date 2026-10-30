@@ -9,6 +9,7 @@
 #include "game_engine.hpp"
 #include "menu_controller.hpp"
 #include "score_manager.hpp"
+#include "sound.hpp"
 #include "terminal_menu_view.hpp"
 #include "terminal_key_source.hpp"
 #include "wasd_input_handler.hpp"
@@ -25,6 +26,9 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
+#include <io.h>
+#else
+#include <unistd.h>
 #endif
 
 /**
@@ -77,6 +81,19 @@ static unsigned readSeed() {
 }
 
 /**
+ * Tells whether the terminal can play the bell, i.e. output goes to a terminal
+ *
+ * Returns bool: true if stdout is a terminal
+ */
+static bool soundCapable() {
+#ifdef _WIN32
+	return _isatty(_fileno(stdout)) != 0;
+#else
+	return isatty(STDOUT_FILENO) != 0;
+#endif
+}
+
+/**
  * Program entry point
  *
  * Returns int: Exit status
@@ -97,10 +114,14 @@ int main() {
 	input.add(std::make_unique<CommandInputHandler>());
 	const bool color = TerminalRenderer::colorEnabledFromEnv();
 	GameEngine engine(keys, input, 20, 20, 200, readSeed(), color);
+	TerminalBell bell(std::cout);
+	const bool canBeep = soundCapable();
 	MenuModel menu;
 	bool showMenu = !skipMenu();
 	do {
-		int speedMs = 200;
+		Level level = Level::Normal;
+		int speedMs = levelSpeedMs(level);
+		bool sound = true;
 		if (showMenu) {
 			// Read the scores afresh: the round that just ended may have changed them
 			ScoreManager scores;
@@ -109,10 +130,13 @@ int main() {
 			if (!choice.start) {
 				return 0;
 			}
+			level = choice.level;
 			speedMs = choice.speedMs;
+			sound = choice.sound;
 		}
-		// A valid SNAKE_FRAME_MS (test hook) overrides the chosen level
-		engine.setSpeed(readFrameMs().value_or(speedMs));
+		// A valid SNAKE_FRAME_MS (test hook) overrides the speed, never the level
+		engine.setLevel(level, readFrameMs().value_or(speedMs));
+		engine.setSound(sound && canBeep ? &bell : nullptr);
 		showMenu = true;
 	} while (engine.run() == GameEnd::Menu);
 	return 0;

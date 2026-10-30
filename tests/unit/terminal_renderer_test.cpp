@@ -33,7 +33,7 @@ TEST(TerminalRendererGolden, AfterMoves) {
 TEST(TerminalRendererGolden, GameOverPanel) {
 	std::ostringstream out;
 	TerminalRenderer renderer(out);
-	renderer.printGameOver(3, 12, 7, 4.2857);
+	renderer.printGameOver(Level::Hard, 3, {12, 7, 4.2857});
 	expectGolden("game_over_panel.txt", out.str());
 }
 

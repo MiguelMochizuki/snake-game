@@ -113,13 +113,26 @@ bool GameEngine::isOpposite(Direction current, Direction next) {
 }
 
 /**
- * Sets the game speed for the next rounds
+ * Sets the level and game speed for the next rounds
  *
  * Parameters:
+ * Level level: Level that tags the saved scores and sets the best score shown
  * int speedMs: Game speed in milliseconds per frame
  */
-void GameEngine::setSpeed(int speedMs) {
+void GameEngine::setLevel(Level level, int speedMs) {
+	level_ = level;
 	speedMs_ = speedMs;
+	state_.setBestScore(scoreManager_.bestScore(level));
+}
+
+/**
+ * Sets the sound effects
+ *
+ * Parameters:
+ * ISound* sound: Receives eat and game over events, must outlive the engine; nullptr for silence
+ */
+void GameEngine::setSound(ISound* sound) {
+	sound_ = sound;
 }
 
 /**
@@ -144,6 +157,7 @@ GameEnd GameEngine::run() {
 				direction_ = *tick.move;
 			}
 
+			const int scoreBefore = state_.getScore();
 			try {
 				int dirInt = static_cast<int>(direction_);
 				state_.moveSnake(dirInt);
@@ -154,20 +168,21 @@ GameEnd GameEngine::run() {
 
 			renderer_.clear();
 			renderer_.render(state_);
+			if (sound_ && state_.getScore() > scoreBefore) {
+				sound_->eat();
+			}
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(speedMs_));
 		}
 
 		int finalScore = state_.getFinalScore();
-		scoreManager_.saveScore(Level::Normal, finalScore);
+		scoreManager_.saveScore(level_, finalScore);
 
 		end = awaitChoice(keys_, input_, [&]() {
-			renderer_.printGameOver(
-				finalScore,
-				scoreManager_.bestScore(Level::Normal),
-				scoreManager_.totalGames(Level::Normal),
-				scoreManager_.averageScore(Level::Normal)
-			);
+			if (sound_) {
+				sound_->gameOver();
+			}
+			renderer_.printGameOver(level_, finalScore, scoreManager_.stats(level_));
 		});
 
 		if (end != GameEnd::Quit) {
