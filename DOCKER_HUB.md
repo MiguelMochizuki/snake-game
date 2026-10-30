@@ -9,7 +9,7 @@ docker pull miguelmochizuki/snake-game
 docker run --rm -it miguelmochizuki/snake-game
 ```
 
-Scores stay inside the container and are lost when it exits. To keep them, mount a volume:
+Scores from v1.x are migrated on the first run. Scores stay inside the container and are lost when it exits. To keep them, mount a volume:
 
 ```bash
 docker run --rm -it -v $(pwd)/data:/app/data miguelmochizuki/snake-game
@@ -17,7 +17,7 @@ docker run --rm -it -v $(pwd)/data:/app/data miguelmochizuki/snake-game
 
 ## How to play
 
-The game opens on a menu. Use W/S or the up/down arrows to move, A/D or left/right to change the level (Easy, Normal, Hard), and Enter to pick Start or Quit. The menu also shows your best score, games played and average score.
+The game opens on a menu. Use W/S or the up/down arrows to move, A/D or left/right to change the level (Easy, Normal, Hard) or switch Sound, and Enter to pick a row: Start, Leaderboard, How to play or Quit. Scores are kept separately for each level.
 
 | Key | In the game |
 |-----|-------------|
@@ -29,7 +29,7 @@ The game opens on a menu. Use W/S or the up/down arrows to move, A/D or left/rig
 
 When a game ends, press **R** to play again, **M** to go back to the menu or **Q** to quit.
 
-Set `NO_COLOR=1` to turn colors off.
+Sound is a terminal beep. Set `NO_COLOR=1` to turn colors off.
 
 ## Platforms
 

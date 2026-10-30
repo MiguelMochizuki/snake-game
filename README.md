@@ -4,15 +4,16 @@ The classic Snake game for the terminal, written in C++. It saves your scores be
 
 ## Features
 
-- Start menu with Start, Quit and three levels: Easy, Normal and Hard, which you can reach again from the game-over screen
+- Start menu with three levels (Easy, Normal, Hard), a leaderboard, a how-to-play screen and a sound switch; press M at game over to return to it
 - Arrow keys or WASD
-- Best score, games played and average score, saved between sessions
+- Best score, games played, average score and top 10, kept separately for each level and saved between sessions
+- Terminal beep when you eat and when the game ends
 - Colored board (cyan walls, green snake with a bright head, red food, yellow numbers)
 - Linux, macOS and Windows binaries, plus a Docker image
 
 ## Download
 
-Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v1.4.1](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.4.1), a documentation update to v1.4.0, which added the start menu and difficulty levels.
+Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v2.0.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.0.0), which keeps scores per level, adds the leaderboard, how-to-play screen and sound, and migrates old score files.
 
 | Platform | Architecture | Binary |
 |----------|-------------|--------|
@@ -83,14 +84,14 @@ The game opens on a menu. Pick a level, then start.
 |-----|-------------|-------------|
 | W / Up arrow | Move selection up | Move up |
 | S / Down arrow | Move selection down | Move down |
-| A / Left arrow | Previous level (on the Level row) | Move left |
-| D / Right arrow | Next level (on the Level row) | Move right |
+| A / Left arrow | Previous level (Level row), toggle (Sound row) | Move left |
+| D / Right arrow | Next level (Level row), toggle (Sound row) | Move right |
 | Enter | Choose the selected row | Nothing |
 | Q / Ctrl+C | Quit | End the game |
 
-The levels set the time per step: Easy 300 ms, Normal 200 ms, Hard 100 ms. The menu also shows your best score, games played and average over the last 10 games. Any other key does nothing.
+The menu rows are Start, Level, Leaderboard, How to play, Sound and Quit. The levels set the time per step: Easy 300 ms, Normal 200 ms, Hard 100 ms. The menu shows the best score, games played and average over the last 10 games of the selected level. The Leaderboard lists the top 10 scores of a level (A/D switch level, Enter goes back). Sound is on at each launch and only beeps in a terminal. Any other key does nothing.
 
-After a game ends, you see your final score and the same statistics. Press **R** to play again straight away, **M** to go back to the menu (for example to change the level; your choice is kept) or **Q** to quit.
+After a game ends, you see the level, your final score and that level's statistics. Press **R** to play again straight away, **M** to go back to the menu (for example to change the level; your choice is kept) or **Q** to quit.
 
 Set `NO_COLOR` to any non-empty value to turn colors off, for example `NO_COLOR=1 ./snake`. An empty value keeps them on, as [no-color.org](https://no-color.org) describes.
 
@@ -98,14 +99,16 @@ Set `NO_COLOR` to any non-empty value to turn colors off, for example `NO_COLOR=
 
 Scores are saved in the `data/` directory, which the game creates:
 
-- `best_score.txt` holds your highest score.
-- `score_history.txt` holds the score of every game.
+- `scores_v2.txt` holds the level and score of every game.
+- `scores_v2.checksum` detects edited files.
+
+Files from v1.x (`best_score.txt`, `score_history.txt`, `score_checksum.txt`) are imported once as Normal scores if their checksum is valid. They are never changed or deleted.
 
 ## Code layout
 
 - `src/` and `include/` hold the game. `GameEngine` runs the loop, `GameState` holds the snake and food, and `TerminalRenderer` draws the board.
 - Input goes through a key source and a set of handlers (WASD, arrows and commands), so the engine never reads the terminal directly.
-- The menu is split the same way: `MenuModel` holds its state, `IMenuView` draws it (`TerminalMenuView` does so in ASCII), and `runMenu` connects them to the keys. A different interface, such as a GUI, would need only another `IMenuView`.
+- The menu is split the same way: `MenuModel` holds its state, `IMenuView` draws it and its leaderboard and help screens (`TerminalMenuView` does so in ASCII), and `runMenu` connects them to the keys. A different interface, such as a GUI, would need only another `IMenuView`.
 - `tests/` holds the unit, golden and end-to-end tests.
 
 ## Tests
@@ -149,8 +152,8 @@ One GitHub Actions workflow handles both. On every push to `main` and every pull
 To publish a release, push a tag that starts with `v`:
 
 ```bash
-git tag -a v1.4.1 -m "Release v1.4.1"
-git push origin v1.4.1
+git tag -a v2.0.0 -m "Release v2.0.0"
+git push origin v2.0.0
 ```
 
 The workflow then creates a GitHub release with all the binaries and publishes the Docker image to Docker Hub. A failing platform job blocks the release. The image builds at the same time as the binaries.
@@ -159,6 +162,7 @@ The workflow then creates a GitHub release with all the binaries and publishes t
 
 | Version | What changed |
 |---------|--------------|
+| [v2.0.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.0.0) | Breaking: scores are kept per level in a new `data/` format (old files are migrated); leaderboard, how-to-play screen, sound |
 | [v1.4.1](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.4.1) | Rewritten README and Docker Hub page; no code changes |
 | [v1.4.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.4.0) | Start menu with Easy, Normal and Hard levels and score statistics, behind an `IMenuView` interface; Enter key; `SNAKE_SKIP_MENU` test hook |
 | [v1.3.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.3.0) | Arrow keys; strict key handling (escape sequences, Windows extended keys, Ctrl+C/Z/S); average over the last 10 games |
@@ -182,7 +186,7 @@ sudo usermod -aG docker $USER
 
 Fork the repository, make your changes on a branch, run `make test-local` (and try the game with `make run-docker`), then open a pull request.
 
-Ideas not done yet: a leaderboard, sound (terminal beep) and network multiplayer.
+Ideas not done yet: network multiplayer.
 
 ## License
 
