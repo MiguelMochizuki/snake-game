@@ -13,6 +13,10 @@ if(WIN32)
 	list(REMOVE_ITEM UNIT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/unit/terminal_key_source_test.cpp)
 endif()
 
+if(NOT SNAKE_GAME_BUILD_AUDIO)
+	list(REMOVE_ITEM UNIT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/unit/audio_device_test.cpp)
+endif()
+
 add_executable(snake_unit_tests ${UNIT_SOURCES})
 target_link_libraries(snake_unit_tests PRIVATE snake_core GTest::gtest_main)
 target_compile_definitions(snake_unit_tests PRIVATE

@@ -13,6 +13,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 option(SNAKE_GAME_BUILD_APPS "Build the game executable" ON)
 option(SNAKE_GAME_BUILD_TESTS "Build unit and end-to-end tests" ON)
+option(SNAKE_GAME_BUILD_AUDIO "Build with music and sound output through miniaudio (fetched at configure time)" OFF)
 
 # Compiler warnings, shared by all targets (including tests)
 function(snake_game_set_warnings target)
@@ -50,6 +51,21 @@ target_include_directories(snake_core PUBLIC include)
 snake_game_set_warnings(snake_core)
 if(UNIX)
 	target_link_libraries(snake_core PUBLIC pthread)
+endif()
+
+if(SNAKE_GAME_BUILD_AUDIO)
+	include(FetchContent)
+	# Only the single header is needed, so skip miniaudio's own CMake project
+	FetchContent_Declare(miniaudio
+		URL https://github.com/mackron/miniaudio/archive/refs/tags/0.11.26.tar.gz
+		URL_HASH SHA256=838ba55a21c9142adf7b76bdc4351e5cd8b7ae128f46b25ec25f94ae9969c600
+		SOURCE_SUBDIR no-cmake-project
+	)
+	FetchContent_MakeAvailable(miniaudio)
+	target_sources(snake_core PRIVATE src/audio/audio_device.cpp)
+	target_include_directories(snake_core SYSTEM PRIVATE ${miniaudio_SOURCE_DIR})
+	target_compile_definitions(snake_core PUBLIC SNAKE_HAVE_AUDIO)
+	target_link_libraries(snake_core PUBLIC ${CMAKE_DL_LIBS})
 endif()
 
 if(SNAKE_GAME_BUILD_APPS)
