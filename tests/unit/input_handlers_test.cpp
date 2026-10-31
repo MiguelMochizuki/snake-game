@@ -9,11 +9,11 @@
 #include <optional>
 #include <vector>
 
-#include "arrow_input_handler.hpp"
-#include "command_input_handler.hpp"
-#include "composite_input_handler.hpp"
-#include "input_handler.hpp"
-#include "wasd_input_handler.hpp"
+#include "snake_game/input/arrow_input_handler.hpp"
+#include "snake_game/input/command_input_handler.hpp"
+#include "snake_game/input/composite_input_handler.hpp"
+#include "snake_game/input/input_handler.hpp"
+#include "snake_game/input/wasd_input_handler.hpp"
 
 /**
  * Test-only handler that maps one key to one action and ignores everything else

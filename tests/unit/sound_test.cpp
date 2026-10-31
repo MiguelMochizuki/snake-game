@@ -7,7 +7,7 @@
 
 #include <sstream>
 
-#include "sound.hpp"
+#include "snake_game/render/sound.hpp"
 
 TEST(TerminalBell, EatWritesOneBell) {
 	std::ostringstream os;

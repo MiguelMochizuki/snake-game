@@ -5,7 +5,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "menu_model.hpp"
+#include "snake_game/menu/menu_model.hpp"
 
 TEST(MenuModel, StartsOnStartWithNormalLevel) {
 	MenuModel m;

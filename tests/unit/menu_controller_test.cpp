@@ -11,12 +11,12 @@
 #include <string>
 #include <vector>
 
-#include "arrow_input_handler.hpp"
-#include "command_input_handler.hpp"
-#include "composite_input_handler.hpp"
-#include "menu_controller.hpp"
-#include "score_source.hpp"
-#include "wasd_input_handler.hpp"
+#include "snake_game/input/arrow_input_handler.hpp"
+#include "snake_game/input/command_input_handler.hpp"
+#include "snake_game/input/composite_input_handler.hpp"
+#include "snake_game/menu/menu_controller.hpp"
+#include "snake_game/score/score_source.hpp"
+#include "snake_game/input/wasd_input_handler.hpp"
 
 namespace {
 

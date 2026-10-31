@@ -11,7 +11,7 @@
 #include <vector>
 #include <unistd.h>
 
-#include "terminal_key_source.hpp"
+#include "snake_game/input/terminal_key_source.hpp"
 
 /**
  * Fixture that replaces STDIN_FILENO with a pipe and restores it on teardown

@@ -12,9 +12,9 @@
 #include <sstream>
 #include <string>
 
-#include "game_state.hpp"
+#include "snake_game/game/game_state.hpp"
 #include "golden.hpp"
-#include "terminal_renderer.hpp"
+#include "snake_game/render/terminal_renderer.hpp"
 
 namespace {
 

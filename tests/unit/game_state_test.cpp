@@ -5,7 +5,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "game_state.hpp"
+#include "snake_game/game/game_state.hpp"
 
 #include <queue>
 #include <stdexcept>

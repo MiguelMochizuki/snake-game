@@ -17,13 +17,13 @@ add_executable(snake_unit_tests ${UNIT_SOURCES})
 target_link_libraries(snake_unit_tests PRIVATE snake_core GTest::gtest_main)
 target_compile_definitions(snake_unit_tests PRIVATE
 	SNAKE_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden")
-snake_set_warnings(snake_unit_tests)
+snake_game_set_warnings(snake_unit_tests)
 
 include(GoogleTest)
 gtest_discover_tests(snake_unit_tests PROPERTIES LABELS unit TIMEOUT 30)
 
 # End-to-end tests (Linux only): every tests/e2e/test_*.py is registered automatically
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND TARGET snake)
 	find_package(Python3 COMPONENTS Interpreter)
 	if(Python3_Interpreter_FOUND)
 		# Default from the configure-time environment so `SNAKE_E2E_TIMEOUT_SCALE=3 cmake ...` works

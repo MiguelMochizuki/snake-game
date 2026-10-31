@@ -5,7 +5,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "snake.hpp"
+#include "snake_game/game/snake.hpp"
 
 TEST(Smoke, SnakeCoreLinks) {
 	Snake s(5, 5);

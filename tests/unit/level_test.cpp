@@ -5,7 +5,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "level.hpp"
+#include "snake_game/game/level.hpp"
 
 TEST(Level, Names) {
 	EXPECT_STREQ(levelName(Level::Easy), "Easy");

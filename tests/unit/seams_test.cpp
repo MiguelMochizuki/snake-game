@@ -5,9 +5,9 @@
  */
 #include <gtest/gtest.h>
 
-#include "game_state.hpp"
-#include "score_manager.hpp"
-#include "terminal_renderer.hpp"
+#include "snake_game/game/game_state.hpp"
+#include "snake_game/score/score_manager.hpp"
+#include "snake_game/render/terminal_renderer.hpp"
 
 #include <chrono>
 #include <filesystem>

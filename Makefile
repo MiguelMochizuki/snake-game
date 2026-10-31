@@ -1,140 +1,51 @@
 # Snake Game Makefile
 # Author: Miguel Mochizuki Silva
-# Description: Makefile to orchestrate CMake and Docker build processes
+# Description: Thin wrapper around CMake and Docker: build, run, test and clean
 
-# Directories
-BUILD_DIR = build
+BUILD ?= build
 DATA_DIR = data
 
-# CMake options
-CMAKE = cmake
-CMAKE_BUILD_TYPE ?= Release
-CMAKE_FLAGS = -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
-
-# Docker options
 DOCKER_IMAGE = snake-game
-DOCKER_CONTAINER = snake-game-container
 DOCKER_VOLUME = snake-data
 
-# Executable path
-EXECUTABLE = $(BUILD_DIR)/bin/snake
+.PHONY: all run test clean clean-data docker run-docker test-docker clean-docker clean-docker-data help
 
-# Docker cache tracking
-DOCKER_CACHE = .docker-build-cache
+all:
+	cmake -S . -B $(BUILD) -DCMAKE_BUILD_TYPE=Release
+	cmake --build $(BUILD) -j
 
-# Colors
-GREEN = \033[0;32m
-BLUE = \033[0;34m
-YELLOW = \033[0;33m
-RED = \033[0;31m
-NC = \033[0m
+run: all
+	$(BUILD)/bin/snake
 
-# ==============================
-# Local targets
-# ==============================
+test: all
+	ctest --test-dir $(BUILD) --output-on-failure
 
-.PHONY: local
-local: $(EXECUTABLE)
+clean:
+	rm -rf $(BUILD)
 
-# Build only if source files or CMakeLists.txt changed
-$(EXECUTABLE): $(shell find . -path ./build -prune -o -path ./.git -prune -o -path ./.superpowers -prune -o -name "*.cpp" -print -o -name "*.hpp" -print -o -name "*.h" -print -o -name "*.c" -print 2>/dev/null) CMakeLists.txt
-	@echo "$(BLUE)Configuring CMake...$(NC)"
-	@mkdir -p $(BUILD_DIR)
-	@cd $(BUILD_DIR) && $(CMAKE) $(CMAKE_FLAGS) ..
-	@echo "$(BLUE)Building project...$(NC)"
-	@$(MAKE) -C $(BUILD_DIR)
-	@echo "$(GREEN)Build complete!$(NC)"
-	@echo "$(GREEN)Executable: $(EXECUTABLE)$(NC)"
+clean-data:
+	rm -rf $(DATA_DIR)
 
-.PHONY: run-local
-run-local: local
-	@echo "$(GREEN)Running Snake Game...$(NC)"
-	@$(EXECUTABLE)
+docker:
+	docker build -t $(DOCKER_IMAGE) .
 
-.PHONY: test-local
-test-local: local
-	@cmake --build $(BUILD_DIR)
-	@cd $(BUILD_DIR) && ctest --output-on-failure
-
-.PHONY: clean-local
-clean-local:
-	@echo "$(YELLOW)Cleaning build files...$(NC)"
-	@rm -rf $(BUILD_DIR)
-	@echo "$(YELLOW)Clean complete!$(NC)"
-
-.PHONY: clean-local-data
-clean-local-data:
-	@echo "$(YELLOW)Removing local data...$(NC)"
-	@rm -rf $(DATA_DIR)
-	@echo "$(YELLOW)Local data removed!$(NC)"
-
-.PHONY: rebuild-local
-rebuild-local: clean-local local
-
-# ==============================
-# Docker targets
-# ==============================
-
-# Build Docker image only if Dockerfile or source files changed
-$(DOCKER_CACHE): Dockerfile .gitattributes $(shell find . -path ./build -prune -o -path ./.git -prune -o -path ./.superpowers -prune -o -name "*.cpp" -print -o -name "*.hpp" -print -o -name "*.h" -print -o -name "*.c" -print -o -path "./tests/*.py" -print -o -path "./tests/*.txt" -print 2>/dev/null) CMakeLists.txt
-	@echo "$(BLUE)Building Docker image...$(NC)"
-	@docker build -t $(DOCKER_IMAGE) .
-	@touch $(DOCKER_CACHE)
-	@echo "$(GREEN)Docker image built: $(DOCKER_IMAGE)$(NC)"
-
-.PHONY: docker
-docker: $(DOCKER_CACHE)
-
-.PHONY: test-docker
 test-docker:
-	@docker build --target test -t $(DOCKER_IMAGE)-test .
+	docker build --target test -t $(DOCKER_IMAGE)-test .
 
-.PHONY: run-docker
 run-docker: docker
-	@echo "$(GREEN)Running Snake Game in Docker with persistent scores...$(NC)"
-	@docker volume create $(DOCKER_VOLUME) 2>/dev/null || true
-	@docker run --rm -it \
-		-v $(DOCKER_VOLUME):/app/data \
-		--name $(DOCKER_CONTAINER) \
-		$(DOCKER_IMAGE)
+	docker volume create $(DOCKER_VOLUME) >/dev/null
+	docker run --rm -it -v $(DOCKER_VOLUME):/app/data $(DOCKER_IMAGE)
 
-.PHONY: clean-docker
 clean-docker:
-	@echo "$(YELLOW)Cleaning Docker...$(NC)"
-	@docker rm -f $(DOCKER_CONTAINER) 2>/dev/null || true
-	@docker rmi -f $(DOCKER_IMAGE) 2>/dev/null || true
-	@rm -f $(DOCKER_CACHE)
-	@echo "$(YELLOW)Docker clean complete!$(NC)"
+	docker rmi -f $(DOCKER_IMAGE) $(DOCKER_IMAGE)-test 2>/dev/null || true
 
-.PHONY: clean-docker-data
 clean-docker-data:
-	@echo "$(YELLOW)Removing Docker data volume...$(NC)"
-	@docker volume rm $(DOCKER_VOLUME) 2>/dev/null || true
-	@echo "$(YELLOW)Docker data volume removed!$(NC)"
+	docker volume rm $(DOCKER_VOLUME) 2>/dev/null || true
 
-.PHONY: rebuild-docker
-rebuild-docker: clean-docker docker
-
-# ==============================
-# Help
-# ==============================
-
-.PHONY: help
 help:
-	@echo "$(GREEN)Snake Game - Makefile Options$(NC)"
-	@echo ""
-	@echo "$(BLUE)Local targets:$(NC)"
-	@echo "  make local          - Build the game locally (only if changed)"
-	@echo "  make run-local      - Build and run the game locally (only if changed)"
-	@echo "  make test-local     - Build and run the test suite locally"
-	@echo "  make clean-local    - Remove build files"
-	@echo "  make clean-local-data - Remove local data files"
-	@echo "  make rebuild-local  - Clean and rebuild locally"
-	@echo ""
-	@echo "$(BLUE)Docker targets:$(NC)"
-	@echo "  make docker         - Build Docker image (only if changed)"
-	@echo "  make test-docker    - Run the test suite in Docker (test stage only)"
-	@echo "  make run-docker     - Build and run in Docker (only if changed)"
-	@echo "  make clean-docker   - Remove Docker image, container and cache"
-	@echo "  make clean-docker-data - Remove Docker data volume"
-	@echo "  make rebuild-docker - Clean and rebuild Docker image"
+	@echo "make            build (Release) into $(BUILD)/"
+	@echo "make run        build and play"
+	@echo "make test       build, then run unit and e2e tests"
+	@echo "make clean      remove $(BUILD)/"
+	@echo "make clean-data remove local score data"
+	@echo "make docker | run-docker | test-docker | clean-docker | clean-docker-data"

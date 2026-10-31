@@ -11,7 +11,7 @@
 #include <sstream>
 #include <string>
 
-#include "score_manager.hpp"
+#include "snake_game/score/score_manager.hpp"
 
 #include <cstdint>
 

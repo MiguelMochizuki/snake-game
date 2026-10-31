@@ -5,7 +5,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "wasd_input_handler.hpp"
+#include "snake_game/input/wasd_input_handler.hpp"
 
 /**
  * Letters map to moves in both cases

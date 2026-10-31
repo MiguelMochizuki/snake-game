@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "golden.hpp"
-#include "terminal_menu_view.hpp"
+#include "snake_game/menu/terminal_menu_view.hpp"
 
 namespace {
 

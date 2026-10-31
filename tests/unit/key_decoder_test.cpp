@@ -5,7 +5,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "key_decoder.hpp"
+#include "snake_game/input/key_decoder.hpp"
 
 using Keys = std::vector<Key>;
 

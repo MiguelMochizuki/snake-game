@@ -11,11 +11,11 @@
 #include <functional>
 #include <memory>
 
-#include "arrow_input_handler.hpp"
-#include "command_input_handler.hpp"
-#include "composite_input_handler.hpp"
-#include "game_engine.hpp"
-#include "wasd_input_handler.hpp"
+#include "snake_game/input/arrow_input_handler.hpp"
+#include "snake_game/input/command_input_handler.hpp"
+#include "snake_game/input/composite_input_handler.hpp"
+#include "snake_game/game/game_engine.hpp"
+#include "snake_game/input/wasd_input_handler.hpp"
 
 /**
  * Scripted key source

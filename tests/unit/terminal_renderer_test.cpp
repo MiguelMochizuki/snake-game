@@ -7,9 +7,9 @@
 
 #include <sstream>
 
-#include "game_state.hpp"
+#include "snake_game/game/game_state.hpp"
 #include "golden.hpp"
-#include "terminal_renderer.hpp"
+#include "snake_game/render/terminal_renderer.hpp"
 
 TEST(TerminalRendererGolden, InitialBoard) {
 	std::ostringstream out;

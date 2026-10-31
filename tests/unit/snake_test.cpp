@@ -5,7 +5,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "snake.hpp"
+#include "snake_game/game/snake.hpp"
 
 TEST(Snake, ConstructorLaysBodyLeftOfHead) {
 	Snake s(10, 10);

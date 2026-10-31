@@ -34,27 +34,26 @@ On Windows, double-click the `.exe` or run it from a terminal that supports ANSI
 
 ## Build from source
 
-You need a C++17 compiler (g++ 7+, clang 5+ or MSVC 2017+), CMake 3.14+ and Make or Ninja.
+You need a C++17 compiler (g++ 7+, clang 5+ or MSVC 2017+), CMake 3.16+ and Make or Ninja.
 
 ```bash
-make run-local       # build and play
-make local           # build only: build/bin/snake
-make rebuild-local   # clean build
-make clean-local     # remove build files
+make run             # build and play
+make                 # build only: build/bin/snake
+make clean           # remove build files
+make clean-data      # remove local score data
 ```
 
 Without Make:
 
 ```bash
-mkdir build && cd build
-cmake ..
-make
-./bin/snake
+cmake -S . -B build
+cmake --build build
+./build/bin/snake
 ```
 
 For a different build type, pass `-DCMAKE_BUILD_TYPE=Debug` (or `Release`, the default, or `RelWithDebInfo`) to `cmake`. All targets compile with `-Wall -Wextra -Wpedantic` (`/W4` on MSVC).
 
-On Ubuntu or Debian, `sudo apt-get install build-essential cmake` installs the dependencies. On macOS, use `brew install cmake`. On Windows with MinGW, run `cmake -G "MinGW Makefiles" ..`, then `mingw32-make`.
+On Ubuntu or Debian, `sudo apt-get install build-essential cmake` installs the dependencies. On macOS, use `brew install cmake`. On Windows with MinGW, configure with `cmake -S . -B build -G "MinGW Makefiles"`, then `cmake --build build`.
 
 ## Docker
 
@@ -70,8 +69,8 @@ To build the image yourself (Docker 20.10 or newer):
 ```bash
 make run-docker      # build the image and play with a persistent score volume
 make docker          # build only
-make rebuild-docker  # clean build
-make clean-docker    # remove the image and container
+make clean-docker    # remove the image
+make clean-docker-data  # remove the score volume
 ```
 
 The image builds in two stages (Alpine with build tools, then a minimal Alpine runtime) and runs as the non-root user `snakeuser`.
@@ -106,10 +105,21 @@ Files from v1.x (`best_score.txt`, `score_history.txt`, `score_checksum.txt`) ar
 
 ## Code layout
 
-- `src/` and `include/` hold the game. `GameEngine` runs the loop, `GameState` holds the snake and food, and `TerminalRenderer` draws the board.
+```
+apps/snake.cpp      main(): wires the menu, engine, renderer and key source together
+include/snake_game/
+  game/             Snake, Food, GameState, Level and the GameEngine loop
+  input/            key source, key decoder and the WASD, arrow and command handlers
+  menu/             MenuModel, IMenuView, the terminal view and runMenu
+  render/           TerminalRenderer, TerminalPainter and Sound
+  score/            ScoreManager and the score source it reads
+src/                implementations, mirroring include/snake_game
+tests/              unit (GoogleTest), golden and end-to-end tests
+```
+
+- `GameEngine` runs the loop, `GameState` holds the snake and food, and `TerminalRenderer` draws the board. Everything except `main()` builds into the `snake_core` library.
 - Input goes through a key source and a set of handlers (WASD, arrows and commands), so the engine never reads the terminal directly.
 - The menu is split the same way: `MenuModel` holds its state, `IMenuView` draws it and its leaderboard and help screens (`TerminalMenuView` does so in ASCII), and `runMenu` connects them to the keys. A different interface, such as a GUI, would need only another `IMenuView`.
-- `tests/` holds the unit, golden and end-to-end tests.
 
 ## Tests
 
@@ -120,7 +130,7 @@ The suite has three parts, all run by CTest:
 - **End-to-end** (`tests/e2e/`): Python 3 scripts that run `snake` in a pseudo-terminal and press keys. Each `test_*.py` registers itself as `e2e_<name>`. They run on Linux only (x86-64 and ARM64, natively and in Docker), while the unit tests also run on macOS and Windows.
 
 ```bash
-make test-local                      # build, then run everything
+make test                            # build, then run everything
 make test-docker                     # run the suite inside the Docker build
 ctest --test-dir build -L unit       # unit tests only
 ctest --test-dir build -L e2e        # end-to-end tests only
@@ -184,7 +194,7 @@ sudo usermod -aG docker $USER
 
 ## Contributing
 
-Fork the repository, make your changes on a branch, run `make test-local` (and try the game with `make run-docker`), then open a pull request.
+Code and docs follow the conventions in [CONTRIBUTING.md](CONTRIBUTING.md). Fork the repository, make your changes on a branch, run `make test` (and try the game with `make run-docker`), then open a pull request.
 
 Ideas not done yet: network multiplayer.
 

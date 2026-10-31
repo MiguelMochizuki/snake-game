@@ -27,12 +27,13 @@ ARG SNAKE_E2E_TIMEOUT_SCALE=10
 COPY CMakeLists.txt .gitattributes ./
 COPY include/ ./include/
 COPY src/ ./src/
+COPY apps/ ./apps/
 COPY tests/ ./tests/
 
 # Build the project
 RUN mkdir -p build && \
     cd build && \
-    cmake -DBUILD_TESTING=ON -DSNAKE_E2E_TIMEOUT_SCALE=${SNAKE_E2E_TIMEOUT_SCALE} .. && \
+    cmake -DSNAKE_GAME_BUILD_TESTS=ON -DSNAKE_E2E_TIMEOUT_SCALE=${SNAKE_E2E_TIMEOUT_SCALE} .. && \
     cmake --build .
 
 # ==============================
