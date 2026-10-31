@@ -74,7 +74,7 @@ cmake --build build
 ./build/bin/snake-gui
 ```
 
-This fetches SDL3 and miniaudio when configuring and links them statically. On Linux, SDL needs the development packages of your window system first. For Wayland: `libwayland-dev libxkbcommon-dev wayland-protocols libdecor-0-dev libegl-dev libdrm-dev libgbm-dev`; for X11 also `libx11-dev libxext-dev libxcursor-dev libxi-dev libxrandr-dev`. Without a window system (a CI machine, say), add `-DSDL_UNIX_CONSOLE_BUILD=ON` to build and use only the off-screen mode below.
+This fetches SDL3 and miniaudio when configuring and links them statically. On Linux, SDL needs the development packages of your window system first. For Wayland: `libwayland-dev libxkbcommon-dev wayland-protocols libdecor-0-dev libegl-dev libdrm-dev libgbm-dev`; for X11 (SDL checks for it even on Wayland) also `libx11-dev libxext-dev libxcursor-dev libxi-dev libxrandr-dev libxss-dev libxtst-dev libxfixes-dev libxkbcommon-x11-dev`; for sound output `libasound2-dev libpulse-dev libudev-dev`. Without a window system (a CI machine, say), add `-DSDL_UNIX_CONSOLE_BUILD=ON` to build and use only the off-screen mode below.
 
 The keys are the same as in the terminal (arrows or WASD, Enter, R, M, Q), and closing the window quits. The Docker image stays terminal-only.
 
