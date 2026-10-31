@@ -22,8 +22,8 @@ namespace theme {
 constexpr Color BACKGROUND{15, 18, 17};
 constexpr Color SURFACE{24, 30, 28};
 constexpr Color WALL{52, 66, 61};
-constexpr Color DIM{100, 114, 108};
-constexpr Color LABEL{168, 182, 175};
+constexpr Color DIM{134, 148, 142};
+constexpr Color LABEL{192, 204, 198};
 constexpr Color NUMBER{232, 240, 235};
 
 // The accent (snake, selection, key hints) and the single warm colour (food, game over)

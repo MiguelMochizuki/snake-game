@@ -131,3 +131,44 @@ TEST(SdlKeys, WindowCloseThenEmptyQueueMeansEof) {
 	EXPECT_TRUE(app.closeRequested());
 	EXPECT_FALSE(source.waitKey().has_value());  // nothing queued after a close: end of input, so the program quits
 }
+
+namespace {
+
+/**
+ * Queues a key-down event flagged as an auto-repeat, as the window system sends while a key is held
+ *
+ * Parameters:
+ * SDL_Keycode code: The key
+ */
+void pushRepeat(SDL_Keycode code) {
+	SDL_Event e;
+	SDL_zero(e);
+	e.type = SDL_EVENT_KEY_DOWN;
+	e.key.key = code;
+	e.key.repeat = true;
+	SDL_PushEvent(&e);
+}
+
+}  // namespace
+
+TEST(SdlKeys, HeldEnterDoesNotRepeat) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(32, 32);
+	SdlApp app(*canvas, true);
+	app.keys().clear();
+	pushRepeat(SDLK_RETURN);
+	pushRepeat(SDLK_Q);
+	app.pump(0);
+	EXPECT_TRUE(app.keys().empty());
+}
+
+TEST(SdlKeys, HeldDirectionsStillRepeat) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(32, 32);
+	SdlApp app(*canvas, true);
+	app.keys().clear();
+	pushRepeat(SDLK_DOWN);
+	pushRepeat(SDLK_S);
+	app.pump(0);
+	ASSERT_EQ(app.keys().size(), 2u);
+	EXPECT_EQ(app.keys()[0], specialKey(KeyKind::Down));
+	EXPECT_EQ(app.keys()[1], charKey('s'));
+}

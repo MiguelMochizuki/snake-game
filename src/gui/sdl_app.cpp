@@ -5,6 +5,7 @@
  */
 #include "snake_game/gui/sdl_app.hpp"
 #include <SDL3/SDL.h>
+#include <string>
 
 /**
  * Maps an SDL key to the game's key type
@@ -54,7 +55,11 @@ void SdlApp::handle(const void* event) {
 	switch (e.type) {
 		case SDL_EVENT_KEY_DOWN:
 			if (std::optional<Key> key = keyFromSdl(e.key.key)) {
-				keys_.push_back(*key);
+				// Only steering and menu navigation repeat while held; a held Enter or Q must not skip through screens
+				const bool repeatable = key->kind != KeyKind::Enter && !(key->kind == KeyKind::Char && std::string("wasd").find(key->ch) == std::string::npos);
+				if (!e.key.repeat || repeatable) {
+					keys_.push_back(*key);
+				}
 			}
 			break;
 		case SDL_EVENT_QUIT:
