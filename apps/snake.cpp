@@ -10,6 +10,11 @@
 #include "snake_game/menu/menu_controller.hpp"
 #include "snake_game/score/score_manager.hpp"
 #include "snake_game/render/sound.hpp"
+#ifdef SNAKE_HAVE_AUDIO
+#include "snake_game/audio/audio_device.hpp"
+#include "snake_game/audio/synth.hpp"
+#include "snake_game/audio/synth_sound.hpp"
+#endif
 #include "snake_game/menu/terminal_menu_view.hpp"
 #include "snake_game/input/terminal_key_source.hpp"
 #include "snake_game/input/wasd_input_handler.hpp"
@@ -116,6 +121,16 @@ int main() {
 	GameEngine engine(keys, input, 20, 20, 200, readSeed(), color);
 	TerminalBell bell(std::cout);
 	const bool canBeep = soundCapable();
+	ISound* cues = canBeep ? &bell : nullptr;
+#ifdef SNAKE_HAVE_AUDIO
+	// The device is declared after the synth so it is stopped first; without a device the bell is used as before
+	Synth synth;
+	SynthSound synthSound(synth);
+	std::unique_ptr<AudioDevice> audio = AudioDevice::open(synth);
+	if (audio) {
+		cues = &synthSound;
+	}
+#endif
 	MenuModel menu;
 	bool showMenu = !skipMenu();
 	do {
@@ -126,7 +141,7 @@ int main() {
 			// Read the scores afresh: the round that just ended may have changed them
 			ScoreManager scores;
 			TerminalMenuView view(std::cout, color);
-			MenuResult choice = runMenu(keys, input, view, menu, scores);
+			MenuResult choice = runMenu(keys, input, view, menu, scores, cues);
 			if (!choice.start) {
 				return 0;
 			}
@@ -136,7 +151,7 @@ int main() {
 		}
 		// A valid SNAKE_FRAME_MS (test hook) overrides the speed, never the level
 		engine.setLevel(level, readFrameMs().value_or(speedMs));
-		engine.setSound(sound && canBeep ? &bell : nullptr);
+		engine.setSound(sound ? cues : nullptr);
 		showMenu = true;
 	} while (engine.run() == GameEnd::Menu);
 	return 0;

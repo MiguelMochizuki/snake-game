@@ -46,7 +46,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND TARGET snake)
 			set_tests_properties(e2e_${name} PROPERTIES
 				LABELS e2e
 				TIMEOUT ${E2E_TIMEOUT}
-				ENVIRONMENT SNAKE_E2E_TIMEOUT_SCALE=${SNAKE_E2E_TIMEOUT_SCALE})
+				ENVIRONMENT "SNAKE_E2E_TIMEOUT_SCALE=${SNAKE_E2E_TIMEOUT_SCALE};SNAKE_AUDIO=off")
 		endforeach()
 	else()
 		message(STATUS "Python3 not found: e2e tests not registered")
