@@ -169,6 +169,9 @@ GameEnd GameEngine::run() {
 	do {
 		renderer_->clear();
 		renderer_->render(state_);
+		if (sound_) {
+			sound_->musicStart();
+		}
 
 		while (running_) {
 			TickInput tick = readTick(keys_, input_);
@@ -204,6 +207,7 @@ GameEnd GameEngine::run() {
 
 		end = awaitChoice(keys_, input_, [&]() {
 			if (sound_) {
+				sound_->musicStop();
 				sound_->gameOver();
 			}
 			renderer_->printGameOver(level_, finalScore, scoreManager_.stats(level_));

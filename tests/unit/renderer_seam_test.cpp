@@ -18,80 +18,11 @@
 #include "snake_game/input/command_input_handler.hpp"
 #include "snake_game/input/composite_input_handler.hpp"
 #include "snake_game/input/wasd_input_handler.hpp"
+#include "engine_fakes.hpp"
 #include "snake_game/render/renderer.hpp"
 
-namespace fs = std::filesystem;
+using namespace fakes;
 
-namespace {
-
-/**
- * Key source with no keys during play and scripted waitKey() answers
- *
- * Attributes:
- * std::deque<std::optional<Key>> waits: Results of successive waitKey() calls, nullopt once empty
- */
-class ScriptedKeys : public IKeySource {
-public:
-	std::deque<std::optional<Key>> waits;
-
-	std::vector<Key> poll() override { return {}; }
-
-	std::optional<Key> waitKey() override {
-		if (waits.empty()) {
-			return std::nullopt;
-		}
-		std::optional<Key> k = waits.front();
-		waits.pop_front();
-		return k;
-	}
-
-	void flush() override {}
-};
-
-/**
- * Renderer that records every call
- *
- * Attributes:
- * int renders, clears, resets, gameOvers: Call counts
- * int lastScore: finalScore of the last printGameOver
- * std::vector<int> pauses: Argument of every pause()
- */
-class RecordingRenderer : public IRenderer {
-public:
-	int renders = 0, clears = 0, resets = 0, gameOvers = 0, lastScore = -1;
-	std::vector<int> pauses;
-
-	void reset() override { ++resets; }
-	void clear() override { ++clears; }
-	void render(const GameState&) override { ++renders; }
-	void printGameOver(Level, int finalScore, const ScoreStats&) override {
-		++gameOvers;
-		lastScore = finalScore;
-	}
-	void pause(int ms) override { pauses.push_back(ms); }
-};
-
-/**
- * Temporary score directory removed on destruction
- */
-struct TempDir {
-	fs::path path;
-
-	TempDir() : path(fs::temp_directory_path() / ("snake_renderer_seam_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))) {
-		fs::create_directories(path);
-	}
-	~TempDir() { fs::remove_all(path); }
-};
-
-CompositeInputHandler makeInput() {
-	CompositeInputHandler input;
-	input.add(std::make_unique<WASDInputHandler>());
-	input.add(std::make_unique<ArrowInputHandler>());
-	input.add(std::make_unique<CommandInputHandler>());
-	return input;
-}
-
-}  // namespace
 
 TEST(RendererSeam, EngineDrivesInjectedRenderer) {
 	TempDir dir;

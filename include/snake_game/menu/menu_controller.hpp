@@ -10,6 +10,7 @@
 #include "snake_game/input/key_source.hpp"
 #include "snake_game/menu/menu_model.hpp"
 #include "snake_game/menu/menu_view.hpp"
+#include "snake_game/render/sound.hpp"
 #include "snake_game/score/score_source.hpp"
 
 /**
@@ -37,10 +38,11 @@ struct MenuResult {
  * IMenuView& view: Draws the menu
  * MenuModel& model: Menu state, updated as keys arrive
  * const IScoreSource& scores: Where the menu reads the figures and leaderboards from
+ * ISound* sound: Plays a blip on Up/Down and Confirm while the menu's sound switch is on, nullptr for silence
  *
  * Returns MenuResult: start true with the chosen speed; false on Quit, Ctrl+C or EOF
  */
 MenuResult runMenu(IKeySource& keys, const IInputHandler& input, IMenuView& view,
-	MenuModel& model, const IScoreSource& scores);
+	MenuModel& model, const IScoreSource& scores, ISound* sound = nullptr);
 
 #endif

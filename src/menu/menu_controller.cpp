@@ -88,11 +88,12 @@ bool runHelp(IKeySource& keys, const IInputHandler& input, IMenuView& view) {
  * IMenuView& view: Draws the menu
  * MenuModel& model: Menu state, updated as keys arrive
  * const IScoreSource& scores: Where the menu reads the figures and leaderboards from
+ * ISound* sound: Plays a blip on Up/Down and Confirm while the menu's sound switch is on, nullptr for silence
  *
  * Returns MenuResult: start true with the chosen speed; false on Quit, Ctrl+C or EOF
  */
 MenuResult runMenu(IKeySource& keys, const IInputHandler& input, IMenuView& view,
-		MenuModel& model, const IScoreSource& scores) {
+		MenuModel& model, const IScoreSource& scores, ISound* sound) {
 	keys.flush();
 	while (true) {
 		view.show(MenuSnapshot{model.selected(), model.level(), scores.stats(model.level()), model.sound()});
@@ -104,7 +105,16 @@ MenuResult runMenu(IKeySource& keys, const IInputHandler& input, IMenuView& view
 		if (!action) {
 			continue;
 		}
-		switch (model.apply(*action)) {
+		const MenuOutcome outcome = model.apply(*action);
+		// Judged after the action, so switching sound Off is itself silent
+		if (sound && model.sound()) {
+			if (*action == Action::MoveUp || *action == Action::MoveDown) {
+				sound->menuMove();
+			} else if (*action == Action::Confirm) {
+				sound->menuSelect();
+			}
+		}
+		switch (outcome) {
 			case MenuOutcome::Start:
 				return resultOf(model, true);
 			case MenuOutcome::Quit:
