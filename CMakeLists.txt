@@ -89,6 +89,8 @@ if(SNAKE_GAME_BUILD_GUI)
 	add_library(snake_gui_core STATIC
 		src/gui/canvas.cpp
 		src/gui/bitmap_font.cpp
+		src/gui/sdl_app.cpp
+		src/gui/sdl_key_source.cpp
 	)
 	target_include_directories(snake_gui_core PUBLIC include)
 	target_link_libraries(snake_gui_core PUBLIC snake_core SDL3::SDL3)
