@@ -14,7 +14,7 @@ The classic Snake game for the terminal, written in C++. It saves your scores be
 
 ## Download
 
-Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v2.0.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.0.0), which keeps scores per level, adds the leaderboard, how-to-play screen and sound, and migrates old score files.
+Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v2.1.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.1.0), which adds the graphical `snake-gui` with an app icon, and chord music in both versions.
 
 | Platform | Architecture | Binary |
 |----------|-------------|--------|
@@ -32,6 +32,20 @@ chmod +x snake-linux-x86_64
 ```
 
 On Windows, double-click the `.exe` or run it from a terminal that supports ANSI escape codes, such as Windows Terminal.
+
+### Graphical version
+
+| Platform | Architecture | Download |
+|----------|-------------|----------|
+| Linux | x86-64 | `snake-gui-linux-x86_64.AppImage` |
+| Linux | ARM64 | `snake-gui-linux-arm64.AppImage` |
+| Windows | x86-64 | `snake-gui-windows-x86_64.zip` |
+| Windows | ARM64 | `snake-gui-windows-arm64.zip` |
+| macOS | Universal (x86_64 + ARM64) | `snake-gui-macos-universal.zip` |
+
+- **Linux:** `chmod +x snake-gui-linux-x86_64.AppImage`, then run it or double-click it.
+- **Windows:** unzip and double-click `snake-gui.exe`. SmartScreen may warn about an unknown publisher (the app is not signed): choose More info, then Run anyway.
+- **macOS:** unzip and move `Snake.app` to Applications. The app is not signed, so the first time, right-click it, choose Open, then Open again.
 
 ## Build from source
 
