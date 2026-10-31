@@ -7,7 +7,7 @@ The classic Snake game for the terminal, written in C++. It saves your scores be
 - Start menu with three levels (Easy, Normal, Hard), a leaderboard, a how-to-play screen and a sound switch; press M at game over to return to it
 - Arrow keys or WASD
 - Best score, games played, average score and top 10, kept separately for each level and saved between sessions
-- Terminal beep when you eat and when the game ends
+- Terminal beep when you eat and when the game ends; in builds with audio (the release binaries), a looping C - Am - F - G chord arpeggio plays during the game, with short blips when you eat, when the game ends and when you move around the menu
 - Colored board (cyan walls, green snake with a bright head, red food, yellow numbers)
 - Linux, macOS and Windows binaries, plus a Docker image
 
@@ -54,6 +54,12 @@ cmake --build build
 For a different build type, pass `-DCMAKE_BUILD_TYPE=Debug` (or `Release`, the default, or `RelWithDebInfo`) to `cmake`. All targets compile with `-Wall -Wextra -Wpedantic` (`/W4` on MSVC).
 
 On Ubuntu or Debian, `sudo apt-get install build-essential cmake` installs the dependencies. On macOS, use `brew install cmake`. On Windows with MinGW, configure with `cmake -S . -B build -G "MinGW Makefiles"`, then `cmake --build build`.
+
+## Sound
+
+The release binaries play music and blips through the system audio device. The sound switch in the menu turns all of it off. If no audio device can be opened, the game falls back to the terminal beep without any message. Set `SNAKE_AUDIO=off` to force the beep even when a device exists.
+
+Audio is optional at build time: `cmake -S . -B build -DSNAKE_GAME_BUILD_AUDIO=ON` fetches [miniaudio](https://github.com/mackron/miniaudio) when configuring. The default build (`make`) and the Docker image have no audio and keep the terminal beep.
 
 ## Docker
 

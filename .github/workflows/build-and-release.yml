@@ -76,6 +76,7 @@ jobs:
             -S .
             -B build
             -DCMAKE_BUILD_TYPE=Release
+            -DSNAKE_GAME_BUILD_AUDIO=ON
           )
 
           if [ "${{ matrix.cmake-generator }}" = "Visual Studio" ]; then
