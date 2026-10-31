@@ -8,6 +8,7 @@
 
 #include "snake_game/game/game_state.hpp"
 #include "snake_game/game/level.hpp"
+#include "snake_game/render/renderer.hpp"
 #include "snake_game/score/score_source.hpp"
 #include <cstddef>
 #include <iostream>
@@ -20,7 +21,7 @@
  * bool firstRender_: Whether the next clear is the first one (full clear)
  * bool color_: Whether output carries ANSI SGR color codes
  */
-class TerminalRenderer {
+class TerminalRenderer : public IRenderer {
 	std::ostream& out_;
 	bool firstRender_ = true;
 	bool color_;
@@ -50,12 +51,12 @@ public:
 	/**
 	 * Resets the renderer state (for game restart)
 	 */
-	void reset();
+	void reset() override;
 
 	/**
 	 * Clears the terminal screen
 	 */
-	void clear();
+	void clear() override;
 
 	/**
 	 * Renders the game state
@@ -63,7 +64,7 @@ public:
 	 * Parameters:
 	 * const GameState& state: The game state to render
 	 */
-	void render(const GameState& state);
+	void render(const GameState& state) override;
 
 	/**
 	 * Prints the game over panel with statistics
@@ -73,7 +74,15 @@ public:
 	 * int finalScore: The final score
 	 * const ScoreStats& stats: Best, games played and average of that level
 	 */
-	void printGameOver(Level level, int finalScore, const ScoreStats& stats);
+	void printGameOver(Level level, int finalScore, const ScoreStats& stats) override;
+
+	/**
+	 * Sleeps between game steps
+	 *
+	 * Parameters:
+	 * int ms: Time to sleep in milliseconds
+	 */
+	void pause(int ms) override;
 };
 
 #endif

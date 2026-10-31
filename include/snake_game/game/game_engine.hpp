@@ -11,11 +11,14 @@
 #include "snake_game/input/key_source.hpp"
 #include "snake_game/game/level.hpp"
 #include "snake_game/render/sound.hpp"
+#include "snake_game/render/renderer.hpp"
 #include "snake_game/render/terminal_renderer.hpp"
 #include "snake_game/score/score_manager.hpp"
 #include <ctime>
 #include <functional>
+#include <memory>
 #include <optional>
+#include <string>
 
 /**
  * What the player asked for during one tick
@@ -55,7 +58,8 @@ private:
 	GameState state_;
 	IKeySource& keys_;
 	const IInputHandler& input_;
-	TerminalRenderer renderer_;
+	std::unique_ptr<TerminalRenderer> ownedRenderer_;
+	IRenderer* renderer_;
 	Direction direction_;
 	bool running_;
 	int speedMs_;
@@ -76,6 +80,21 @@ public:
 	 * bool color: Whether to render with ANSI colors (default: false)
 	 */
 	GameEngine(IKeySource& keys, const IInputHandler& input, int rows = 20, int cols = 20, int speedMs = 200, unsigned seed = static_cast<unsigned>(std::time(nullptr)), bool color = false);
+
+	/**
+	 * Constructor taking any renderer, for front-ends other than the terminal
+	 *
+	 * Parameters:
+	 * IKeySource& keys: Source of key presses, must outlive the engine
+	 * const IInputHandler& input: Maps keys to actions, must outlive the engine
+	 * IRenderer& renderer: Draws the game and paces it, must outlive the engine
+	 * int rows: Number of rows in the board
+	 * int cols: Number of columns in the board
+	 * int speedMs: Game speed in milliseconds
+	 * unsigned seed: Seed for food placement
+	 * const std::string& dataDir: Directory of the score file (default: "data")
+	 */
+	GameEngine(IKeySource& keys, const IInputHandler& input, IRenderer& renderer, int rows, int cols, int speedMs, unsigned seed, const std::string& dataDir = "data");
 
 	/**
 	 * Destructor for the GameEngine class
