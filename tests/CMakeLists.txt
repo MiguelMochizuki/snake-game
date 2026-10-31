@@ -17,8 +17,18 @@ if(NOT SNAKE_GAME_BUILD_AUDIO)
 	list(REMOVE_ITEM UNIT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/unit/audio_device_test.cpp)
 endif()
 
+set(GUI_TESTS canvas_test bitmap_font_test sdl_keys_test sdl_renderer_test sdl_menu_view_test demo_pilot_test)
+if(NOT SNAKE_GAME_BUILD_GUI)
+	foreach(name ${GUI_TESTS})
+		list(REMOVE_ITEM UNIT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/unit/${name}.cpp)
+	endforeach()
+endif()
+
 add_executable(snake_unit_tests ${UNIT_SOURCES})
 target_link_libraries(snake_unit_tests PRIVATE snake_core GTest::gtest_main)
+if(SNAKE_GAME_BUILD_GUI)
+	target_link_libraries(snake_unit_tests PRIVATE snake_gui_core)
+endif()
 target_compile_definitions(snake_unit_tests PRIVATE
 	SNAKE_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden")
 snake_game_set_warnings(snake_unit_tests)
