@@ -13,6 +13,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 option(SNAKE_GAME_BUILD_APPS "Build the game executable" ON)
 option(SNAKE_GAME_BUILD_TESTS "Build unit and end-to-end tests" ON)
+option(SNAKE_GAME_BUILD_GUI "Build snake-gui, the SDL3 front-end (fetched at configure time; implies audio)" OFF)
 option(SNAKE_GAME_BUILD_AUDIO "Build with music and sound output through miniaudio (fetched at configure time)" OFF)
 
 # Compiler warnings, shared by all targets (including tests)
@@ -53,6 +54,10 @@ if(UNIX)
 	target_link_libraries(snake_core PUBLIC pthread)
 endif()
 
+if(SNAKE_GAME_BUILD_GUI)
+	set(SNAKE_GAME_BUILD_AUDIO ON CACHE BOOL "" FORCE)
+endif()
+
 if(SNAKE_GAME_BUILD_AUDIO)
 	include(FetchContent)
 	# Only the single header is needed, so skip miniaudio's own CMake project
@@ -66,6 +71,33 @@ if(SNAKE_GAME_BUILD_AUDIO)
 	target_include_directories(snake_core SYSTEM PRIVATE ${miniaudio_SOURCE_DIR})
 	target_compile_definitions(snake_core PUBLIC SNAKE_HAVE_AUDIO)
 	target_link_libraries(snake_core PUBLIC ${CMAKE_DL_LIBS})
+endif()
+
+if(SNAKE_GAME_BUILD_GUI)
+	include(FetchContent)
+	set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+	set(SDL_STATIC ON CACHE BOOL "" FORCE)
+	set(SDL_TEST_LIBRARY OFF CACHE BOOL "" FORCE)
+	set(SDL_TESTS OFF CACHE BOOL "" FORCE)
+	set(SDL_EXAMPLES OFF CACHE BOOL "" FORCE)
+	set(SDL_INSTALL OFF CACHE BOOL "" FORCE)
+	FetchContent_Declare(SDL3
+		URL https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.4.18.tar.gz
+		URL_HASH SHA256=c4b08b950bd29d83caae0ab8d884298d27046a9d30700fb42841c50992665c90
+	)
+	FetchContent_MakeAvailable(SDL3)
+	add_library(snake_gui_core STATIC
+		src/gui/canvas.cpp
+		src/gui/bitmap_font.cpp
+		src/gui/sdl_app.cpp
+		src/gui/sdl_key_source.cpp
+		src/gui/sdl_renderer.cpp
+		src/gui/sdl_menu_view.cpp
+		src/gui/demo_pilot.cpp
+	)
+	target_include_directories(snake_gui_core PUBLIC include)
+	target_link_libraries(snake_gui_core PUBLIC snake_core SDL3::SDL3)
+	snake_game_set_warnings(snake_gui_core)
 endif()
 
 if(SNAKE_GAME_BUILD_APPS)

@@ -10,6 +10,7 @@ The classic Snake game for the terminal, written in C++. It saves your scores be
 - Terminal beep when you eat and when the game ends; in builds with audio (the release binaries), a looping C - Am - F - G chord arpeggio plays during the game, with short blips when you eat, when the game ends and when you move around the menu
 - Colored board (cyan walls, green snake with a bright head, red food, yellow numbers)
 - Linux, macOS and Windows binaries, plus a Docker image
+- An optional graphical version, `snake-gui`, drawn with SDL3 (see [Graphical version](#graphical-version))
 
 ## Download
 
@@ -60,6 +61,29 @@ On Ubuntu or Debian, `sudo apt-get install build-essential cmake` installs the d
 The release binaries play music and blips through the system audio device. The sound switch in the menu turns all of it off. If no audio device can be opened, the game falls back to the terminal beep without any message. Set `SNAKE_AUDIO=off` to force the beep even when a device exists.
 
 Audio is optional at build time: `cmake -S . -B build -DSNAKE_GAME_BUILD_AUDIO=ON` fetches [miniaudio](https://github.com/mackron/miniaudio) when configuring. The default build (`make`) and the Docker image have no audio and keep the terminal beep.
+
+## Graphical version
+
+![The graphical version playing a full game with the demo autopilot](docs/snake-gui.gif)
+
+`snake-gui` is a second front-end for the same game: the same rules, levels, scores file and menu, drawn in a resizable window with a bitmap font instead of the terminal. It is not part of the default build. Turn it on with:
+
+```bash
+cmake -S . -B build -DSNAKE_GAME_BUILD_GUI=ON
+cmake --build build
+./build/bin/snake-gui
+```
+
+This fetches SDL3 and miniaudio when configuring and links them statically. On Linux, SDL needs the development packages of your window system first. For Wayland: `libwayland-dev libxkbcommon-dev wayland-protocols libdecor-0-dev libegl-dev libdrm-dev libgbm-dev`; for X11 (SDL checks for it even on Wayland) also `libx11-dev libxext-dev libxcursor-dev libxi-dev libxrandr-dev libxss-dev libxtst-dev libxfixes-dev libxkbcommon-x11-dev`; for sound output `libasound2-dev libpulse-dev libudev-dev`. Without a window system (a CI machine, say), add `-DSDL_UNIX_CONSOLE_BUILD=ON` to build and use only the off-screen mode below.
+
+The keys are the same as in the terminal (arrows or WASD, Enter, R, M, Q), and closing the window quits. The Docker image stays terminal-only.
+
+Two options exist for demos and recordings. `snake-gui --demo` lets an autopilot play, with the menu skipped and the scores kept out of your leaderboard. `snake-gui --demo --frames DIR [--stride N] [--max-steps M]` draws off-screen with no window, writes `frame-00000.ppm`, `frame-00001.ppm` and so on to `DIR`, and gives the same frames for the same `SNAKE_SEED`. The GIF above was made from such frames:
+
+```bash
+SNAKE_SEED=9 build/bin/snake-gui --demo --frames frames --stride 5
+ffmpeg -framerate 25 -i frames/frame-%05d.ppm -vf "scale=480:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=48:stats_mode=diff[p];[b][p]paletteuse=dither=none" -loop 0 docs/snake-gui.gif
+```
 
 ## Docker
 
@@ -113,11 +137,14 @@ Files from v1.x (`best_score.txt`, `score_history.txt`, `score_checksum.txt`) ar
 
 ```
 apps/snake.cpp      main(): wires the menu, engine, renderer and key source together
+apps/snake_gui.cpp  the same for the SDL front-end (only with SNAKE_GAME_BUILD_GUI=ON)
 include/snake_game/
   game/             Snake, Food, GameState, Level and the GameEngine loop
   input/            key source, key decoder and the WASD, arrow and command handlers
   menu/             MenuModel, IMenuView, the terminal view and runMenu
-  render/           TerminalRenderer, TerminalPainter and Sound
+  render/           IRenderer, TerminalRenderer, TerminalPainter and Sound
+  audio/            Synth (chord music and blips) and AudioDevice (only with audio built)
+  gui/              SDL canvas, bitmap font, renderer, menu view, key source and demo autopilot (only with the GUI built)
   score/            ScoreManager and the score source it reads
 src/                implementations, mirroring include/snake_game
 tests/              unit (GoogleTest), golden and end-to-end tests
@@ -125,7 +152,7 @@ tests/              unit (GoogleTest), golden and end-to-end tests
 
 - `GameEngine` runs the loop, `GameState` holds the snake and food, and `TerminalRenderer` draws the board. Everything except `main()` builds into the `snake_core` library.
 - Input goes through a key source and a set of handlers (WASD, arrows and commands), so the engine never reads the terminal directly.
-- The menu is split the same way: `MenuModel` holds its state, `IMenuView` draws it and its leaderboard and help screens (`TerminalMenuView` does so in ASCII), and `runMenu` connects them to the keys. A different interface, such as a GUI, would need only another `IMenuView`.
+- The menu is split the same way: `MenuModel` holds its state, `IMenuView` draws it and its leaderboard and help screens (`TerminalMenuView` does so in ASCII), and `runMenu` connects them to the keys. `snake-gui` is exactly that: another `IRenderer`, `IMenuView` and key source on the same engine.
 
 ## Tests
 
