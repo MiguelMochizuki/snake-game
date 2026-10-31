@@ -93,6 +93,7 @@ if(SNAKE_GAME_BUILD_GUI)
 		src/gui/sdl_key_source.cpp
 		src/gui/sdl_renderer.cpp
 		src/gui/sdl_menu_view.cpp
+		src/gui/demo_pilot.cpp
 	)
 	target_include_directories(snake_gui_core PUBLIC include)
 	target_link_libraries(snake_gui_core PUBLIC snake_core SDL3::SDL3)

@@ -194,7 +194,7 @@ void SdlRenderer::printGameOver(Level level, int finalScore, const ScoreStats& s
 			scale = 1;
 		}
 		const int lineH = font::textHeight(scale) + 4;
-		const int lines = 9;
+		const int lines = 11;
 		const int w = font::textWidth(std::string(30, ' '), scale);
 		const int h = lines * lineH + 8;
 		const int x = std::max(0, (canvas_.width() - w) / 2);
