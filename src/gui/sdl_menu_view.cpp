@@ -6,6 +6,7 @@
 #include "snake_game/gui/sdl_menu_view.hpp"
 #include "snake_game/gui/bitmap_font.hpp"
 #include <algorithm>
+#include <functional>
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -13,78 +14,206 @@
 
 namespace {
 
-const int COLUMNS = 28;  // characters across the widest screen line
-const int LINES = 24;    // lines on the tallest screen
-const Color HIGHLIGHT{30, 62, 74};
+const int COLUMNS = 24;  // characters across the content column
+const int TALLEST = 15;  // rows of text the tallest screen needs, used to pick the text scale
 
 /**
- * Cursor over the lines of one screen
+ * Text scale for a canvas: the largest that fits the content column and the tallest screen
+ *
+ * Parameters:
+ * int canvasW, int canvasH: Canvas size in pixels
+ *
+ * Returns int: Scale from 1 to 4
+ */
+int scaleFor(int canvasW, int canvasH) {
+	for (int s = 4; s > 1; --s) {
+		if (COLUMNS * font::GLYPH * s + 8 * s <= canvasW && TALLEST * 14 * s <= canvasH) {
+			return s;
+		}
+	}
+	return 1;
+}
+
+/**
+ * One screen laid out as a single column: everything is spaced in multiples of u = 2 x the text scale, and a dry pass measures the height so the block can be centred
  *
  * Attributes:
  * Canvas& canvas: Where to draw
+ * bool dry: true to only advance y, drawing nothing
  * int scale: Pixels per glyph pixel
- * int lineH: Height of one line
- * int x: Left edge of the text
- * int y: Top of the next line
+ * int u: Spacing unit
+ * int x: Left edge of the column
+ * int w: Width of the column
+ * int y: Top of the next element
  */
 struct Page {
 	Canvas& canvas;
+	bool dry;
 	int scale;
-	int lineH;
+	int u;
 	int x;
+	int w;
 	int y;
 
 	/**
-	 * Starts a screen: clears, picks the largest text scale that fits and draws the wall frame
+	 * Starts a pass over a screen
 	 *
 	 * Parameters:
 	 * Canvas& c: Where to draw
+	 * bool dryRun: Whether to only measure
+	 * int top: Where the block starts
 	 */
-	explicit Page(Canvas& c) : canvas(c) {
-		canvas.clear(theme::BACKGROUND);
-		scale = 1;
-		for (int s = 3; s >= 1; --s) {
-			if (font::textWidth(std::string(COLUMNS, ' '), s) <= canvas.width() && LINES * (font::textHeight(s) + 4) <= canvas.height()) {
-				scale = s;
-				break;
-			}
+	Page(Canvas& c, bool dryRun, int top) : canvas(c), dry(dryRun) {
+		scale = scaleFor(c.width(), c.height());
+		u = 2 * scale;
+		w = COLUMNS * font::GLYPH * scale;
+		x = std::max(0, (c.width() - w) / 2);
+		y = top;
+		if (!dry) {
+			canvas.clear(theme::BACKGROUND);
 		}
-		lineH = font::textHeight(scale) + 4;
-		x = std::max(0, (canvas.width() - font::textWidth(std::string(COLUMNS, ' '), scale)) / 2);
-		y = std::max(0, (canvas.height() - LINES * lineH) / 2);
-		canvas.fillRect(x - 4, y - 4, font::textWidth(std::string(COLUMNS, ' '), scale) + 8, 2, theme::WALL);
-		canvas.fillRect(x - 4, y + LINES * lineH + 2, font::textWidth(std::string(COLUMNS, ' '), scale) + 8, 2, theme::WALL);
 	}
 
 	/**
-	 * Draws text pieces side by side on the current line, then moves to the next
+	 * Returns int: Height of one text row
+	 */
+	int rowH() const {
+		return font::GLYPH * scale + 3 * u;
+	}
+
+	/**
+	 * Draws text at a position, vertically centred in a row
 	 *
 	 * Parameters:
-	 * const std::vector<std::pair<std::string, Color>>& pieces: Text and colour of each piece
-	 * int indent: Characters of left indent
-	 * bool highlighted: Whether to put a highlight bar behind the line
+	 * int px: Left edge
+	 * int rowTop: Top of the row
+	 * const std::string& text: The text
+	 * Color color: Text colour
+	 * int textScale: Pixels per glyph pixel
 	 */
-	void line(const std::vector<std::pair<std::string, Color>>& pieces, int indent = 0, bool highlighted = false) {
-		if (highlighted) {
-			canvas.fillRect(x, y, font::textWidth(std::string(COLUMNS, ' '), scale), lineH, HIGHLIGHT);
+	void text(int px, int rowTop, const std::string& text, Color color, int textScale) {
+		if (!dry) {
+			font::drawText(canvas, px, rowTop + (rowH() - font::textHeight(textScale)) / 2, text, textScale, color);
 		}
-		int px = x + font::textWidth(std::string(indent, ' '), scale);
-		for (const auto& piece : pieces) {
-			font::drawText(canvas, px, y + 2, piece.first, scale, piece.second);
-			px += font::textWidth(piece.first, scale);
-		}
-		y += lineH;
 	}
 
 	/**
-	 * Leaves an empty line
+	 * Draws text with its right edge on the column's right edge
 	 */
-	void blank() {
-		y += lineH;
+	void textRight(int rowTop, const std::string& text, Color color) {
+		this->text(x + w - u - font::textWidth(text, scale), rowTop, text, color, scale);
+	}
+
+	/**
+	 * Empty space
+	 *
+	 * Parameters:
+	 * int units: Height in spacing units
+	 */
+	void gap(int units) {
+		y += units * u;
+	}
+
+	/**
+	 * A hairline across the column with spacing above and below
+	 */
+	void rule() {
+		y += u;
+		if (!dry) {
+			canvas.fillRect(x, y, w, std::max(1, scale / 2), theme::WALL);
+		}
+		y += std::max(1, scale / 2) + u;
+	}
+
+	/**
+	 * The screen title in a larger size
+	 *
+	 * Parameters:
+	 * const std::string& title: The title
+	 */
+	void title(const std::string& title) {
+		const int ts = scale + 1;
+		if (!dry) {
+			font::drawText(canvas, x + 2 * u, y, title, ts, theme::HEAD);
+		}
+		y += font::textHeight(ts);
+	}
+
+	/**
+	 * The snake and its food drawn from the same blocks as the board
+	 */
+	void art() {
+		const int cell = 3 * u;
+		const int sq = cell - std::max(1, scale / 2);
+		if (!dry) {
+			int px = x + 2 * u;
+			for (int i = 0; i < 6; ++i, px += cell) {
+				canvas.fillRect(px, y, sq, sq, theme::BODY);
+			}
+			canvas.fillRect(px, y, sq, sq, theme::HEAD);
+			px += 3 * cell;
+			canvas.fillCircle(px + cell / 2, y + cell / 2, std::max(1, cell / 2 - 1), theme::FOOD);
+		}
+		y += cell;
+	}
+
+	/**
+	 * A menu row: the selected one gets a surface bar with an accent edge and brighter text; a value is right-aligned and shows arrows while selected
+	 *
+	 * Parameters:
+	 * const std::string& label: Row label
+	 * const std::string* value: Value text, or nullptr
+	 * bool selected: Whether the row is selected
+	 */
+	void row(const std::string& label, const std::string* value, bool selected) {
+		if (!dry && selected) {
+			canvas.fillRect(x, y, w, rowH(), theme::SURFACE);
+			canvas.fillRect(x, y, std::max(2, scale), rowH(), theme::HEAD);
+		}
+		text(x + 2 * u, y, label, selected ? theme::NUMBER : theme::LABEL, scale);
+		if (value) {
+			const std::string shown = selected ? "< " + *value + " >" : *value;
+			if (!dry) {
+				const int right = x + w - u;
+				const int left = right - font::textWidth(shown, scale);
+				if (selected) {
+					text(left, y, "<", theme::HEAD, scale);
+					text(right - font::textWidth(">", scale), y, ">", theme::HEAD, scale);
+					text(right - font::textWidth(" " + *value + " >", scale) + font::textWidth(" ", scale), y, *value, theme::NUMBER, scale);
+				} else {
+					text(left, y, shown, theme::NUMBER, scale);
+				}
+			}
+		}
+		y += rowH();
+	}
+
+	/**
+	 * A figure: dim label on the left, bright value on the right
+	 *
+	 * Parameters:
+	 * const std::string& label: Label
+	 * const std::string& value: Value
+	 * Color valueColor: Colour of the value
+	 */
+	void stat(const std::string& label, const std::string& value, Color valueColor = theme::NUMBER) {
+		text(x + 2 * u, y, label, theme::DIM, scale);
+		text(x + w - u - font::textWidth(value, scale), y, value, valueColor, scale);
+		y += rowH();
+	}
+
+	/**
+	 * A line of plain text
+	 *
+	 * Parameters:
+	 * const std::string& line: The text
+	 * Color color: Text colour
+	 */
+	void line(const std::string& line, Color color) {
+		text(x + 2 * u, y, line, color, scale);
+		y += rowH();
 	}
 };
-
-using Piece = std::pair<std::string, Color>;
 
 /**
  * Formats a number with a fixed number of decimals
@@ -102,24 +231,19 @@ std::string fixed(double value, int decimals) {
 }
 
 /**
- * Draws a menu row: a marker, the label and, for rows with a value, the value between angle brackets
+ * Draws a screen twice: once to measure it, once centred vertically
  *
  * Parameters:
- * Page& page: Where to draw
- * bool selected: Whether the row is selected
- * const std::string& label: Row label
- * const std::string* value: Value text, or nullptr for rows without one
+ * Canvas& canvas: Where to draw
+ * const std::function<void(Page&)>& content: Lays out the screen on a page
  */
-void menuRow(Page& page, bool selected, const std::string& label, const std::string* value) {
-	const Color text = selected ? theme::LABEL : theme::DIM;
-	std::vector<Piece> pieces = {{selected ? "> " : "  ", theme::HEAD}, {label, text}};
-	if (value) {
-		pieces.push_back({std::string(std::max<int>(1, 14 - static_cast<int>(label.size())), ' '), text});
-		pieces.push_back({"<", text});
-		pieces.push_back({*value, theme::NUMBER});
-		pieces.push_back({">", text});
-	}
-	page.line(pieces, 3, selected);
+void drawScreen(Canvas& canvas, const std::function<void(Page&)>& content) {
+	Page measure(canvas, true, 0);
+	content(measure);
+	const int top = std::max(measure.u, (canvas.height() - measure.y) / 2);
+	Page page(canvas, false, top);
+	content(page);
+	canvas.present();
 }
 
 }  // namespace
@@ -135,30 +259,27 @@ SdlMenuView::SdlMenuView(Canvas& canvas, SdlApp& app) : canvas_(canvas), app_(ap
  */
 void SdlMenuView::show(const MenuSnapshot& snapshot) {
 	auto draw = [this, snapshot] {
-		Page page(canvas_);
-		page.blank();
-		page.line({{"#############", theme::BODY}}, 3);
-		page.line({{"# ", theme::BODY}, {"SNAKE GAME", theme::HEAD}, {" #", theme::BODY}}, 3);
-		page.line({{"#############", theme::BODY}}, 3);
-		page.blank();
-		page.line({{"OOOOOO", theme::BODY}, {"O", theme::HEAD}, {"   ", theme::DIM}, {"*", theme::FOOD}}, 3);
-		page.blank();
-		const std::string level = levelName(snapshot.level);
-		const std::string sound = snapshot.sound ? "On" : "Off";
-		menuRow(page, snapshot.selected == MenuItem::Start, "Start", nullptr);
-		menuRow(page, snapshot.selected == MenuItem::Level, "Level", &level);
-		menuRow(page, snapshot.selected == MenuItem::Leaderboard, "Leaderboard", nullptr);
-		menuRow(page, snapshot.selected == MenuItem::Help, "How to play", nullptr);
-		menuRow(page, snapshot.selected == MenuItem::Sound, "Sound", &sound);
-		menuRow(page, snapshot.selected == MenuItem::Quit, "Quit", nullptr);
-		page.blank();
-		page.line({{"Best:  ", theme::LABEL}, {std::to_string(snapshot.stats.best), theme::NUMBER}}, 3);
-		page.line({{"Games: ", theme::LABEL}, {std::to_string(snapshot.stats.games), theme::NUMBER}}, 3);
-		page.line({{"Avg:   ", theme::LABEL}, {fixed(snapshot.stats.average, 1), theme::NUMBER}}, 3);
-		page.blank();
-		page.line({{"W/S pick, A/D change", theme::DIM}}, 3);
-		page.line({{"Enter go, Q quit", theme::DIM}}, 3);
-		canvas_.present();
+		drawScreen(canvas_, [&](Page& p) {
+			const std::string level = levelName(snapshot.level);
+			const std::string sound = snapshot.sound ? "On" : "Off";
+			p.title("SNAKE");
+			p.gap(2);
+			p.art();
+			p.rule();
+			p.row("Start", nullptr, snapshot.selected == MenuItem::Start);
+			p.row("Level", &level, snapshot.selected == MenuItem::Level);
+			p.row("Leaderboard", nullptr, snapshot.selected == MenuItem::Leaderboard);
+			p.row("How to play", nullptr, snapshot.selected == MenuItem::Help);
+			p.row("Sound", &sound, snapshot.selected == MenuItem::Sound);
+			p.row("Quit", nullptr, snapshot.selected == MenuItem::Quit);
+			p.rule();
+			p.stat("Best", std::to_string(snapshot.stats.best));
+			p.stat("Games", std::to_string(snapshot.stats.games));
+			p.stat("Average", fixed(snapshot.stats.average, 1));
+			p.rule();
+			p.line("W/S pick  A/D change", theme::DIM);
+			p.line("Enter go  Q quit", theme::DIM);
+		});
 	};
 	draw();
 	app_.setScene(draw);
@@ -172,22 +293,21 @@ void SdlMenuView::show(const MenuSnapshot& snapshot) {
  */
 void SdlMenuView::showLeaderboard(const LeaderboardSnapshot& snapshot) {
 	auto draw = [this, snapshot] {
-		Page page(canvas_);
-		page.blank();
-		page.line({{"TOP SCORES", theme::HEAD}}, 3);
-		page.line({{"<", theme::LABEL}, {levelName(snapshot.level), theme::NUMBER}, {">", theme::LABEL}}, 3);
-		page.blank();
-		if (snapshot.scores.empty()) {
-			page.line({{"No games yet", theme::DIM}}, 3);
-		}
-		for (size_t i = 0; i < snapshot.scores.size(); ++i) {
-			std::string rank = std::to_string(i + 1) + ".";
-			if (rank.size() < 3) {
-				rank = std::string(3 - rank.size(), ' ') + rank;
+		drawScreen(canvas_, [&](Page& p) {
+			p.title("TOP SCORES");
+			p.gap(2);
+			const std::string level = levelName(snapshot.level);
+			p.row("Level", &level, true);
+			p.rule();
+			if (snapshot.scores.empty()) {
+				p.line("No games yet", theme::DIM);
 			}
-			page.line({{rank, theme::LABEL}, {"  ", theme::DIM}, {std::to_string(snapshot.scores[i]), theme::NUMBER}}, 3);
-		}
-		canvas_.present();
+			for (size_t i = 0; i < snapshot.scores.size(); ++i) {
+				p.stat(std::to_string(i + 1) + ".", std::to_string(snapshot.scores[i]), i == 0 ? theme::HEAD : theme::NUMBER);
+			}
+			p.rule();
+			p.line("A/D level  Enter back", theme::DIM);
+		});
 	};
 	draw();
 	app_.setScene(draw);
@@ -198,25 +318,27 @@ void SdlMenuView::showLeaderboard(const LeaderboardSnapshot& snapshot) {
  */
 void SdlMenuView::showHelp() {
 	auto draw = [this] {
-		Page page(canvas_);
-		const std::vector<std::string> text = {
-			"", "Steer: WASD or", "the arrow keys", "",
-			"Eat the red *", "to grow and", "score points.", "",
-			"Hitting a wall", "or yourself", "ends the game.", "",
-			"After a game:", "R again, M menu", "Q quit",
-		};
-		page.blank();
-		page.line({{"HOW TO PLAY", theme::HEAD}}, 3);
-		for (const std::string& line : text) {
-			if (line.empty()) {
-				page.blank();
-			} else {
-				page.line({{line, theme::LABEL}}, 3);
+		drawScreen(canvas_, [&](Page& p) {
+			p.title("HOW TO PLAY");
+			p.gap(2);
+			p.rule();
+			const std::vector<std::vector<std::string>> paragraphs = {
+				{"Steer: WASD or", "the arrow keys"},
+				{"Eat the red dot", "to grow and", "score points."},
+				{"Hitting a wall", "or yourself", "ends the game."},
+				{"After a game:", "R again, M menu", "Q quit"},
+			};
+			for (size_t i = 0; i < paragraphs.size(); ++i) {
+				if (i > 0) {
+					p.gap(2);
+				}
+				for (const std::string& line : paragraphs[i]) {
+					p.line(line, theme::LABEL);
+				}
 			}
-		}
-		page.blank();
-		page.line({{"Enter back", theme::DIM}}, 3);
-		canvas_.present();
+			p.rule();
+			p.line("Enter back", theme::DIM);
+		});
 	};
 	draw();
 	app_.setScene(draw);

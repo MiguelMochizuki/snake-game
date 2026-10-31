@@ -1,7 +1,7 @@
 /**
  * theme.hpp
  * Author: Miguel Mochizuki Silva
- * Description: Colour palette of the graphical front-end, matching the terminal game
+ * Description: Colour palette of the graphical front-end: tinted neutrals, one green accent and one warm colour for the food
  */
 #ifndef THEME_HPP
 #define THEME_HPP
@@ -18,14 +18,18 @@ struct Color {
 
 namespace theme {
 
-constexpr Color BACKGROUND{16, 18, 24};
-constexpr Color WALL{0, 190, 200};
-constexpr Color BODY{40, 170, 70};
-constexpr Color HEAD{120, 255, 140};
-constexpr Color FOOD{230, 50, 50};
-constexpr Color NUMBER{240, 210, 60};
-constexpr Color LABEL{225, 225, 225};
-constexpr Color DIM{120, 125, 135};
+// Neutrals share one slightly green tint so nothing looks pasted on
+constexpr Color BACKGROUND{15, 18, 17};
+constexpr Color SURFACE{24, 30, 28};
+constexpr Color WALL{52, 66, 61};
+constexpr Color DIM{100, 114, 108};
+constexpr Color LABEL{168, 182, 175};
+constexpr Color NUMBER{232, 240, 235};
+
+// The accent (snake, selection, key hints) and the single warm colour (food, game over)
+constexpr Color BODY{58, 148, 104};
+constexpr Color HEAD{124, 214, 162};
+constexpr Color FOOD{218, 98, 92};
 
 }  // namespace theme
 

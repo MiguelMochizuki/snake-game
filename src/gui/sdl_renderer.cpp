@@ -13,8 +13,6 @@
 
 namespace {
 
-const int HUD_LINES = 3;
-
 /**
  * Text scale for a canvas height
  *
@@ -28,7 +26,31 @@ int textScaleFor(int canvasH) {
 }
 
 /**
- * Height reserved below the board for the HUD text
+ * Spacing unit: twice the text scale
+ *
+ * Parameters:
+ * int canvasH: Canvas height in pixels
+ *
+ * Returns int: Spacing in pixels
+ */
+int unitFor(int canvasH) {
+	return 2 * textScaleFor(canvasH);
+}
+
+/**
+ * Height of one HUD line, a text row with breathing room
+ *
+ * Parameters:
+ * int canvasH: Canvas height in pixels
+ *
+ * Returns int: Height in pixels
+ */
+int lineHeightFor(int canvasH) {
+	return font::textHeight(textScaleFor(canvasH)) + 3 * unitFor(canvasH);
+}
+
+/**
+ * Height reserved around the board: the score line above it and the hint line below it
  *
  * Parameters:
  * int canvasH: Canvas height in pixels
@@ -36,11 +58,11 @@ int textScaleFor(int canvasH) {
  * Returns int: Height in pixels
  */
 int hudHeightFor(int canvasH) {
-	return HUD_LINES * (font::textHeight(textScaleFor(canvasH)) + 4) + 8;
+	return 2 * lineHeightFor(canvasH);
 }
 
 /**
- * Side of the square drawn for one cell, leaving a 1 px gap when cells are big enough
+ * Side of the square drawn for one cell, leaving a gap between cells when they are big enough
  *
  * Parameters:
  * int cell: Cell side
@@ -48,7 +70,7 @@ int hudHeightFor(int canvasH) {
  * Returns int: Square side
  */
 int squareFor(int cell) {
-	return cell > 2 ? cell - 1 : cell;
+	return cell > 3 ? cell - std::max(1, cell / 16) : cell;
 }
 
 /**
@@ -79,7 +101,8 @@ Layout layoutFor(int canvasW, int canvasH, int cols, int rows) {
 	Layout l;
 	l.cell = cellSizeFor(canvasW, canvasH, cols, rows, hud);
 	l.originX = std::max(0, (canvasW - l.cell * (cols + 2)) / 2);
-	l.originY = std::max(0, (canvasH - hud - l.cell * (rows + 2)) / 2);
+	// The score line sits above the board and the hint below it, so the board is centred in what is left between them
+	l.originY = lineHeightFor(canvasH) + std::max(0, (canvasH - hud - l.cell * (rows + 2)) / 2);
 	return l;
 }
 
@@ -97,17 +120,16 @@ void SdlRenderer::drawBoard(const GameState& state) {
 	const int rows = state.getRows();
 	const Layout l = layoutFor(canvas_.width(), canvas_.height(), cols, rows);
 	const int sq = squareFor(l.cell);
+	const int u = unitFor(canvas_.height());
 	auto cellX = [&](int x) { return l.originX + (x + 1) * l.cell; };
 	auto cellY = [&](int y) { return l.originY + (y + 1) * l.cell; };
 
-	for (int x = -1; x <= cols; ++x) {
-		canvas_.fillRect(cellX(x), cellY(-1), sq, sq, theme::WALL);
-		canvas_.fillRect(cellX(x), cellY(rows), sq, sq, theme::WALL);
-	}
-	for (int y = 0; y < rows; ++y) {
-		canvas_.fillRect(cellX(-1), cellY(y), sq, sq, theme::WALL);
-		canvas_.fillRect(cellX(cols), cellY(y), sq, sq, theme::WALL);
-	}
+	// A hairline frame around a slightly lighter playfield; the cell ring around it is breathing room
+	const int line = std::max(1, l.cell / 12);
+	const int fx = cellX(0) - line - u / 2, fy = cellY(0) - line - u / 2;
+	const int fw = cols * l.cell + 2 * line + u, fh = rows * l.cell + 2 * line + u;
+	canvas_.fillRect(fx, fy, fw, fh, theme::WALL);
+	canvas_.fillRect(fx + line, fy + line, fw - 2 * line, fh - 2 * line, theme::SURFACE);
 
 	const auto& grid = state.getOccupied();
 	const int foodX = state.getFood().getX();
@@ -119,7 +141,7 @@ void SdlRenderer::drawBoard(const GameState& state) {
 				continue;
 			}
 			if (x == foodX && y == foodY) {
-				canvas_.fillCircle(cellX(x) + l.cell / 2, cellY(y) + l.cell / 2, std::max(1, l.cell / 2 - 1), theme::FOOD);
+				canvas_.fillCircle(cellX(x) + l.cell / 2, cellY(y) + l.cell / 2, std::max(1, l.cell / 2 - std::max(1, l.cell / 8)), theme::FOOD);
 			} else if (head && x == head->getX() && y == head->getY()) {
 				canvas_.fillRect(cellX(x), cellY(y), sq, sq, theme::HEAD);
 			} else {
@@ -128,17 +150,18 @@ void SdlRenderer::drawBoard(const GameState& state) {
 		}
 	}
 
+	// Score and best on one line above the board, the hint below it, all on the frame's edges
 	const int scale = textScaleFor(canvas_.height());
-	const int lineH = font::textHeight(scale) + 4;
-	const int textX = l.originX;
-	int textY = l.originY + (rows + 2) * l.cell + 4;
-	font::drawText(canvas_, textX, textY, "Score:", scale, theme::LABEL);
-	font::drawText(canvas_, textX + font::textWidth("Score: ", scale), textY, std::to_string(state.getScore()), scale, theme::NUMBER);
-	textY += lineH;
-	font::drawText(canvas_, textX, textY, "Best:", scale, theme::LABEL);
-	font::drawText(canvas_, textX + font::textWidth("Best: ", scale), textY, std::to_string(state.getBestScore()), scale, theme::NUMBER);
-	textY += lineH;
-	font::drawText(canvas_, textX, textY, "Controls: WASD to move, Q to quit", scale, theme::DIM);
+	const int lineH = lineHeightFor(canvas_.height());
+	const int textH = font::textHeight(scale);
+	const int topY = fy - lineH + (lineH - textH) / 2 - u / 2;
+	const std::string score = std::to_string(state.getScore());
+	const std::string best = std::to_string(state.getBestScore());
+	font::drawText(canvas_, fx, topY, "SCORE", scale, theme::DIM);
+	font::drawText(canvas_, fx + font::textWidth("SCORE ", scale), topY, score, scale, theme::NUMBER);
+	font::drawText(canvas_, fx + fw - font::textWidth(best, scale), topY, best, scale, theme::NUMBER);
+	font::drawText(canvas_, fx + fw - font::textWidth(best + " BEST ", scale), topY, "BEST", scale, theme::DIM);
+	font::drawText(canvas_, fx, fy + fh + (lineH - textH) / 2 + u / 2, "WASD or arrows to steer, Q to quit", scale, theme::DIM);
 }
 
 /**
@@ -190,40 +213,53 @@ void SdlRenderer::printGameOver(Level level, int finalScore, const ScoreStats& s
 	const std::string levelText = levelName(level);
 	panel_ = [this, levelText, finalScore, stats] {
 		int scale = textScaleFor(canvas_.height());
-		if (font::textWidth(std::string(30, ' '), scale) > canvas_.width()) {
+		const int columns = 26;
+		if (font::textWidth(std::string(columns + 4, ' '), scale) > canvas_.width()) {
 			scale = 1;
 		}
-		const int lineH = font::textHeight(scale) + 4;
-		const int lines = 11;
-		const int w = font::textWidth(std::string(30, ' '), scale);
-		const int h = lines * lineH + 8;
+		const int u = 2 * scale;
+		const int rowH = font::textHeight(scale) + 3 * u;
+		const int pad = 3 * u;
+		const int w = std::min(canvas_.width(), font::textWidth(std::string(columns, ' '), scale) + 2 * pad);
+		const int rules = 2 * (u + std::max(1, scale / 2) + u);
+		const int h = 2 * pad + rowH + 5 * rowH + rowH + rules;
 		const int x = std::max(0, (canvas_.width() - w) / 2);
 		const int y = std::max(0, (canvas_.height() - h) / 2);
-		canvas_.fillRect(x, y, w, h, theme::BACKGROUND);
-		canvas_.fillRect(x, y, w, 2, theme::WALL);
-		canvas_.fillRect(x, y + h - 2, w, 2, theme::WALL);
-		int ty = y + 6;
-		const int labelX = x + 2 * font::GLYPH * scale;
-		font::drawText(canvas_, x + 9 * font::GLYPH * scale, ty, "GAME OVER!", scale, theme::FOOD);
-		ty += 2 * lineH;
-		auto row = [&](const std::string& label, const std::string& value) {
-			font::drawText(canvas_, labelX, ty, label, scale, theme::LABEL);
-			font::drawText(canvas_, x + w - 2 * font::GLYPH * scale - font::textWidth(value, scale), ty, value, scale, theme::NUMBER);
-			ty += lineH;
+		const int border = std::max(1, scale / 2);
+		canvas_.fillRect(x, y, w, h, theme::WALL);
+		canvas_.fillRect(x + border, y + border, w - 2 * border, h - 2 * border, theme::SURFACE);
+		const int left = x + pad;
+		const int right = x + w - pad;
+		int ty = y + pad;
+		auto textAt = [&](int px, const std::string& text, Color color) {
+			font::drawText(canvas_, px, ty + (rowH - font::textHeight(scale)) / 2, text, scale, color);
 		};
-		row("Level:", levelText);
-		row("Final Score:", std::to_string(finalScore));
-		row("Best Score:", std::to_string(stats.best));
-		row("Games Played:", std::to_string(stats.games));
-		row("Average Score:", fixed(stats.average, 1));
-		ty += lineH / 2;
-		font::drawText(canvas_, labelX, ty, "[R]", scale, theme::HEAD);
-		font::drawText(canvas_, labelX + font::textWidth("[R] ", scale), ty, "Restart", scale, theme::LABEL);
-		font::drawText(canvas_, labelX + font::textWidth("[R] Restart  ", scale), ty, "[M]", scale, theme::WALL);
-		font::drawText(canvas_, labelX + font::textWidth("[R] Restart  [M] ", scale), ty, "Menu", scale, theme::LABEL);
-		ty += lineH;
-		font::drawText(canvas_, labelX, ty, "[Q]", scale, theme::FOOD);
-		font::drawText(canvas_, labelX + font::textWidth("[Q] ", scale), ty, "Quit", scale, theme::LABEL);
+		auto rule = [&] {
+			ty += u;
+			canvas_.fillRect(left, ty, right - left, border, theme::WALL);
+			ty += border + u;
+		};
+		textAt(left, "GAME OVER", theme::FOOD);
+		ty += rowH;
+		rule();
+		auto row = [&](const std::string& label, const std::string& value, Color color) {
+			textAt(left, label, theme::DIM);
+			textAt(right - font::textWidth(value, scale), value, color);
+			ty += rowH;
+		};
+		row("Level", levelText, theme::NUMBER);
+		row("Score", std::to_string(finalScore), theme::HEAD);
+		row("Best", std::to_string(stats.best), theme::NUMBER);
+		row("Games", std::to_string(stats.games), theme::NUMBER);
+		row("Average", fixed(stats.average, 1), theme::NUMBER);
+		rule();
+		int px = left;
+		for (const auto& key : {std::make_pair("R", "again"), std::make_pair("M", "menu"), std::make_pair("Q", "quit")}) {
+			textAt(px, key.first, theme::HEAD);
+			px += font::textWidth(std::string(key.first) + " ", scale);
+			textAt(px, key.second, theme::LABEL);
+			px += font::textWidth(std::string(key.second) + "  ", scale);
+		}
 	};
 	panel_();
 	canvas_.present();
