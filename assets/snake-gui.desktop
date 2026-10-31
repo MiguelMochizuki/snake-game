@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Snake
+Comment=Classic Snake game
+Exec=snake-gui
+Icon=snake
+Terminal=false
+Categories=Game;ArcadeGame;
