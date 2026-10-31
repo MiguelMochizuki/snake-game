@@ -59,6 +59,7 @@ void SdlApp::handle(const void* event) {
 			break;
 		case SDL_EVENT_QUIT:
 		case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+			closeRequested_ = true;
 			keys_.push_back(charKey('q'));
 			break;
 		case SDL_EVENT_WINDOW_RESIZED:
@@ -104,6 +105,10 @@ void SdlApp::pump(int timeoutMs) {
 
 std::deque<Key>& SdlApp::keys() {
 	return keys_;
+}
+
+bool SdlApp::closeRequested() const {
+	return closeRequested_;
 }
 
 bool SdlApp::interactive() const {

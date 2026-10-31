@@ -33,7 +33,7 @@ public:
 	std::vector<Key> poll() override;
 
 	/**
-	 * Returns std::optional<Key>: The next key, waiting for one; nullopt only when the app is not interactive and no key is queued
+	 * Returns std::optional<Key>: The next key, waiting for one; nullopt when no key is queued and the app is not interactive or the window was closed
 	 */
 	std::optional<Key> waitKey() override;
 

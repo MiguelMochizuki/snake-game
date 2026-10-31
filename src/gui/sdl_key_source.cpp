@@ -25,11 +25,12 @@ std::vector<Key> SdlKeySource::poll() {
 }
 
 /**
- * Returns std::optional<Key>: The next key, waiting for one; nullopt only when the app is not interactive and no key is queued
+ * Returns std::optional<Key>: The next key, waiting for one; nullopt when no key is queued and the app is not interactive or the window was closed
  */
 std::optional<Key> SdlKeySource::waitKey() {
 	while (app_.keys().empty()) {
-		if (!app_.interactive()) {
+		// A closed window ends the program: end of input is what the engine and menu treat as quit
+		if (!app_.interactive() || app_.closeRequested()) {
 			return std::nullopt;
 		}
 		app_.pump(-1);

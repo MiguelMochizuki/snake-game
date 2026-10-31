@@ -30,12 +30,14 @@ std::optional<Key> keyFromSdl(SDL_Keycode code);
  * Canvas& canvas_: The canvas the scene is drawn on
  * bool interactive_: false for off-screen use, where there are no events and pump only sleeps
  * std::deque<Key> keys_: Keys received and not yet taken
+ * bool closeRequested_: Whether the window was asked to close
  * std::function<void()> scene_: Redraws the last thing shown
  */
 class SdlApp {
 	Canvas& canvas_;
 	bool interactive_;
 	std::deque<Key> keys_;
+	bool closeRequested_ = false;
 	std::function<void()> scene_;
 
 	void handle(const void* event);
@@ -67,6 +69,11 @@ public:
 	 * Returns bool: Whether SDL events are read
 	 */
 	bool interactive() const;
+
+	/**
+	 * Returns bool: Whether the window was asked to close; the game then quits once the queued keys are used
+	 */
+	bool closeRequested() const;
 
 	/**
 	 * Sets what to redraw when the window is resized or exposed

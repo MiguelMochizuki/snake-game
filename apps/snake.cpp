@@ -18,6 +18,7 @@
 #include "snake_game/menu/terminal_menu_view.hpp"
 #include "snake_game/input/terminal_key_source.hpp"
 #include "snake_game/input/wasd_input_handler.hpp"
+#include "env_options.hpp"
 #include "snake_game/render/terminal_renderer.hpp"
 #include <cctype>
 #include <cerrno>
@@ -35,55 +36,6 @@
 #else
 #include <unistd.h>
 #endif
-
-/**
- * Reads the frame duration from SNAKE_FRAME_MS
- *
- * Returns std::optional<int>: The parsed value if the whole string is an integer in [0, 10000], otherwise nullopt
- */
-static std::optional<int> readFrameMs() {
-	const char* env = std::getenv("SNAKE_FRAME_MS");
-	if (!env || !std::isdigit(static_cast<unsigned char>(*env))) {
-		return std::nullopt;
-	}
-	errno = 0;
-	char* end = nullptr;
-	long value = std::strtol(env, &end, 10);
-	if (errno != 0 || *end != '\0' || value < 0 || value > 10000) {
-		return std::nullopt;
-	}
-	return static_cast<int>(value);
-}
-
-/**
- * Tells whether the start menu is skipped, from SNAKE_SKIP_MENU
- *
- * Returns bool: true if SNAKE_SKIP_MENU is set and non-empty
- */
-static bool skipMenu() {
-	const char* env = std::getenv("SNAKE_SKIP_MENU");
-	return env && *env;
-}
-
-/**
- * Reads the food placement seed from SNAKE_SEED
- *
- * Returns unsigned: The parsed value if the whole string is an unsigned 32-bit integer, otherwise the current time
- */
-static unsigned readSeed() {
-	unsigned fallback = static_cast<unsigned>(std::time(nullptr));
-	const char* env = std::getenv("SNAKE_SEED");
-	if (!env || !std::isdigit(static_cast<unsigned char>(*env))) {
-		return fallback;
-	}
-	errno = 0;
-	char* end = nullptr;
-	unsigned long value = std::strtoul(env, &end, 10);
-	if (errno != 0 || *end != '\0' || value > UINT32_MAX) {
-		return fallback;
-	}
-	return static_cast<unsigned>(value);
-}
 
 /**
  * Tells whether the terminal can play the bell, i.e. output goes to a terminal

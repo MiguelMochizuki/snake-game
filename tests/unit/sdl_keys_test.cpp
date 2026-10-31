@@ -118,3 +118,16 @@ TEST(SdlKeys, ResizeRedrawsTheScene) {
 	app.pump(0);
 	EXPECT_EQ(redraws, 1);
 }
+
+TEST(SdlKeys, WindowCloseThenEmptyQueueMeansEof) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(32, 32);
+	SdlApp app(*canvas, true);
+	SdlKeySource source(app);
+	source.flush();
+	pushEvent(SDL_EVENT_WINDOW_CLOSE_REQUESTED);
+	std::optional<Key> first = source.waitKey();
+	ASSERT_TRUE(first.has_value());
+	EXPECT_EQ(*first, charKey('q'));
+	EXPECT_TRUE(app.closeRequested());
+	EXPECT_FALSE(source.waitKey().has_value());  // nothing queued after a close: end of input, so the program quits
+}
