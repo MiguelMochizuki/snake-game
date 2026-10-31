@@ -18,11 +18,12 @@ def v1_checksum(best, history):
 	"""
 	Computes the checksum the v1 releases wrote
 
-	Parameters:
-	int best: Best score
-	list[int] history: Scores of every game
+	Args:
+		best (int): Best score
+		history (list[int]): Scores of every game
 
-	Returns int: The 64-bit checksum
+	Returns:
+		int: The 64-bit checksum
 	"""
 	h = SEED
 	for value in [best] + history:

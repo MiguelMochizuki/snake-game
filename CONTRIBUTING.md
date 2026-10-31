@@ -46,7 +46,7 @@ Trivial getters need no block. Comments inside functions say why, not what.
 
 ### Python
 
-Used by the end-to-end tests in `tests/e2e/`. Every file starts with a docstring header, and every function and class gets a docstring in the same `Parameters:` / `Returns` layout as the C++ blocks. Indent with tabs.
+Used by the end-to-end tests in `tests/e2e/`. Every file starts with a docstring header, and every function and class gets a Google-style docstring (summary, then `Args:` and `Returns:`). Indent with tabs.
 
 ```python
 """
@@ -60,11 +60,12 @@ def choose(head, d, food):
 	"""
 	Greedy step toward the food that never reverses
 
-	Parameters:
-	tuple head: Head (x, y)
-	tuple d: Current direction (dx, dy)
-	tuple food: Food (x, y)
+	Args:
+		head (tuple): Head (x, y)
+		d (tuple): Current direction (dx, dy)
+		food (tuple): Food (x, y)
 
-	Returns tuple: Next direction (dx, dy)
+	Returns:
+		tuple: Next direction (dx, dy)
 	"""
 ```

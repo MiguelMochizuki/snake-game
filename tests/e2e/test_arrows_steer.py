@@ -11,10 +11,13 @@ from harness import Game, quit_game
 
 def cells(frame):
 	"""
-	Parameters:
-	list[str] frame: Board rows
+	Collects the cells occupied by the snake
 
-	Returns set: (x, y) of every snake cell
+	Args:
+		frame (list[str]): Board rows
+
+	Returns:
+		set: (x, y) of every snake cell
 	"""
 	return {(x, y) for y, row in enumerate(frame) for x, c in enumerate(row) if c == "O"}
 
@@ -23,13 +26,12 @@ def steer(game, key, dx, dy):
 	"""
 	Sends one arrow key and checks the head moves one cell in (dx, dy) on each of the next 2 frames
 
-	Parameters:
-	Game game: The running game
-	bytes key: Arrow escape sequence
-	int dx: Expected column change per frame
-	int dy: Expected row change per frame
-
-	Throws AssertionError: If the head does not move that way
+	Args:
+		game (Game): The running game
+		key (bytes): Arrow escape sequence
+		dx (int): Expected column change per frame
+		dy (int): Expected row change per frame
+		AssertionError (Throws): If the head does not move that way
 	"""
 	game.send(key)
 	game.wait_input_consumed()

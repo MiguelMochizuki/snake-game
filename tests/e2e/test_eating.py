@@ -14,10 +14,13 @@ KEYS = {"w": (0, -1), "s": (0, 1), "a": (-1, 0), "d": (1, 0)}
 
 def snake_cells(frame):
 	"""
-	Parameters:
-	list[str] frame: Board rows
+	Collects the cells occupied by the snake
 
-	Returns set: (x, y) of every 'O'
+	Args:
+		frame (list[str]): Board rows
+
+	Returns:
+		set: (x, y) of every 'O'
 	"""
 	return {(x, y) for y, row in enumerate(frame) for x, ch in enumerate(row) if ch == "O"}
 
@@ -26,12 +29,13 @@ def choose(head, d, food):
 	"""
 	Greedy step toward the food that never reverses
 
-	Parameters:
-	tuple head: Head (x, y)
-	tuple d: Current direction (dx, dy)
-	tuple food: Food (x, y)
+	Args:
+		head (tuple): Head (x, y)
+		d (tuple): Current direction (dx, dy)
+		food (tuple): Food (x, y)
 
-	Returns str: Key for the wanted direction
+	Returns:
+		str: Key for the wanted direction
 	"""
 	dx, dy = food[0] - head[0], food[1] - head[1]
 	wanted = []

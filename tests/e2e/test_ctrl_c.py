@@ -13,10 +13,13 @@ from harness import Game
 
 def history_lines(tmp):
 	"""
-	Parameters:
-	str tmp: The game's working directory
+	Counts the games recorded in the score file
 
-	Returns int: Number of lines in data/scores_v2.txt
+	Args:
+		tmp (str): The game's working directory
+
+	Returns:
+		int: Number of lines in data/scores_v2.txt
 	"""
 	with open(os.path.join(tmp, "data", "scores_v2.txt")) as f:
 		return len(f.read().splitlines())

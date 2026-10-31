@@ -11,10 +11,13 @@ from harness import Game, quit_game
 
 def head_x(frame):
 	"""
-	Parameters:
-	list[str] frame: Board rows
+	Finds the column of the snake head on the start row
 
-	Returns int: Rightmost 'O' column on the start row (the head while moving right)
+	Args:
+		frame (list[str]): Board rows
+
+	Returns:
+		int: Rightmost 'O' column on the start row (the head while moving right)
 	"""
 	return frame[10].rindex("O")
 
