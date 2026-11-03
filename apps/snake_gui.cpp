@@ -15,6 +15,7 @@
 #include "snake_game/gui/sdl_key_source.hpp"
 #include "snake_game/gui/sdl_menu_view.hpp"
 #include "snake_game/gui/sdl_renderer.hpp"
+#include "snake_game/gui/user_data_dir.hpp"
 #include "snake_game/input/arrow_input_handler.hpp"
 #include "snake_game/input/command_input_handler.hpp"
 #include "snake_game/input/composite_input_handler.hpp"
@@ -157,7 +158,9 @@ int main(int argc, char** argv) {
 	std::unique_ptr<AudioDevice> audio = AudioDevice::open(synth);
 	ISound* cues = audio ? &synthSound : nullptr;
 
-	GameEngine engine(keys, input, renderer, 20, 20, 200, readSeed());
+	// Scores live in the OS app-data folder, so the game behaves the same wherever it was started from
+	const std::string dataDir = userDataDir();
+	GameEngine engine(keys, input, renderer, 20, 20, 200, readSeed(), dataDir);
 	MenuModel menu;
 	bool showMenu = !skipMenu();
 	do {
@@ -166,7 +169,7 @@ int main(int argc, char** argv) {
 		bool sound = true;
 		if (showMenu) {
 			// Read the scores afresh: the round that just ended may have changed them
-			ScoreManager scores;
+			ScoreManager scores(dataDir);
 			MenuResult choice = runMenu(keys, input, menuView, menu, scores, cues);
 			if (!choice.start) {
 				return 0;

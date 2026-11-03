@@ -45,7 +45,7 @@ On Windows, double-click the `.exe` or run it from a terminal that supports ANSI
 
 - **Linux:** `chmod +x snake-gui-linux-x86_64.AppImage`, then run it or double-click it.
 - **Windows:** unzip and double-click `snake-gui.exe`. SmartScreen may warn about an unknown publisher (the app is not signed): choose More info, then Run anyway.
-- **Linux icon:** GNOME and some other desktops take the dock icon from an installed desktop entry, not from the window. An AppImage shows its icon once you integrate it (AppImageLauncher or Gear Lever do that); a build from source gets it with `make install-gui` (`make uninstall-gui` removes it).
+- **Linux icon:** GNOME and some other desktops take the dock icon from an installed desktop entry, not from the window. An AppImage shows its icon once you integrate it (AppImageLauncher or Gear Lever do that); to install a source build like any other app, use `make install-gui` (see [Graphical version](#graphical-version)).
 - **macOS:** unzip and move `Snake.app` to Applications. The app is not signed, so the first time, right-click it, choose Open, then Open again.
 
 ## Build from source
@@ -57,6 +57,7 @@ make run             # build and play
 make                 # build only: build/bin/snake
 make run-audio       # terminal game with music (fetches miniaudio)
 make run-gui         # graphical game (fetches SDL3)
+make install-gui     # install the graphical game for your user (Linux, macOS)
 make test-all        # tests for all three builds; `make help` lists everything
 make clean           # remove build files
 make clean-data      # remove local score data
@@ -86,12 +87,15 @@ Audio is optional at build time: `cmake -S . -B build -DSNAKE_GAME_BUILD_AUDIO=O
 
 ![The graphical version playing a full game with the demo autopilot](docs/snake-gui.gif)
 
-`snake-gui` is a second front-end for the same game: the same rules, levels, scores file and menu, drawn in a resizable window with a bitmap font instead of the terminal. It is not part of the default build. Turn it on with:
+`snake-gui` is a second front-end for the same game: the same rules, levels and menu, drawn in a resizable window with a bitmap font instead of the terminal. It is not part of the default build. Turn it on with:
 
 ```bash
 make run-gui        # build (first time fetches SDL3) and play
 make gui            # build only: build-sdl/bin/snake-gui
+make install-gui    # install it for your user, like any other app
 ```
+
+`make install-gui` copies the program, so you can delete the source folder afterwards. On Linux it installs `~/.local/bin/snake-gui` with an app-menu entry and icon (`make uninstall-gui` removes them); on macOS it installs `~/Applications/Snake.app`. On Windows, use the zip from the Releases page.
 
 Or with CMake directly: `cmake -S . -B build -DSNAKE_GAME_BUILD_GUI=ON && cmake --build build`, then `./build/bin/snake-gui`.
 
@@ -147,7 +151,7 @@ Set `NO_COLOR` to any non-empty value to turn colors off, for example `NO_COLOR=
 
 ### Scores
 
-Scores are saved in the `data/` directory, which the game creates:
+The terminal game saves scores in a `data/` directory next to where you start it. `snake-gui` uses your OS's app-data folder instead, so it behaves the same however it is launched: `~/.local/share/snake-game/` on Linux (or under `$XDG_DATA_HOME`), `~/Library/Application Support/snake-game/` on macOS and `%APPDATA%\snake-game\` on Windows. The two do not share scores. Uninstalling leaves them in place. The files are:
 
 - `scores_v2.txt` holds the level and score of every game.
 - `scores_v2.checksum` detects edited files.

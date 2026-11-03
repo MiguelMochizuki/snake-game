@@ -136,15 +136,34 @@ rebuild rebuild-local: clean all
 # Tools
 # ==============================
 
-# Gives the graphical game its icon and an app-menu entry for the current user (Linux desktops)
+# Installs the graphical game for the current user like any other app: on Linux the binary goes to
+# ~/.local/bin with an app-menu entry and icon, on macOS Snake.app goes to ~/Applications. Either way the
+# source folder can be deleted afterwards. On Windows use the zip from the Releases page.
 .PHONY: install-gui uninstall-gui
+OS_NAME := $(shell uname -s)
+APP_VERSION := $(shell sed -n 's/^project.*VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+MAC_APP_DIR = $(HOME)/Applications
+
 install-gui: gui
+ifeq ($(OS_NAME),Darwin)
+	@tmp=$$(mktemp -d) && NO_ZIP=1 bash tools/package.sh macos $(GUI_EXECUTABLE) $(APP_VERSION) $$tmp \
+		&& mkdir -p $(MAC_APP_DIR) && rm -rf $(MAC_APP_DIR)/Snake.app && cp -R $$tmp/Snake.app $(MAC_APP_DIR)/ && rm -rf $$tmp
+	@echo "$(GREEN)Installed $(MAC_APP_DIR)/Snake.app$(NC)"
+else ifeq ($(OS_NAME),Linux)
 	@bash tools/install_desktop.sh install $(GUI_EXECUTABLE)
-	@echo "$(GREEN)Installed the Snake entry and icon for $(USER); log out and in if your dock does not pick it up$(NC)"
+	@echo "$(GREEN)Installed ~/.local/bin/snake-gui with its app-menu entry and icon; log out and in if your dock does not pick it up$(NC)"
+else
+	@echo "$(YELLOW)On Windows, download snake-gui-windows-x86_64.zip (or arm64) from the Releases page$(NC)"
+endif
 
 uninstall-gui:
+ifeq ($(OS_NAME),Darwin)
+	@rm -rf $(MAC_APP_DIR)/Snake.app
+	@echo "$(YELLOW)Removed $(MAC_APP_DIR)/Snake.app$(NC)"
+else ifeq ($(OS_NAME),Linux)
 	@bash tools/install_desktop.sh uninstall $(GUI_EXECUTABLE)
-	@echo "$(YELLOW)Removed the Snake entry and icon$(NC)"
+	@echo "$(YELLOW)Removed the Snake binary, entry and icon$(NC)"
+endif
 
 # Needs Python 3 with Pillow (pip install pillow)
 .PHONY: icon
@@ -228,8 +247,8 @@ help:
 	@echo "  make rebuild        - Clean and rebuild the terminal game"
 	@echo ""
 	@echo "$(BLUE)Tools:$(NC)"
-	@echo "  make install-gui    - Add the Snake icon and app-menu entry for this user (Linux)"
-	@echo "  make uninstall-gui  - Remove them"
+	@echo "  make install-gui    - Install the graphical game for this user, with menu entry and icon (Linux, macOS)"
+	@echo "  make uninstall-gui  - Remove it (scores are kept)"
 	@echo "  make icon           - Redraw assets/icon.* (needs Python and Pillow)"
 	@echo ""
 	@echo "$(BLUE)Docker:$(NC)"

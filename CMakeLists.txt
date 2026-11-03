@@ -90,6 +90,7 @@ if(SNAKE_GAME_BUILD_GUI)
 	FetchContent_MakeAvailable(SDL3)
 	add_library(snake_gui_core STATIC
 		src/gui/app_icon.cpp
+		src/gui/user_data_dir.cpp
 		src/gui/icon_data.cpp
 		src/gui/canvas.cpp
 		src/gui/bitmap_font.cpp
