@@ -4,19 +4,18 @@
  * Description: Synth implementation
  */
 #include "snake_game/audio/synth.hpp"
+#include "snake_game/audio/score.hpp"
 #include <algorithm>
 #include <cmath>
 
 namespace {
 
-const int STEPS = 64;
-const int STEPS_PER_BAR = 16;
-const double BPM = 140.0;
-const float MUSIC_GAIN = 0.2f;
-
-// MIDI notes of C, Am, F and G, lowest to highest
-const int CHORDS[4][3] = {{60, 64, 67}, {57, 60, 64}, {53, 57, 60}, {55, 59, 62}};
-const int PATTERN[4] = {0, 1, 2, 1};
+const float ARPEGGIO_GAIN = 0.15f;
+const float MELODY_GAIN = 0.10f;
+const float CHORD_GAIN = 0.04f;  // per note of the final chord
+const int CHORD_STEPS = 16;      // the final chord rings for one bar
+const double MELODY_ATTACK = 0.008;   // seconds
+const double MELODY_RELEASE = 0.03;   // seconds, so repeated notes do not click
 
 struct BlipSpec {
 	double hz;
@@ -39,21 +38,25 @@ float square(double phase) {
 	return phase < 0.5 ? 1.0f : -1.0f;
 }
 
-}  // namespace
-
 /**
- * Frequency of one sixteenth-note step of the C - Am - F - G loop
+ * One sample of a triangle wave that starts at zero, so a note can begin without a click
  *
  * Parameters:
- * int step: Sixteenth-note index, wraps modulo 64
+ * double phase: Position in the period, in [0, 1)
  *
- * Returns double: Frequency in Hz
+ * Returns float: Value in [-1, 1]
  */
-double stepFrequency(int step) {
-	const int s = ((step % STEPS) + STEPS) % STEPS;
-	const int note = CHORDS[s / STEPS_PER_BAR][PATTERN[s % 4]];
-	return 440.0 * std::pow(2.0, (note - 69) / 12.0);
+float triangle(double phase) {
+	if (phase < 0.25) {
+		return static_cast<float>(4.0 * phase);
+	}
+	if (phase < 0.75) {
+		return static_cast<float>(2.0 - 4.0 * phase);
+	}
+	return static_cast<float>(4.0 * phase - 4.0);
 }
+
+}  // namespace
 
 /**
  * Constructor for the Synth class
@@ -65,7 +68,7 @@ Synth::Synth(int sampleRate) : rate_(sampleRate) {
 }
 
 /**
- * Starts the music from the first chord
+ * Starts the music from the beginning
  */
 void Synth::startMusic() {
 	musicOn_ = true;
@@ -100,6 +103,7 @@ void Synth::render(float* out, int frames) {
 	if (on && !wasOn_) {
 		step_ = 0;
 		stepPos_ = 0;
+		melodyIdx_ = 0;
 	}
 	wasOn_ = on;
 	const int request = blipRequest_.exchange(0);
@@ -110,18 +114,47 @@ void Synth::render(float* out, int frames) {
 		blipTotal_ = blipLeft_ = static_cast<int>(b.seconds * rate_);
 		blipPos_ = 0;
 	}
-	// 4725 samples per sixteenth at 44100 Hz and 140 BPM
-	const int stepLen = static_cast<int>(rate_ * 60.0 / BPM / 4.0);
+	// 10022 samples per sixteenth at 44100 Hz and 66 BPM
+	const int stepLen = static_cast<int>(rate_ * 60.0 / TEMPO_BPM / 4.0);
+	const int attack = static_cast<int>(MELODY_ATTACK * rate_);
+	const int release = static_cast<int>(MELODY_RELEASE * rate_);
 	for (int i = 0; i < frames; ++i) {
 		float sample = 0.0f;
 		if (on) {
-			// Phase restarts at every step, so the loop repeats exactly
-			const double phase = std::fmod(stepFrequency(step_) * stepPos_ / rate_, 1.0);
-			const float fade = 1.0f - 0.6f * static_cast<float>(stepPos_) / static_cast<float>(stepLen);
-			sample += MUSIC_GAIN * fade * square(phase);
+			// Every note restarts its phase, so the whole piece repeats exactly
+			if (step_ < ARPEGGIO_STEPS) {
+				const double phase = std::fmod(midiFrequency(ARPEGGIO_DATA[step_]) * stepPos_ / rate_, 1.0);
+				const float fade = 1.0f - 0.55f * static_cast<float>(stepPos_) / static_cast<float>(stepLen);
+				sample += ARPEGGIO_GAIN * fade * triangle(phase);
+			} else if (step_ < ARPEGGIO_STEPS + CHORD_STEPS) {
+				const int t = (step_ - ARPEGGIO_STEPS) * stepLen + stepPos_;
+				const float fade = 1.0f - static_cast<float>(t) / static_cast<float>(CHORD_STEPS * stepLen);
+				for (int note : FINAL_CHORD) {
+					sample += CHORD_GAIN * fade * triangle(std::fmod(midiFrequency(note) * t / rate_, 1.0));
+				}
+			}
+			while (melodyIdx_ < MELODY_COUNT && MELODY[melodyIdx_].start + MELODY[melodyIdx_].length <= step_) {
+				++melodyIdx_;
+			}
+			if (melodyIdx_ < MELODY_COUNT && MELODY[melodyIdx_].start <= step_) {
+				const MelodyNote& m = MELODY[melodyIdx_];
+				const int t = (step_ - m.start) * stepLen + stepPos_;
+				const int left = m.length * stepLen - t;
+				float env = 1.0f;
+				if (t < attack) {
+					env = static_cast<float>(t) / static_cast<float>(attack);
+				}
+				if (left < release) {
+					env = std::min(env, static_cast<float>(left) / static_cast<float>(release));
+				}
+				sample += MELODY_GAIN * env * square(std::fmod(midiFrequency(m.pitch) * t / rate_, 1.0));
+			}
 			if (++stepPos_ >= stepLen) {
 				stepPos_ = 0;
-				step_ = (step_ + 1) % STEPS;
+				if (++step_ >= SCORE_STEPS) {
+					step_ = 0;
+					melodyIdx_ = 0;
+				}
 			}
 		}
 		if (blipLeft_ > 0) {
