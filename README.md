@@ -83,10 +83,11 @@ Audio is optional at build time: `cmake -S . -B build -DSNAKE_GAME_BUILD_AUDIO=O
 `snake-gui` is a second front-end for the same game: the same rules, levels, scores file and menu, drawn in a resizable window with a bitmap font instead of the terminal. It is not part of the default build. Turn it on with:
 
 ```bash
-cmake -S . -B build -DSNAKE_GAME_BUILD_GUI=ON
-cmake --build build
-./build/bin/snake-gui
+make run-gui        # build (first time fetches SDL3) and play
+make gui            # build only: build-sdl/bin/snake-gui
 ```
+
+Or with CMake directly: `cmake -S . -B build -DSNAKE_GAME_BUILD_GUI=ON && cmake --build build`, then `./build/bin/snake-gui`.
 
 This fetches SDL3 and miniaudio when configuring and links them statically. On Linux, SDL needs the development packages of your window system first. For Wayland: `libwayland-dev libxkbcommon-dev wayland-protocols libdecor-0-dev libegl-dev libdrm-dev libgbm-dev`; for X11 (SDL checks for it even on Wayland) also `libx11-dev libxext-dev libxcursor-dev libxi-dev libxrandr-dev libxss-dev libxtst-dev libxfixes-dev libxkbcommon-x11-dev`; for sound output `libasound2-dev libpulse-dev libudev-dev`. Without a window system (a CI machine, say), add `-DSDL_UNIX_CONSOLE_BUILD=ON` to build and use only the off-screen mode below.
 

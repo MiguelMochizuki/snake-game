@@ -20,6 +20,10 @@ DOCKER_VOLUME = snake-data
 # Executable path
 EXECUTABLE = $(BUILD_DIR)/bin/snake
 
+# Graphical version (SDL3), built in its own directory
+GUI_BUILD_DIR = build-sdl
+GUI_EXECUTABLE = $(GUI_BUILD_DIR)/bin/snake-gui
+
 # Docker cache tracking
 DOCKER_CACHE = .docker-build-cache
 
@@ -50,6 +54,18 @@ $(EXECUTABLE): $(SOURCES) CMakeLists.txt
 	@echo "$(GREEN)Build complete!$(NC)"
 	@echo "$(GREEN)Executable: $(EXECUTABLE)$(NC)"
 
+# Always runs CMake and the build: both are no-ops when nothing changed
+.PHONY: gui
+gui:
+	@echo "$(BLUE)Building the graphical version (fetches SDL3 on the first run)...$(NC)"
+	@$(CMAKE) -S . -B $(GUI_BUILD_DIR) $(CMAKE_FLAGS) -DSNAKE_GAME_BUILD_GUI=ON
+	@$(CMAKE) --build $(GUI_BUILD_DIR) -j
+	@echo "$(GREEN)Executable: $(GUI_EXECUTABLE)$(NC)"
+
+.PHONY: run-gui
+run-gui: gui
+	@$(GUI_EXECUTABLE)
+
 .PHONY: run run-local
 run run-local: all
 	@echo "$(GREEN)Running Snake Game...$(NC)"
@@ -63,7 +79,7 @@ test test-local: all
 .PHONY: clean clean-local
 clean clean-local:
 	@echo "$(YELLOW)Cleaning build files...$(NC)"
-	@rm -rf $(BUILD_DIR)
+	@rm -rf $(BUILD_DIR) $(GUI_BUILD_DIR)
 	@echo "$(YELLOW)Clean complete!$(NC)"
 
 .PHONY: clean-data clean-local-data
@@ -135,6 +151,8 @@ help:
 	@echo "  make clean          - Remove build files"
 	@echo "  make clean-data     - Remove local data files"
 	@echo "  make rebuild        - Clean and rebuild"
+	@echo "  make gui            - Build the graphical version: $(GUI_EXECUTABLE)"
+	@echo "  make run-gui        - Build and run the graphical version"
 	@echo "  (the old *-local names still work: local, run-local, test-local, ...)"
 	@echo ""
 	@echo "$(BLUE)Docker targets:$(NC)"

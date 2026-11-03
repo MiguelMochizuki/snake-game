@@ -137,6 +137,9 @@ int main(int argc, char** argv) {
 	std::unique_ptr<Canvas> canvas = Canvas::window("Snake", 640, 720);
 	if (!canvas) {
 		std::fprintf(stderr, "snake-gui: cannot open a window: %s\n", SDL_GetError());
+		std::fprintf(stderr, "Is a display available (not an SSH or headless session)? "
+			"Binaries built with -DSDL_UNIX_CONSOLE_BUILD=ON can only draw off-screen; "
+			"use 'make gui' for a build with a window.\n");
 		return 1;
 	}
 	SdlApp app(*canvas, true);
