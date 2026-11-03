@@ -2,6 +2,9 @@
 # Build dir
 # ==============================
 build/
+build-audio/
+build-sdl/
+.docker-build-cache
 
 # ==============================
 # Data dir
