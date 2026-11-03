@@ -17,7 +17,7 @@ if(NOT SNAKE_GAME_BUILD_AUDIO)
 	list(REMOVE_ITEM UNIT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/unit/audio_device_test.cpp)
 endif()
 
-set(GUI_TESTS canvas_test bitmap_font_test sdl_keys_test sdl_renderer_test sdl_menu_view_test demo_pilot_test)
+set(GUI_TESTS app_icon_test canvas_test bitmap_font_test sdl_keys_test sdl_renderer_test sdl_menu_view_test demo_pilot_test)
 if(NOT SNAKE_GAME_BUILD_GUI)
 	foreach(name ${GUI_TESTS})
 		list(REMOVE_ITEM UNIT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/unit/${name}.cpp)

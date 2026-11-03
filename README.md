@@ -14,7 +14,7 @@ The classic Snake game for the terminal, written in C++. It saves your scores be
 
 ## Download
 
-Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v2.1.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.1.0), which adds the graphical `snake-gui` with an app icon, and music in both versions.
+Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v2.1.1](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.1.1), which adds the graphical `snake-gui` with an app and window icon, and music in both versions.
 
 | Platform | Architecture | Binary |
 |----------|-------------|--------|
