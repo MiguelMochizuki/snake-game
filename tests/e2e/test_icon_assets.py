@@ -60,6 +60,12 @@ def test_png():
     assert rows[h // 2][(w // 2) * 4 + 3] == 255, "centre must be opaque"
 
 
+def test_png_512():
+    w, h, rows = png_pixels(read("icon-512.png"))
+    assert (w, h) == (512, 512), (w, h)
+    assert rows[0][3] == 0 and rows[h // 2][(w // 2) * 4 + 3] == 255
+
+
 def test_ico():
     data = read("icon.ico")
     reserved, kind, count = struct.unpack("<HHH", data[:6])
@@ -71,7 +77,7 @@ def test_icns():
 
 
 if __name__ == "__main__":
-    for t in (test_png, test_ico, test_icns):
+    for t in (test_png, test_png_512, test_ico, test_icns):
         t()
     print("ok")
     sys.exit(0)

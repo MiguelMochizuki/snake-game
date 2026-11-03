@@ -240,6 +240,21 @@ jobs:
             macos) cp dist/snake-gui-macos.zip "${{ matrix.final-name }}" ;;
           esac
 
+      - name: Check the exe carries its icon
+        if: matrix.target == 'windows'
+        shell: bash
+        run: python tools/check_icon.py exe "${{ matrix.binary-path }}"
+
+      - name: Check the app bundle carries its icon
+        if: matrix.target == 'macos'
+        shell: bash
+        run: |
+          unzip -q dist/snake-gui-macos.zip -d dist/unzipped
+          app=$(echo dist/unzipped/*.app)
+          grep -A1 CFBundleIconFile "$app/Contents/Info.plist" | grep -q '<string>icon</string>'
+          python3 tools/check_icon.py icns "$app/Contents/Resources/icon.icns"
+          sips -g pixelWidth "$app/Contents/Resources/icon.icns"
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:

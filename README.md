@@ -14,7 +14,7 @@ The classic Snake game for the terminal, written in C++. It saves your scores be
 
 ## Download
 
-Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v2.1.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.1.0), which adds the graphical `snake-gui` with an app icon, and music in both versions.
+Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v2.1.1](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.1.1), which adds the graphical `snake-gui` with an app and window icon, and music in both versions.
 
 | Platform | Architecture | Binary |
 |----------|-------------|--------|
@@ -33,7 +33,7 @@ chmod +x snake-linux-x86_64
 
 On Windows, double-click the `.exe` or run it from a terminal that supports ANSI escape codes, such as Windows Terminal.
 
-### Graphical version
+### Graphical downloads
 
 | Platform | Architecture | Download |
 |----------|-------------|----------|
@@ -45,6 +45,7 @@ On Windows, double-click the `.exe` or run it from a terminal that supports ANSI
 
 - **Linux:** `chmod +x snake-gui-linux-x86_64.AppImage`, then run it or double-click it.
 - **Windows:** unzip and double-click `snake-gui.exe`. SmartScreen may warn about an unknown publisher (the app is not signed): choose More info, then Run anyway.
+- **Linux icon:** GNOME and some other desktops take the dock icon from an installed desktop entry, not from the window. An AppImage shows its icon once you integrate it (AppImageLauncher or Gear Lever do that); a build from source gets it with `make install-gui` (`make uninstall-gui` removes it).
 - **macOS:** unzip and move `Snake.app` to Applications. The app is not signed, so the first time, right-click it, choose Open, then Open again.
 
 ## Build from source
@@ -168,6 +169,8 @@ include/snake_game/
   score/            ScoreManager and the score source it reads
 src/                implementations, mirroring include/snake_game
 tests/              unit (GoogleTest), golden and end-to-end tests
+assets/             app icons, desktop entry, macOS Info.plist, Windows resource file
+tools/              packaging (package.sh), icon generation and checks, soundtrack generator, desktop install
 ```
 
 - `GameEngine` runs the loop, `GameState` holds the snake and food, and `TerminalRenderer` draws the board. Everything except `main()` builds into the `snake_core` library.
@@ -210,7 +213,7 @@ Normal play needs none of these. The tests use them to make the game predictable
 
 ## CI and releases
 
-One GitHub Actions workflow handles both. On every push to `main` and every pull request, it builds and tests Linux x86-64, Linux ARM64 (on a native ARM64 runner), Windows x86-64, Windows ARM64 and macOS Universal. The Docker image runs the whole suite as part of its build, for amd64 and arm64 (arm64 under emulation).
+One GitHub Actions workflow handles both. On every push to `main` and every pull request, it builds and tests Linux x86-64, Linux ARM64 (on a native ARM64 runner), Windows x86-64, Windows ARM64 and macOS Universal. The Docker image runs the whole suite as part of its build, for amd64 and arm64 (arm64 under emulation). The graphical builds are packaged on the same runners, and the Windows and macOS jobs fail if the exe or app bundle has lost its icon (`tools/check_icon.py`).
 
 To publish a release, push a tag that starts with `v`:
 
@@ -223,15 +226,7 @@ The workflow then creates a GitHub release with all the binaries and publishes t
 
 ### Version history
 
-| Version | What changed |
-|---------|--------------|
-| [v2.0.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.0.0) | Breaking: scores are kept per level in a new `data/` format (old files are migrated); leaderboard, how-to-play screen, sound |
-| [v1.4.1](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.4.1) | Rewritten README and Docker Hub page; no code changes |
-| [v1.4.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.4.0) | Start menu with Easy, Normal and Hard levels and score statistics, behind an `IMenuView` interface; Enter key; `SNAKE_SKIP_MENU` test hook |
-| [v1.3.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.3.0) | Arrow keys; strict key handling (escape sequences, Windows extended keys, Ctrl+C/Z/S); average over the last 10 games |
-| [v1.2.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.2.0) | Colors with `NO_COLOR` support; exit on end of input at game over; the Makefile tracks headers; CTest suite (unit, golden, Linux end-to-end) on every platform and in Docker |
-| [v1.1.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.1.0) | Smaller memory use (flattened occupancy bitmask); buffered terminal output for smoother drawing |
-| [v1.0.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v1.0.0) | First release: cross-platform builds, Docker, saved scores |
+Every release, with its notes and binaries, is on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page.
 
 ## Troubleshooting
 

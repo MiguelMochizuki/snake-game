@@ -4,6 +4,7 @@
  * Description: Canvas implementation on SDL3
  */
 #include "snake_game/gui/canvas.hpp"
+#include "snake_game/gui/app_icon.hpp"
 #include <SDL3/SDL.h>
 #include <cstdio>
 
@@ -53,12 +54,18 @@ Canvas::~Canvas() {
  * Returns std::unique_ptr<Canvas>: The canvas, or nullptr if no window can be created
  */
 std::unique_ptr<Canvas> Canvas::window(const std::string& title, int width, int height) {
+	// Lets Linux desktops match the window to snake-gui.desktop, which names its icon
+	SDL_SetHint(SDL_HINT_APP_ID, "snake-gui");
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
 		return nullptr;
 	}
 	std::unique_ptr<Canvas> canvas(new Canvas);
 	if (!SDL_CreateWindowAndRenderer(title.c_str(), width, height, SDL_WINDOW_RESIZABLE, &canvas->impl_->window, &canvas->impl_->renderer)) {
 		return nullptr;
+	}
+	if (SDL_Surface* icon = makeIconSurface()) {
+		SDL_SetWindowIcon(canvas->impl_->window, icon);  // SDL keeps its own copy
+		SDL_DestroySurface(icon);
 	}
 	return canvas;
 }

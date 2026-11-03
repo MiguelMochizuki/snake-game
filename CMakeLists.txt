@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(snake_game VERSION 2.1.0 LANGUAGES C CXX) # C is needed by SDL3 (GUI build); every C++ toolchain ships a C compiler
+project(snake_game VERSION 2.1.1 LANGUAGES C CXX) # C is needed by SDL3 (GUI build); every C++ toolchain ships a C compiler
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -89,6 +89,8 @@ if(SNAKE_GAME_BUILD_GUI)
 	)
 	FetchContent_MakeAvailable(SDL3)
 	add_library(snake_gui_core STATIC
+		src/gui/app_icon.cpp
+		src/gui/icon_data.cpp
 		src/gui/canvas.cpp
 		src/gui/bitmap_font.cpp
 		src/gui/sdl_app.cpp

@@ -136,6 +136,16 @@ rebuild rebuild-local: clean all
 # Tools
 # ==============================
 
+# Gives the graphical game its icon and an app-menu entry for the current user (Linux desktops)
+.PHONY: install-gui uninstall-gui
+install-gui: gui
+	@bash tools/install_desktop.sh install $(GUI_EXECUTABLE)
+	@echo "$(GREEN)Installed the Snake entry and icon for $(USER); log out and in if your dock does not pick it up$(NC)"
+
+uninstall-gui:
+	@bash tools/install_desktop.sh uninstall $(GUI_EXECUTABLE)
+	@echo "$(YELLOW)Removed the Snake entry and icon$(NC)"
+
 # Needs Python 3 with Pillow (pip install pillow)
 .PHONY: icon
 icon:
@@ -218,6 +228,8 @@ help:
 	@echo "  make rebuild        - Clean and rebuild the terminal game"
 	@echo ""
 	@echo "$(BLUE)Tools:$(NC)"
+	@echo "  make install-gui    - Add the Snake icon and app-menu entry for this user (Linux)"
+	@echo "  make uninstall-gui  - Remove them"
 	@echo "  make icon           - Redraw assets/icon.* (needs Python and Pillow)"
 	@echo ""
 	@echo "$(BLUE)Docker:$(NC)"
