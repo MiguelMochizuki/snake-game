@@ -54,6 +54,9 @@ You need a C++17 compiler (g++ 7+, clang 5+ or MSVC 2017+), CMake 3.16+ and Make
 ```bash
 make run             # build and play
 make                 # build only: build/bin/snake
+make run-audio       # terminal game with music (fetches miniaudio)
+make run-gui         # graphical game (fetches SDL3)
+make test-all        # tests for all three builds; `make help` lists everything
 make clean           # remove build files
 make clean-data      # remove local score data
 ```
