@@ -44,6 +44,8 @@ add_library(snake_core STATIC
 	src/menu/menu_controller.cpp
 	src/menu/terminal_menu_view.cpp
 	src/render/terminal_renderer.cpp
+	src/audio/score.cpp
+	src/audio/score_data.cpp
 	src/audio/synth.cpp
 	src/render/sound.cpp
 	src/score/score_manager.cpp

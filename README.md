@@ -7,14 +7,14 @@ The classic Snake game for the terminal, written in C++. It saves your scores be
 - Start menu with three levels (Easy, Normal, Hard), a leaderboard, a how-to-play screen and a sound switch; press M at game over to return to it
 - Arrow keys or WASD
 - Best score, games played, average score and top 10, kept separately for each level and saved between sessions
-- Terminal beep when you eat and when the game ends; in builds with audio (the release binaries), a looping C - Am - F - G chord arpeggio plays during the game, with short blips when you eat, when the game ends and when you move around the menu
+- Terminal beep when you eat and when the game ends; in builds with audio (the release binaries), Gounod's "Ave Maria" over Bach's C major Prelude plays during the game (about four minutes, then it starts again), with short blips when you eat, when the game ends and when you move around the menu
 - Colored board (cyan walls, green snake with a bright head, red food, yellow numbers)
 - Linux, macOS and Windows binaries, plus a Docker image
 - An optional graphical version, `snake-gui`, drawn with SDL3 (see [Graphical version](#graphical-version))
 
 ## Download
 
-Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v2.1.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.1.0), which adds the graphical `snake-gui` with an app icon, and chord music in both versions.
+Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v2.1.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.1.0), which adds the graphical `snake-gui` with an app icon, and music in both versions.
 
 | Platform | Architecture | Binary |
 |----------|-------------|--------|
@@ -76,6 +76,8 @@ On Ubuntu or Debian, `sudo apt-get install build-essential cmake` installs the d
 ## Sound
 
 The release binaries play music and blips through the system audio device. The sound switch in the menu turns all of it off. If no audio device can be opened, the game falls back to the terminal beep without any message. Set `SNAKE_AUDIO=off` to force the beep even when a device exists.
+
+The music is Charles Gounod's *Ave Maria* (1853) over Johann Sebastian Bach's Prelude in C major (BWV 846), both in the public domain, played at the score's calm 66 BPM. The notes come from the [Mutopia Project](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=2167) edition (typeset by Yann Leprince from the 1856 Heugel score, also public domain) through `tools/gen_score.py`, which writes `src/audio/score_data.cpp`.
 
 Audio is optional at build time: `cmake -S . -B build -DSNAKE_GAME_BUILD_AUDIO=ON` fetches [miniaudio](https://github.com/mackron/miniaudio) when configuring. The default build (`make`) and the Docker image have no audio and keep the terminal beep.
 

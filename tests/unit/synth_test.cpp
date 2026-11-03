@@ -5,17 +5,20 @@
  */
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <atomic>
 #include <cmath>
 #include <thread>
 #include <vector>
 
+#include "snake_game/audio/score.hpp"
 #include "snake_game/audio/synth.hpp"
 
 namespace {
 
 const int RATE = 44100;
-const int LOOP_FRAMES = 302400;  // 64 sixteenths of 4725 samples at 140 BPM
+const int LOW_RATE = 2000;  // keeps whole-piece renders small: a sixteenth is 454 samples at 66 BPM
+const int LOW_STEP = 454;
 
 std::vector<float> renderFrames(Synth& s, int frames) {
 	std::vector<float> out(frames);
@@ -44,24 +47,96 @@ int signChanges(const std::vector<float>& v, size_t n) {
 
 }  // namespace
 
-TEST(Synth, StepFrequenciesFollowProgression) {
-	EXPECT_NEAR(stepFrequency(0), 261.63, 0.01);
-	EXPECT_NEAR(stepFrequency(1), 329.63, 0.01);
-	EXPECT_NEAR(stepFrequency(2), 392.00, 0.01);
-	EXPECT_NEAR(stepFrequency(3), 329.63, 0.01);
-	EXPECT_NEAR(stepFrequency(16), 220.00, 0.01);
-	EXPECT_NEAR(stepFrequency(32), 174.61, 0.01);
-	EXPECT_NEAR(stepFrequency(48), 196.00, 0.01);
-	EXPECT_DOUBLE_EQ(stepFrequency(64), stepFrequency(0));
+TEST(Score, PreludeOpensLikeBach) {
+	// Bar 1 of the C major prelude: C E G C E G C E, twice
+	const int bar1[8] = {60, 64, 67, 72, 76, 67, 72, 76};
+	for (int i = 0; i < 16; ++i) {
+		EXPECT_EQ(arpeggioNote(i), bar1[i % 8]) << "step " << i;
+	}
+	EXPECT_EQ(arpeggioNote(16 + 1), 62);  // bar 2 is Dm7/C: C D A D F ...
+	EXPECT_EQ(arpeggioNote(32), 59);      // bar 3 is G7/B: B D G D F ...
 }
 
-TEST(Synth, LoopIsSevenSeconds) {
-	Synth s(RATE);
+TEST(Score, MelodyWaitsFourBarsThenSings) {
+	for (int step = 0; step < 64; ++step) {
+		EXPECT_EQ(melodyNote(step), -1) << "step " << step;
+	}
+	EXPECT_EQ(melodyNote(64), 76);       // E5, first note of the melody
+	EXPECT_EQ(melodyNote(64 + 15), 76);  // held for the whole bar
+	EXPECT_EQ(melodyNote(80), 77);       // F5
+	EXPECT_EQ(melodyNote(96), 79);       // G5
+	EXPECT_EQ(melodyNote(96 + 12), 74);  // D5
+}
+
+TEST(Score, DataIsConsistent) {
+	for (int step = 0; step < ARPEGGIO_STEPS; ++step) {
+		EXPECT_GE(arpeggioNote(step), 36) << "step " << step;
+		EXPECT_LE(arpeggioNote(step), 96) << "step " << step;
+	}
+	EXPECT_EQ(arpeggioNote(ARPEGGIO_STEPS), -1);  // the final chord takes over
+	int end = 0;
+	for (int i = 0; i < MELODY_COUNT; ++i) {
+		EXPECT_GE(MELODY[i].start, end) << "note " << i << " overlaps the previous one";
+		EXPECT_GT(MELODY[i].length, 0);
+		EXPECT_GE(MELODY[i].pitch, 48);
+		EXPECT_LE(MELODY[i].pitch, 96);
+		end = MELODY[i].start + MELODY[i].length;
+	}
+	EXPECT_LE(end, SCORE_STEPS - 8) << "melody must leave a breath before the loop restarts";
+}
+
+TEST(Score, WrapsAroundAtTheEnd) {
+	for (int step : {0, 1, 17, 64, 100, 700}) {
+		EXPECT_EQ(arpeggioNote(step + SCORE_STEPS), arpeggioNote(step));
+		EXPECT_EQ(melodyNote(step + SCORE_STEPS), melodyNote(step));
+	}
+}
+
+TEST(Score, TempoIsCalm) {
+	EXPECT_LE(TEMPO_BPM, 72.0);
+	EXPECT_GE(TEMPO_BPM, 54.0);
+}
+
+TEST(Synth, PlaysThroughAndRestartsSeamlessly) {
+	Synth s(LOW_RATE);
 	s.startMusic();
-	std::vector<float> first = renderFrames(s, LOOP_FRAMES);
-	std::vector<float> second = renderFrames(s, LOOP_FRAMES);
+	const int loopFrames = SCORE_STEPS * LOW_STEP;
+	std::vector<float> first = renderFrames(s, loopFrames);
+	std::vector<float> second = renderFrames(s, loopFrames);
 	EXPECT_FALSE(allZero(first));
 	EXPECT_EQ(first, second);
+}
+
+TEST(Synth, LeavesABreathBeforeRestarting) {
+	Synth s(LOW_RATE);
+	s.startMusic();
+	std::vector<float> loop = renderFrames(s, SCORE_STEPS * LOW_STEP);
+	EXPECT_TRUE(allZero(loop, static_cast<size_t>((SCORE_STEPS - 8) * LOW_STEP)));
+}
+
+TEST(Synth, MelodyAddsToTheAccompaniment) {
+	// Bars 1-4 are accompaniment only; the melody enters in bar 5 and the sound gets louder
+	Synth s(LOW_RATE);
+	s.startMusic();
+	std::vector<float> out = renderFrames(s, 8 * 16 * LOW_STEP);
+	double intro = 0, withMelody = 0;
+	for (size_t i = 0; i < out.size() / 2; ++i) {
+		intro += std::fabs(out[i]);
+		withMelody += std::fabs(out[i + out.size() / 2]);
+	}
+	EXPECT_GT(withMelody, intro * 1.1);
+}
+
+TEST(Synth, MusicStaysQuietAndFinite) {
+	Synth s(LOW_RATE);
+	s.startMusic();
+	float peak = 0.0f;
+	for (float v : renderFrames(s, SCORE_STEPS * LOW_STEP)) {
+		ASSERT_TRUE(std::isfinite(v));
+		peak = std::max(peak, std::fabs(v));
+	}
+	EXPECT_GT(peak, 0.05f);
+	EXPECT_LT(peak, 0.5f) << "leaves headroom for the blips on top";
 }
 
 TEST(Synth, SilentWhenStopped) {
