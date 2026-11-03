@@ -15,7 +15,8 @@ RUN apk add --no-cache \
     cmake \
     g++ \
     make \
-    python3
+    python3 \
+    bash
 
 # Set working directory
 WORKDIR /app
@@ -29,6 +30,8 @@ COPY include/ ./include/
 COPY src/ ./src/
 COPY apps/ ./apps/
 COPY tests/ ./tests/
+COPY assets/ ./assets/
+COPY tools/ ./tools/
 
 # Build the project
 RUN mkdir -p build && \
