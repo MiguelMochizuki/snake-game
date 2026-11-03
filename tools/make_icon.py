@@ -2,7 +2,7 @@
 make_icon.py
 Author: Miguel Mochizuki Silva
 Description: Draws the Snake app icon (coiled green snake beside a red dot on a dark
-rounded square) and writes icon.png, icon.ico and icon.icns, plus src/gui/icon_data.cpp, the raw
+rounded square) and writes icon.png, icon-512.png, icon.ico and icon.icns, plus src/gui/icon_data.cpp, the raw
 pixels embedded in snake-gui for its window icon. Needs Pillow.
 Usage: python3 tools/make_icon.py [--out assets] [--source src/gui/icon_data.cpp]
 """
@@ -88,6 +88,7 @@ def main():
     os.makedirs(out, exist_ok=True)
     img = draw_icon()
     img.save(os.path.join(out, "icon.png"))
+    img.resize((512, 512), Image.LANCZOS).save(os.path.join(out, "icon-512.png"))  # for the Linux icon theme
     img.save(os.path.join(out, "icon.ico"), sizes=[(n, n) for n in (16, 32, 48, 64, 128, 256)])
     img.save(os.path.join(out, "icon.icns"))
     write_source(img, args.source)

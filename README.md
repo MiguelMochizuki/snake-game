@@ -45,6 +45,7 @@ On Windows, double-click the `.exe` or run it from a terminal that supports ANSI
 
 - **Linux:** `chmod +x snake-gui-linux-x86_64.AppImage`, then run it or double-click it.
 - **Windows:** unzip and double-click `snake-gui.exe`. SmartScreen may warn about an unknown publisher (the app is not signed): choose More info, then Run anyway.
+- **Linux icon:** GNOME and some other desktops take the dock icon from an installed desktop entry, not from the window. An AppImage shows its icon once you integrate it (AppImageLauncher or Gear Lever do that); a build from source gets it with `make install-gui` (`make uninstall-gui` removes it).
 - **macOS:** unzip and move `Snake.app` to Applications. The app is not signed, so the first time, right-click it, choose Open, then Open again.
 
 ## Build from source
