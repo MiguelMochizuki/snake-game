@@ -4,7 +4,6 @@
  * Description: Class GameEngine implementation
  */
 #include "snake_game/game/game_engine.hpp"
-#include <thread>
 #include <stdexcept>
 #include <iostream>
 
@@ -25,7 +24,32 @@ GameEngine::GameEngine(IKeySource& keys, const IInputHandler& input, int rows, i
 	, state_(rows, cols, scoreManager_.bestScore(Level::Normal), seed)
 	, keys_(keys)
 	, input_(input)
-	, renderer_(std::cout, color)
+	, ownedRenderer_(std::make_unique<TerminalRenderer>(std::cout, color))
+	, renderer_(ownedRenderer_.get())
+	, direction_(Direction::RIGHT)
+	, running_(true)
+	, speedMs_(speedMs) {
+}
+
+/**
+ * Constructor for the GameEngine class taking any renderer
+ *
+ * Parameters:
+ * IKeySource& keys: Source of key presses
+ * const IInputHandler& input: Maps keys to actions
+ * IRenderer& renderer: Draws the game and paces it
+ * int rows: Number of rows in the board
+ * int cols: Number of columns in the board
+ * int speedMs: Game speed in milliseconds
+ * unsigned seed: Seed for food placement
+ * const std::string& dataDir: Directory of the score file
+ */
+GameEngine::GameEngine(IKeySource& keys, const IInputHandler& input, IRenderer& renderer, int rows, int cols, int speedMs, unsigned seed, const std::string& dataDir)
+	: scoreManager_(dataDir)
+	, state_(rows, cols, scoreManager_.bestScore(Level::Normal), seed)
+	, keys_(keys)
+	, input_(input)
+	, renderer_(&renderer)
 	, direction_(Direction::RIGHT)
 	, running_(true)
 	, speedMs_(speedMs) {
@@ -143,8 +167,11 @@ void GameEngine::setSound(ISound* sound) {
 GameEnd GameEngine::run() {
 	GameEnd end;
 	do {
-		renderer_.clear();
-		renderer_.render(state_);
+		renderer_->clear();
+		renderer_->render(state_);
+		if (sound_) {
+			sound_->musicStart();
+		}
 
 		while (running_) {
 			TickInput tick = readTick(keys_, input_);
@@ -166,13 +193,13 @@ GameEnd GameEngine::run() {
 				break;
 			}
 
-			renderer_.clear();
-			renderer_.render(state_);
+			renderer_->clear();
+			renderer_->render(state_);
 			if (sound_ && state_.getScore() > scoreBefore) {
 				sound_->eat();
 			}
 
-			std::this_thread::sleep_for(std::chrono::milliseconds(speedMs_));
+			renderer_->pause(speedMs_);
 		}
 
 		int finalScore = state_.getFinalScore();
@@ -180,16 +207,17 @@ GameEnd GameEngine::run() {
 
 		end = awaitChoice(keys_, input_, [&]() {
 			if (sound_) {
+				sound_->musicStop();
 				sound_->gameOver();
 			}
-			renderer_.printGameOver(level_, finalScore, scoreManager_.stats(level_));
+			renderer_->printGameOver(level_, finalScore, scoreManager_.stats(level_));
 		});
 
 		if (end != GameEnd::Quit) {
 			state_.reset();
 			direction_ = Direction::RIGHT;
 			running_ = true;
-			renderer_.reset();
+			renderer_->reset();
 		}
 	} while (end == GameEnd::Restart);
 	return end;

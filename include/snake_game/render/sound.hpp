@@ -27,6 +27,26 @@ public:
 	 * Plays the cue for the end of a game
 	 */
 	virtual void gameOver() = 0;
+
+	/**
+	 * Starts the background music; does nothing by default
+	 */
+	virtual void musicStart() {}
+
+	/**
+	 * Stops the background music; does nothing by default
+	 */
+	virtual void musicStop() {}
+
+	/**
+	 * Plays the cue for moving the menu selection; does nothing by default
+	 */
+	virtual void menuMove() {}
+
+	/**
+	 * Plays the cue for choosing a menu item; does nothing by default
+	 */
+	virtual void menuSelect() {}
 };
 
 /**

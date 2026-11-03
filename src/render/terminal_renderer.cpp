@@ -4,6 +4,8 @@
  * Description: Terminal renderer implementation
  */
 #include "snake_game/render/terminal_renderer.hpp"
+#include <chrono>
+#include <thread>
 #include "snake_game/render/terminal_painter.hpp"
 #include "snake_game/input/wasd_input_handler.hpp"
 #include <iostream>
@@ -171,4 +173,14 @@ void TerminalRenderer::printGameOver(Level level, int finalScore, const ScoreSta
 	p.put(WALL, rule);
 	p.endl();
 	out_ << buf.str();
+}
+
+/**
+ * Sleeps between game steps
+ *
+ * Parameters:
+ * int ms: Time to sleep in milliseconds
+ */
+void TerminalRenderer::pause(int ms) {
+	std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
