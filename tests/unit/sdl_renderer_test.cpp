@@ -119,6 +119,54 @@ TEST(SdlRenderer, VictoryOnATinyCanvasDoesNotCrash) {
 	renderer.printVictory(Level::Hard, 0, ScoreStats{0, 0, 0.0});
 }
 
+TEST(SdlRenderer, VictoryDarkensTheBoard) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	ASSERT_FALSE(state.getFood().getX() == 0 && state.getFood().getY() == 0);
+	const Layout l = layoutFor(640, 720, 20, 20);
+	// The centre of the top-left cell: empty playfield, well away from the centred panel
+	const int px = l.originX + l.cell + l.cell / 2;
+	const int py = l.originY + l.cell + l.cell / 2;
+	renderer.clear();
+	renderer.render(state);
+	const Color before = pixelAt(canvas->pixelsRgb(), 640, px, py);
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	const Color after = pixelAt(canvas->pixelsRgb(), 640, px, py);
+	EXPECT_LT(after.r, before.r);
+	EXPECT_LT(after.g, before.g);
+	EXPECT_LT(after.b, before.b);
+}
+
+TEST(SdlRenderer, RedrawAfterVictoryKeepsTheBoardDark) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	renderer.clear();
+	renderer.render(state);
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	const std::vector<unsigned char> shown = canvas->pixelsRgb();
+	app.redraw();
+	EXPECT_EQ(shown, canvas->pixelsRgb());
+}
+
+TEST(SdlRenderer, ResetRestoresFullBrightness) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	renderer.clear();
+	renderer.render(state);
+	const std::vector<unsigned char> fresh = canvas->pixelsRgb();
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	renderer.reset();
+	renderer.clear();
+	renderer.render(state);
+	EXPECT_EQ(fresh, canvas->pixelsRgb());
+}
+
 TEST(SdlRenderer, TinyCanvasDoesNotCrash) {
 	std::unique_ptr<Canvas> canvas = Canvas::offscreen(10, 10);
 	SdlApp app(*canvas, false);
