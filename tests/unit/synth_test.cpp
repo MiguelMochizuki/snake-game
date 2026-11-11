@@ -188,6 +188,35 @@ TEST(Synth, MusicLoopsAgainAfterAFinale) {
 	EXPECT_FALSE(allZero(out, static_cast<size_t>(SCORE_STEPS) * LOW_STEP, out.size())) << "and loops as before";
 }
 
+TEST(Synth, TheLastCommandWinsWhenSeveralArriveBetweenCallbacks) {
+	Synth restarted(LOW_RATE), fresh(LOW_RATE);
+	restarted.startMusic();
+	renderFrames(restarted, 5 * LOW_STEP);
+	restarted.finale();
+	restarted.startMusic();  // R pressed right after the ending was requested
+	fresh.startMusic();
+	const int span = (FINALE_END_STEP - FINALE_START_STEP + 8) * LOW_STEP;
+	std::vector<float> a = renderFrames(restarted, span);
+	EXPECT_EQ(a, renderFrames(fresh, span)) << "the new game plays as if no ending had been asked for";
+
+	Synth stopped(LOW_RATE);
+	stopped.startMusic();
+	renderFrames(stopped, 5 * LOW_STEP);
+	stopped.finale();
+	stopped.stopMusic();  // leaving for the menu right after
+	EXPECT_TRUE(allZero(renderFrames(stopped, 4 * LOW_STEP)));
+}
+
+TEST(Synth, StartingAfterTheEndingFinishedPlaysTheNextGame) {
+	Synth s(LOW_RATE);
+	s.startMusic();
+	s.finale();
+	// One callback long enough to hold the whole ending, then the next game starts right away
+	renderFrames(s, (FINALE_END_STEP - FINALE_START_STEP + 1) * LOW_STEP);
+	s.startMusic();
+	EXPECT_FALSE(allZero(renderFrames(s, 8 * LOW_STEP)));
+}
+
 TEST(Synth, BlipsDecay) {
 	for (Blip b : {Blip::Eat, Blip::GameOver, Blip::MenuMove, Blip::MenuSelect, Blip::Win}) {
 		Synth s(RATE);

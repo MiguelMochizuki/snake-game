@@ -83,10 +83,11 @@ void TerminalRenderer::render(const GameState& state) {
 		for (int x = 0; x < cols; ++x) {
 			if (!grid[y * cols + x]) {
 				p.put(nullptr, " ");
+			} else if (x == headX && y == headY) {
+				// Checked before the food: on a full board the old food cell is under the head
+				p.put(HEAD, "O");
 			} else if (x == foodX && y == foodY) {
 				p.put(FOOD, "*");
-			} else if (x == headX && y == headY) {
-				p.put(HEAD, "O");
 			} else {
 				p.put(BODY, "O");
 			}

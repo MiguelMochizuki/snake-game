@@ -44,6 +44,17 @@ TEST(TerminalRendererGolden, VictoryPanel) {
 	expectGolden("victory_panel.txt", out.str());
 }
 
+TEST(TerminalRenderer, TheWinningFrameShowsNoFoodOnTheHead) {
+	// On a full board the old food cell is under the head: the head is what must be drawn there
+	GameState state(1, 4, 0, 5);
+	state.moveSnake(3);
+	ASSERT_TRUE(state.isWon());
+	std::ostringstream out;
+	TerminalRenderer renderer(out);
+	renderer.render(state);
+	EXPECT_EQ(out.str().find('*'), std::string::npos);
+}
+
 TEST(TerminalRenderer, ClearEscapes) {
 	std::ostringstream out;
 	TerminalRenderer renderer(out);

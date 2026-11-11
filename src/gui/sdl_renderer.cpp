@@ -145,10 +145,11 @@ void SdlRenderer::drawBoard(const GameState& state) {
 			if (!grid[y * cols + x]) {
 				continue;
 			}
-			if (x == foodX && y == foodY) {
-				canvas_.fillCircle(cellX(x) + l.cell / 2, cellY(y) + l.cell / 2, std::max(1, l.cell / 2 - std::max(1, l.cell / 8)), tone(theme::FOOD));
-			} else if (head && x == head->getX() && y == head->getY()) {
+			if (head && x == head->getX() && y == head->getY()) {
+				// Checked before the food: on a full board the old food cell is under the head
 				canvas_.fillRect(cellX(x), cellY(y), sq, sq, tone(theme::HEAD));
+			} else if (x == foodX && y == foodY) {
+				canvas_.fillCircle(cellX(x) + l.cell / 2, cellY(y) + l.cell / 2, std::max(1, l.cell / 2 - std::max(1, l.cell / 8)), tone(theme::FOOD));
 			} else {
 				canvas_.fillRect(cellX(x), cellY(y), sq, sq, tone(theme::BODY));
 			}

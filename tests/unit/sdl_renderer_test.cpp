@@ -139,6 +139,23 @@ TEST(SdlRenderer, VictoryDarkensTheBoard) {
 	EXPECT_LT(after.b, before.b);
 }
 
+TEST(SdlRenderer, TheWinningFrameDrawsTheHeadNotTheFood) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(1, 4, 0, 5);
+	state.moveSnake(3);
+	ASSERT_TRUE(state.isWon());
+	const Layout l = layoutFor(640, 720, 4, 1);
+	const SnakeSegment* head = state.getSnake().getHead();
+	// A corner of the head cell: the food is a circle and leaves the corners alone, the head fills the square
+	const int px = l.originX + (head->getX() + 1) * l.cell + 1;
+	const int py = l.originY + (head->getY() + 1) * l.cell + 1;
+	renderer.clear();
+	renderer.render(state);
+	EXPECT_TRUE(same(pixelAt(canvas->pixelsRgb(), 640, px, py), theme::HEAD));
+}
+
 TEST(SdlRenderer, RedrawAfterVictoryKeepsTheBoardDark) {
 	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
 	SdlApp app(*canvas, false);
