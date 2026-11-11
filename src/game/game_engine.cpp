@@ -212,7 +212,7 @@ GameEnd GameEngine::run() {
 		const bool won = state_.isWon();
 		end = awaitChoice(keys_, input_, [&]() {
 			if (sound_) {
-				sound_->musicFinale();
+				sound_->musicStop();
 				if (won) {
 					sound_->win();
 				} else {
@@ -225,9 +225,6 @@ GameEnd GameEngine::run() {
 				renderer_->printGameOver(level_, finalScore, scoreManager_.stats(level_));
 			}
 		});
-		if (sound_ && end != GameEnd::Restart) {
-			sound_->musicStop();  // leaving for the menu or the shell: the ending must not play on
-		}
 
 		if (end != GameEnd::Quit) {
 			state_.reset();
