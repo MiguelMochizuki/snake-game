@@ -126,6 +126,7 @@ void TerminalMenuView::show(const MenuSnapshot& snapshot) {
 	frameRow(p, itemRow(snapshot.selected == MenuItem::Leaderboard, "Leaderboard"));
 	frameRow(p, itemRow(snapshot.selected == MenuItem::Help, "How to play"));
 	frameRow(p, valueRow(snapshot.selected == MenuItem::Sound, "Sound", snapshot.sound ? "On" : "Off"));
+	frameRow(p, valueRow(snapshot.selected == MenuItem::Practice, "Practice", snapshot.practice ? "On" : "Off"));
 	frameRow(p, itemRow(snapshot.selected == MenuItem::Quit, "Quit"));
 
 	frameRow(p, {});
@@ -173,7 +174,9 @@ void TerminalMenuView::showLeaderboard(const LeaderboardSnapshot& snapshot) {
 	frameRow(p, {});
 	p.put(WALL, rule);
 	p.endl();
-	p.put(DIM, "A/D level, Enter back");
+	p.put(DIM, "A/D level, C clear");
+	p.endl();
+	p.put(DIM, "Enter back");
 	p.endl();
 
 	out_ << buf.str();
@@ -211,6 +214,38 @@ void TerminalMenuView::showHelp() {
 	p.put(WALL, rule);
 	p.endl();
 	p.put(DIM, "Enter back");
+	p.endl();
+
+	out_ << buf.str();
+}
+
+/**
+ * Draws the question asked before every saved score is deleted
+ */
+void TerminalMenuView::showConfirmClear() {
+	std::ostringstream buf;
+	Painter p(buf, color_);
+	const std::string rule(INNER + 2, '#');
+	const std::vector<std::string> text = {
+		"", "Delete every saved", "score of every", "level?", "", "This cannot be", "undone.",
+	};
+
+	buf << "\033[2J\033[H";
+	p.put(WALL, rule);
+	p.endl();
+	frameRow(p, {});
+	frameRow(p, {{nullptr, "   "}, {FOOD, "CLEAR SCORES"}});
+	for (const std::string& line : text) {
+		if (line.empty()) {
+			frameRow(p, {});
+		} else {
+			frameRow(p, {{nullptr, "   "}, {nullptr, line}});
+		}
+	}
+	frameRow(p, {});
+	p.put(WALL, rule);
+	p.endl();
+	p.put(DIM, "Enter delete, Q keep");
 	p.endl();
 
 	out_ << buf.str();

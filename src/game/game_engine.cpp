@@ -80,6 +80,7 @@ TickInput GameEngine::readTick(IKeySource& keys, const IInputHandler& handler) {
 			case Action::Restart: break;
 			case Action::Confirm: break;
 			case Action::Menu: break;
+			case Action::Clear: break;
 		}
 	}
 	return tick;
@@ -160,6 +161,16 @@ void GameEngine::setSound(ISound* sound) {
 }
 
 /**
+ * Turns practice mode on or off
+ *
+ * Parameters:
+ * bool practice: true to play without saving scores to the leaderboard
+ */
+void GameEngine::setPractice(bool practice) {
+	practice_ = practice;
+}
+
+/**
  * Runs the main game loop, restarting on request, until the player asks for the menu or quits
  *
  * Returns GameEnd: Menu or Quit; the board is reset for the next run() after Menu
@@ -207,7 +218,9 @@ GameEnd GameEngine::run() {
 		}
 
 		int finalScore = state_.getFinalScore();
-		scoreManager_.saveScore(level_, finalScore);
+		if (!practice_) {
+			scoreManager_.saveScore(level_, finalScore);
+		}
 
 		const bool won = state_.isWon();
 		end = awaitChoice(keys_, input_, [&]() {

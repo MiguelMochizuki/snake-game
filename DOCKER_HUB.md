@@ -17,7 +17,7 @@ docker run --rm -it -v $(pwd)/data:/app/data miguelmochizuki/snake-game
 
 ## How to play
 
-The game opens on a menu. Use W/S or the up/down arrows to move, A/D or left/right to change the level (Easy, Normal, Hard) or switch Sound, and Enter to pick a row: Start, Leaderboard, How to play or Quit. Scores are kept separately for each level.
+The game opens on a menu. Use W/S or the up/down arrows to move, A/D or left/right to change the level (Easy, Normal, Hard) or switch Sound and Practice (games played in practice are not saved), and Enter to pick a row: Start, Leaderboard, How to play or Quit. On the leaderboard, C deletes all saved scores after a confirmation. Scores are kept separately for each level.
 
 | Key | In the game |
 |-----|-------------|

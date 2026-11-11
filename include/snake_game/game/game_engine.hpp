@@ -51,6 +51,7 @@ enum class GameEnd { Restart, Menu, Quit };
  * int speedMs_: Game speed in milliseconds per frame
  * Level level_: Level that tags saved scores
  * ISound* sound_: Sound effects, nullptr for silence
+ * bool practice_: Whether finished games are left out of the score file
  */
 class GameEngine {
 private:
@@ -65,6 +66,7 @@ private:
 	int speedMs_;
 	Level level_ = Level::Normal;
 	ISound* sound_ = nullptr;
+	bool practice_ = false;
 
 public:
 	/**
@@ -152,6 +154,14 @@ public:
 	 * ISound* sound: Receives eat and game over events, must outlive the engine; nullptr for silence
 	 */
 	void setSound(ISound* sound);
+
+	/**
+	 * Turns practice mode on or off
+	 *
+	 * Parameters:
+	 * bool practice: true to play without saving scores to the leaderboard
+	 */
+	void setPractice(bool practice);
 
 	/**
 	 * Runs the main game loop, restarting on request, until the player asks for the menu or quits

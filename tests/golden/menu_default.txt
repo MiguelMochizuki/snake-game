@@ -11,6 +11,7 @@
 #     Leaderboard    #
 #     How to play    #
 #     Sound <On>     #
+#     Practice <Off> #
 #     Quit           #
 #                    #
 #   Best:     42     #

@@ -57,6 +57,7 @@ public:
 	 * Returns void:
 	 */
 	void showHelp() override;
+	void showConfirmClear() override;
 };
 
 #endif

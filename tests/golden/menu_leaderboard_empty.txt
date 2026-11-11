@@ -6,4 +6,5 @@
 #   No games yet     #
 #                    #
 ######################
-A/D level, Enter back
+A/D level, C clear
+Enter back

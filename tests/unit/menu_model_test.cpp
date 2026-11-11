@@ -14,18 +14,18 @@ TEST(MenuModel, StartsOnStartWithNormalLevel) {
 	EXPECT_EQ(m.speedMs(), 200);
 }
 
-TEST(MenuModel, NavigationWrapsOverSixRows) {
+TEST(MenuModel, NavigationWrapsOverSevenRows) {
 	MenuModel m;
 	EXPECT_EQ(m.apply(Action::MoveUp), MenuOutcome::None);
 	EXPECT_EQ(m.selected(), MenuItem::Quit);
 	const MenuItem order[] = {MenuItem::Start, MenuItem::Level, MenuItem::Leaderboard,
-		MenuItem::Help, MenuItem::Sound, MenuItem::Quit};
-	for (int i = 0; i < 6; ++i) {
+		MenuItem::Help, MenuItem::Sound, MenuItem::Practice, MenuItem::Quit};
+	for (int i = 0; i < 7; ++i) {
 		m.apply(Action::MoveDown);
 		EXPECT_EQ(m.selected(), order[i]);
 	}
 	m.apply(Action::MoveUp);
-	EXPECT_EQ(m.selected(), MenuItem::Sound);
+	EXPECT_EQ(m.selected(), MenuItem::Practice);
 }
 
 TEST(MenuModel, LevelCyclesBothWaysOnLevelRow) {
@@ -66,7 +66,23 @@ TEST(MenuModel, ConfirmOutcomes) {
 	m.apply(Action::MoveDown);
 	EXPECT_EQ(m.apply(Action::Confirm), MenuOutcome::None);
 	m.apply(Action::MoveDown);
+	EXPECT_EQ(m.apply(Action::Confirm), MenuOutcome::None);
+	m.apply(Action::MoveDown);
 	EXPECT_EQ(m.apply(Action::Confirm), MenuOutcome::Quit);
+}
+
+TEST(MenuModel, PracticeStartsOffAndToggles) {
+	MenuModel m;
+	EXPECT_FALSE(m.practice());
+	for (int i = 0; i < 5; ++i) m.apply(Action::MoveDown);
+	ASSERT_EQ(m.selected(), MenuItem::Practice);
+	EXPECT_EQ(m.apply(Action::MoveRight), MenuOutcome::None);
+	EXPECT_TRUE(m.practice());
+	EXPECT_EQ(m.apply(Action::MoveLeft), MenuOutcome::None);
+	EXPECT_FALSE(m.practice());
+	m.apply(Action::Confirm);
+	EXPECT_TRUE(m.practice());
+	EXPECT_TRUE(m.sound());
 }
 
 TEST(MenuModel, SoundStartsOnAndToggles) {

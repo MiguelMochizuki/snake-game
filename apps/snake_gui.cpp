@@ -167,6 +167,7 @@ int main(int argc, char** argv) {
 		Level level = Level::Normal;
 		int speedMs = levelSpeedMs(level);
 		bool sound = true;
+		bool practice = false;
 		if (showMenu) {
 			// Read the scores afresh: the round that just ended may have changed them
 			ScoreManager scores(dataDir);
@@ -177,10 +178,12 @@ int main(int argc, char** argv) {
 			level = choice.level;
 			speedMs = choice.speedMs;
 			sound = choice.sound;
+			practice = choice.practice;
 		}
 		// A valid SNAKE_FRAME_MS (test hook) overrides the speed, never the level
 		engine.setLevel(level, readFrameMs().value_or(speedMs));
 		engine.setSound(sound ? cues : nullptr);
+		engine.setPractice(practice);
 		showMenu = true;
 	} while (engine.run() == GameEnd::Menu);
 	return 0;

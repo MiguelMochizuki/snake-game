@@ -1,13 +1,12 @@
 """
 make_icon.py
 Author: Miguel Mochizuki Silva
-Description: Draws the Snake app icon (coiled green snake beside a red dot on a dark
-rounded square) and writes icon.png, icon-512.png, icon.ico and icon.icns, plus src/gui/icon_data.cpp, the raw
+Description: Draws the Snake app icon (a frame of the game: square-celled snake and red food on the dark
+playfield, in a rounded square) and writes icon.png, icon-512.png, icon.ico and icon.icns, plus src/gui/icon_data.cpp, the raw
 pixels embedded in snake-gui for its window icon. Needs Pillow.
 Usage: python3 tools/make_icon.py [--out assets] [--source src/gui/icon_data.cpp]
 """
 import argparse
-import math
 import os
 
 from PIL import Image, ImageDraw
@@ -22,15 +21,13 @@ HEAD = (124, 214, 162)
 FOOD = (218, 98, 92)
 
 
-def coil_points(cx, cy, turns, r_start, r_end, steps):
-    """Returns points of a spiral from the outside in, as the snake's body path."""
-    pts = []
-    for i in range(steps + 1):
-        t = i / steps
-        a = -math.pi / 2 + t * turns * 2 * math.pi
-        r = r_start + (r_end - r_start) * t
-        pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
-    return pts
+# The icon is a frame of the game itself: the playfield on its dark surface, a snake of square cells with a gap
+# between them (head lighter, with eyes) and the round red food, laid out on a coarse 7x7 grid
+GRID = 7
+WALL = (52, 66, 61)
+# Tail to head; the head faces right, toward the food
+SNAKE = [(0, 5), (1, 5), (2, 5), (3, 5), (4, 5), (5, 5), (5, 4), (5, 3), (4, 3), (3, 3), (2, 3), (1, 3), (1, 2), (1, 1)]
+FOOD_CELL = (4, 1)
 
 
 def draw_icon():
@@ -39,21 +36,31 @@ def draw_icon():
     img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     d.rounded_rectangle((0, 0, s - 1, s - 1), radius=int(s * 0.225), fill=BACKGROUND)
-    d.rounded_rectangle((s * 0.03, s * 0.03, s * 0.97, s * 0.97), radius=int(s * 0.2), fill=SURFACE)
 
-    width = s * 0.082
-    pts = coil_points(s * 0.42, s * 0.52, 1.9, s * 0.30, s * 0.06, 400)
-    for (x, y) in pts:  # round brush stamps give a smooth, round-capped body
-        d.ellipse((x - width / 2, y - width / 2, x + width / 2, y + width / 2), fill=BODY)
+    # Playfield: a hairline frame around the lighter surface, like the board in the game
+    lo, hi = s * 0.095, s * 0.905
+    d.rounded_rectangle((lo, lo, hi, hi), radius=int(s * 0.03), fill=WALL)
+    line = s * 0.006
+    d.rounded_rectangle((lo + line, lo + line, hi - line, hi - line), radius=int(s * 0.026), fill=SURFACE)
 
-    hx, hy = pts[0]  # outer end of the spiral is the head
-    hr = width * 0.95
-    d.ellipse((hx - hr, hy - hr, hx + hr, hy + hr), fill=HEAD)
-    er = hr * 0.22
-    d.ellipse((hx - er, hy - hr * 0.1 - er, hx + er, hy - hr * 0.1 + er), fill=BACKGROUND)
+    cell = (hi - lo) / GRID
+    gap = cell * 0.09
 
-    fx, fy, fr = s * 0.80, s * 0.26, s * 0.062
-    d.ellipse((fx - fr, fy - fr, fx + fr, fy + fr), fill=FOOD)
+    def box(c, r):
+        x, y = lo + c * cell, lo + r * cell
+        return (x + gap, y + gap, x + cell - gap, y + cell - gap)
+
+    for c, r in SNAKE[:-1]:
+        d.rectangle(box(c, r), fill=BODY)
+    hx0, hy0, hx1, hy1 = box(*SNAKE[-1])
+    d.rectangle((hx0, hy0, hx1, hy1), fill=HEAD)
+    er, ex = cell * 0.09, hx1 - cell * 0.28  # two eyes on the side the head faces
+    for ey in (hy0 + cell * 0.28, hy1 - cell * 0.28):
+        d.ellipse((ex - er, ey - er, ex + er, ey + er), fill=BACKGROUND)
+
+    fx0, fy0, fx1, fy1 = box(*FOOD_CELL)
+    fc, fr = ((fx0 + fx1) / 2, (fy0 + fy1) / 2), cell * 0.38
+    d.ellipse((fc[0] - fr, fc[1] - fr, fc[0] + fr, fc[1] + fr), fill=FOOD)
     return img.resize((SIZE, SIZE), Image.LANCZOS)
 
 

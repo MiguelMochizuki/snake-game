@@ -84,6 +84,7 @@ public:
 	std::vector<MenuSnapshot> shown;
 	std::vector<LeaderboardSnapshot> boards;
 	int helpShown = 0;
+	int confirmShown = 0;
 	std::vector<std::string>* log;
 
 	/**
@@ -122,6 +123,14 @@ public:
 		++helpShown;
 		log->push_back("help");
 	}
+
+	/**
+	 * Records the confirmation question
+	 */
+	void showConfirmClear() override {
+		++confirmShown;
+		log->push_back("confirm");
+	}
 };
 
 /**
@@ -129,6 +138,15 @@ public:
  */
 class FakeScores : public IScoreSource {
 public:
+	int clears = 0;
+
+	/**
+	 * Counts the call
+	 */
+	void clear() override {
+		++clears;
+	}
+
 	/**
 	 * Gets canned figures: Easy 10/1/10.0, Normal 42/7/4.3, Hard 99/3/50.0
 	 *
@@ -333,4 +351,45 @@ TEST_F(MenuControllerTest, ResultCarriesLevelAndSound) {
 	EXPECT_EQ(r.level, Level::Hard);
 	EXPECT_EQ(r.speedMs, 100);
 	EXPECT_FALSE(r.sound);
+}
+
+/**
+ * Keys that open the leaderboard from the menu: two Downs, then Enter
+ */
+std::vector<Key> openLeaderboard() {
+	return {specialKey(KeyKind::Down), specialKey(KeyKind::Down), enter()};
+}
+
+TEST_F(MenuControllerTest, CAsksOnTheLeaderboardThenDeletesOnEnter) {
+	RecordingView view(&log);
+	std::vector<Key> script = openLeaderboard();
+	script.insert(script.end(), {charKey('c'), enter(), charKey('q')});  // ask, yes, back
+	run(script, view);
+	EXPECT_EQ(view.confirmShown, 1);
+	EXPECT_EQ(scores.clears, 1);
+	EXPECT_EQ(view.boards.size(), 2u);  // the board is drawn again once cleared
+}
+
+TEST_F(MenuControllerTest, CKeepsEverythingOnQ) {
+	RecordingView view(&log);
+	std::vector<Key> script = openLeaderboard();
+	script.insert(script.end(), {charKey('c'), charKey('q')});
+	run(script, view);
+	EXPECT_EQ(view.confirmShown, 1);
+	EXPECT_EQ(scores.clears, 0);
+}
+
+TEST_F(MenuControllerTest, ConfirmationIgnoresOtherKeysAndEofKeepsEverything) {
+	RecordingView view(&log);
+	std::vector<Key> script = openLeaderboard();
+	script.insert(script.end(), {charKey('c'), charKey('x'), specialKey(KeyKind::Down)});
+	EXPECT_FALSE(run(script, view).start);
+	EXPECT_EQ(scores.clears, 0);
+}
+
+TEST_F(MenuControllerTest, CDoesNothingOnTheMenuItself) {
+	RecordingView view(&log);
+	run({charKey('c'), enter()}, view);
+	EXPECT_EQ(view.confirmShown, 0);
+	EXPECT_EQ(scores.clears, 0);
 }

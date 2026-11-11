@@ -7,7 +7,7 @@
 
 namespace {
 
-const int ITEM_COUNT = 6;
+const int ITEM_COUNT = 7;
 
 }  // namespace
 
@@ -36,6 +36,15 @@ Level MenuModel::level() const {
  */
 bool MenuModel::sound() const {
 	return sound_;
+}
+
+/**
+ * Tells whether practice mode is on
+ *
+ * Returns bool: true if the next game must not be saved to the leaderboard
+ */
+bool MenuModel::practice() const {
+	return practice_;
 }
 
 /**
@@ -69,6 +78,8 @@ MenuOutcome MenuModel::apply(Action action) {
 				level_ = nextLevel(level_, -1);
 			} else if (selected_ == MenuItem::Sound) {
 				sound_ = !sound_;
+			} else if (selected_ == MenuItem::Practice) {
+				practice_ = !practice_;
 			}
 			break;
 		case Action::MoveRight:
@@ -76,6 +87,8 @@ MenuOutcome MenuModel::apply(Action action) {
 				level_ = nextLevel(level_, 1);
 			} else if (selected_ == MenuItem::Sound) {
 				sound_ = !sound_;
+			} else if (selected_ == MenuItem::Practice) {
+				practice_ = !practice_;
 			}
 			break;
 		case Action::Confirm:
@@ -94,11 +107,15 @@ MenuOutcome MenuModel::apply(Action action) {
 			if (selected_ == MenuItem::Sound) {
 				sound_ = !sound_;
 			}
+			if (selected_ == MenuItem::Practice) {
+				practice_ = !practice_;
+			}
 			break;
 		case Action::Quit:
 			return MenuOutcome::Quit;
 		case Action::Restart:
 		case Action::Menu:
+		case Action::Clear:
 			break;
 	}
 	return MenuOutcome::None;

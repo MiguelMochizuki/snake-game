@@ -54,6 +54,11 @@ public:
 	 * Returns std::vector<int>: Up to n scores, highest first, ties kept
 	 */
 	virtual std::vector<int> topScores(Level level, std::size_t n) const = 0;
+
+	/**
+	 * Deletes every saved game of every level
+	 */
+	virtual void clear() = 0;
 };
 
 #endif

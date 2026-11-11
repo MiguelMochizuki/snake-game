@@ -21,12 +21,14 @@
  * int speedMs: Frame time of the chosen level, meaningful only when start is true
  * Level level: Level chosen
  * bool sound: Whether sound was left on
+ * bool practice: Whether the game must not be saved to the leaderboard
  */
 struct MenuResult {
 	bool start;
 	int speedMs;
 	Level level;
 	bool sound;
+	bool practice = false;
 };
 
 /**
@@ -37,12 +39,12 @@ struct MenuResult {
  * const IInputHandler& input: Maps keys to actions
  * IMenuView& view: Draws the menu
  * MenuModel& model: Menu state, updated as keys arrive
- * const IScoreSource& scores: Where the menu reads the figures and leaderboards from
+ * IScoreSource& scores: Where the menu reads the figures and leaderboards from, and clears them on request
  * ISound* sound: Plays a blip on Up/Down and Confirm while the menu's sound switch is on, nullptr for silence
  *
  * Returns MenuResult: start true with the chosen speed; false on Quit, Ctrl+C or EOF
  */
 MenuResult runMenu(IKeySource& keys, const IInputHandler& input, IMenuView& view,
-	MenuModel& model, const IScoreSource& scores, ISound* sound = nullptr);
+	MenuModel& model, IScoreSource& scores, ISound* sound = nullptr);
 
 #endif
