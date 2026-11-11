@@ -19,7 +19,7 @@ const std::size_t LEADERBOARD_SIZE = 10;
  * Returns MenuResult: The result
  */
 MenuResult resultOf(const MenuModel& model, bool start) {
-	return MenuResult{start, model.speedMs(), model.level(), model.sound()};
+	return MenuResult{start, model.speedMs(), model.level(), model.sound(), model.practice()};
 }
 
 /**
@@ -77,6 +77,35 @@ bool runHelp(IKeySource& keys, const IInputHandler& input, IMenuView& view) {
 	}
 }
 
+/**
+ * Asks whether to delete every saved score and does it on Enter; Q or anything else but Enter's answer cancels
+ *
+ * Parameters:
+ * IKeySource& keys: Source of key presses
+ * const IInputHandler& input: Maps keys to actions
+ * IMenuView& view: Draws the question
+ * IScoreSource& scores: Cleared when the player confirms
+ *
+ * Returns bool: false if the key source ended (the program should quit), true otherwise
+ */
+bool runConfirmClear(IKeySource& keys, const IInputHandler& input, IMenuView& view, IScoreSource& scores) {
+	view.showConfirmClear();
+	while (true) {
+		std::optional<Key> key = keys.waitKey();
+		if (!key) {
+			return false;
+		}
+		std::optional<Action> action = input.handle(*key);
+		if (action == Action::Confirm) {
+			scores.clear();
+			return true;
+		}
+		if (action == Action::Quit) {
+			return true;
+		}
+	}
+}
+
 }  // namespace
 
 /**
@@ -87,16 +116,16 @@ bool runHelp(IKeySource& keys, const IInputHandler& input, IMenuView& view) {
  * const IInputHandler& input: Maps keys to actions
  * IMenuView& view: Draws the menu
  * MenuModel& model: Menu state, updated as keys arrive
- * const IScoreSource& scores: Where the menu reads the figures and leaderboards from
+ * IScoreSource& scores: Where the menu reads the figures and leaderboards from, and clears them on request
  * ISound* sound: Plays a blip on Up/Down and Confirm while the menu's sound switch is on, nullptr for silence
  *
  * Returns MenuResult: start true with the chosen speed; false on Quit, Ctrl+C or EOF
  */
 MenuResult runMenu(IKeySource& keys, const IInputHandler& input, IMenuView& view,
-		MenuModel& model, const IScoreSource& scores, ISound* sound) {
+		MenuModel& model, IScoreSource& scores, ISound* sound) {
 	keys.flush();
 	while (true) {
-		view.show(MenuSnapshot{model.selected(), model.level(), scores.stats(model.level()), model.sound()});
+		view.show(MenuSnapshot{model.selected(), model.level(), scores.stats(model.level()), model.sound(), model.practice()});
 		std::optional<Key> key = keys.waitKey();
 		if (!key) {
 			return resultOf(model, false);
@@ -126,6 +155,11 @@ MenuResult runMenu(IKeySource& keys, const IInputHandler& input, IMenuView& view
 				break;
 			case MenuOutcome::OpenHelp:
 				if (!runHelp(keys, input, view)) {
+					return resultOf(model, false);
+				}
+				break;
+			case MenuOutcome::ClearScores:
+				if (!runConfirmClear(keys, input, view, scores)) {
 					return resultOf(model, false);
 				}
 				break;

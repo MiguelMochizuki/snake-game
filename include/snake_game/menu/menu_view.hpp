@@ -19,12 +19,14 @@
  * Level level: Chosen level
  * ScoreStats stats: Score figures of the chosen level
  * bool sound: Whether sound is on
+ * bool practice: Whether practice mode (scores not saved) is on
  */
 struct MenuSnapshot {
 	MenuItem selected;
 	Level level;
 	ScoreStats stats;
 	bool sound;
+	bool practice = false;
 };
 
 /**
@@ -75,6 +77,13 @@ public:
 	 * Returns void:
 	 */
 	virtual void showHelp() = 0;
+
+	/**
+	 * Draws the question that must be answered before every saved score is deleted
+	 *
+	 * Returns void:
+	 */
+	virtual void showConfirmClear() = 0;
 };
 
 #endif

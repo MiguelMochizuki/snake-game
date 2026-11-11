@@ -55,6 +55,21 @@ TEST(SdlMenuView, SoundSwitchChangesThePicture) {
 	EXPECT_NE(on, f.canvas->pixelsRgb());
 }
 
+TEST(SdlMenuView, PracticeSwitchChangesThePicture) {
+	Fixture f;
+	f.view.show(MenuSnapshot{MenuItem::Practice, Level::Normal, ScoreStats{0, 0, 0.0}, true, false});
+	std::vector<unsigned char> off = f.canvas->pixelsRgb();
+	f.view.show(MenuSnapshot{MenuItem::Practice, Level::Normal, ScoreStats{0, 0, 0.0}, true, true});
+	EXPECT_NE(off, f.canvas->pixelsRgb());
+}
+
+TEST(SdlMenuView, ConfirmClearIsNotBlank) {
+	Fixture f;
+	std::vector<unsigned char> empty = f.blank();
+	f.view.showConfirmClear();
+	EXPECT_NE(empty, f.canvas->pixelsRgb());
+}
+
 TEST(SdlMenuView, LeaderboardEmptyAndFilledDiffer) {
 	Fixture f;
 	f.view.showLeaderboard(LeaderboardSnapshot{Level::Hard, {}});

@@ -262,6 +262,7 @@ void SdlMenuView::show(const MenuSnapshot& snapshot) {
 		drawScreen(canvas_, [&](Page& p) {
 			const std::string level = levelName(snapshot.level);
 			const std::string sound = snapshot.sound ? "On" : "Off";
+			const std::string practice = snapshot.practice ? "On" : "Off";
 			p.title("SNAKE");
 			p.gap(2);
 			p.art();
@@ -271,6 +272,8 @@ void SdlMenuView::show(const MenuSnapshot& snapshot) {
 			p.row("Leaderboard", nullptr, snapshot.selected == MenuItem::Leaderboard);
 			p.row("How to play", nullptr, snapshot.selected == MenuItem::Help);
 			p.row("Sound", &sound, snapshot.selected == MenuItem::Sound);
+			p.row("Practice", &practice, snapshot.selected == MenuItem::Practice);
+			p.row("Clear scores", nullptr, snapshot.selected == MenuItem::ClearScores);
 			p.row("Quit", nullptr, snapshot.selected == MenuItem::Quit);
 			p.rule();
 			p.stat("Best", std::to_string(snapshot.stats.best));
@@ -338,6 +341,29 @@ void SdlMenuView::showHelp() {
 			}
 			p.rule();
 			p.line("Enter back", theme::DIM);
+		});
+	};
+	draw();
+	app_.setScene(draw);
+}
+
+/**
+ * Draws the question asked before every saved score is deleted
+ */
+void SdlMenuView::showConfirmClear() {
+	auto draw = [this] {
+		drawScreen(canvas_, [&](Page& p) {
+			p.title("CLEAR SCORES");
+			p.gap(2);
+			p.rule();
+			for (const std::string& line : {"Delete every saved", "score of every level?"}) {
+				p.line(line, theme::LABEL);
+			}
+			p.gap(2);
+			p.line("This cannot be undone.", theme::FOOD);
+			p.rule();
+			p.line("Enter delete", theme::DIM);
+			p.line("Q keep", theme::DIM);
 		});
 	};
 	draw();

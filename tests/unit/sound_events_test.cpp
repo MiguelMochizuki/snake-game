@@ -48,6 +48,7 @@ public:
 	void show(const MenuSnapshot&) override {}
 	void showLeaderboard(const LeaderboardSnapshot&) override {}
 	void showHelp() override {}
+	void showConfirmClear() override {}
 };
 
 /**
@@ -57,6 +58,7 @@ class EmptyScores : public IScoreSource {
 public:
 	ScoreStats stats(Level) const override { return ScoreStats{}; }
 	std::vector<int> topScores(Level, size_t) const override { return {}; }
+	void clear() override {}
 };
 
 using Events = std::vector<std::string>;

@@ -299,3 +299,20 @@ TEST_F(ScoreManagerTest, ExistingV2FileWinsOverOldFiles) {
 	EXPECT_EQ(m2.totalGames(Level::Normal), 0u);
 	EXPECT_EQ(m2.bestScore(Level::Hard), 4);
 }
+
+TEST_F(ScoreManagerTest, ClearDeletesEveryLevelAndSurvivesAReload) {
+	{
+		ScoreManager sm(dir_.string());
+		sm.saveScore(Level::Easy, 5);
+		sm.saveScore(Level::Hard, 9);
+		sm.clear();
+		EXPECT_EQ(sm.totalGames(Level::Easy), 0u);
+		EXPECT_EQ(sm.bestScore(Level::Hard), 0);
+	}
+	ScoreManager reloaded(dir_.string());
+	EXPECT_EQ(reloaded.totalGames(Level::Easy), 0u);
+	EXPECT_EQ(reloaded.totalGames(Level::Hard), 0u);
+	reloaded.saveScore(Level::Normal, 3);
+	ScoreManager again(dir_.string());
+	EXPECT_EQ(again.bestScore(Level::Normal), 3);
+}

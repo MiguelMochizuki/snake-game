@@ -84,6 +84,7 @@ public:
 	std::vector<MenuSnapshot> shown;
 	std::vector<LeaderboardSnapshot> boards;
 	int helpShown = 0;
+	int confirmShown = 0;
 	std::vector<std::string>* log;
 
 	/**
@@ -122,6 +123,14 @@ public:
 		++helpShown;
 		log->push_back("help");
 	}
+
+	/**
+	 * Records the confirmation question
+	 */
+	void showConfirmClear() override {
+		++confirmShown;
+		log->push_back("confirm");
+	}
 };
 
 /**
@@ -129,6 +138,15 @@ public:
  */
 class FakeScores : public IScoreSource {
 public:
+	int clears = 0;
+
+	/**
+	 * Counts the call
+	 */
+	void clear() override {
+		++clears;
+	}
+
 	/**
 	 * Gets canned figures: Easy 10/1/10.0, Normal 42/7/4.3, Hard 99/3/50.0
 	 *
@@ -333,4 +351,34 @@ TEST_F(MenuControllerTest, ResultCarriesLevelAndSound) {
 	EXPECT_EQ(r.level, Level::Hard);
 	EXPECT_EQ(r.speedMs, 100);
 	EXPECT_FALSE(r.sound);
+}
+
+TEST_F(MenuControllerTest, ClearScoresAsksThenDeletesOnEnter) {
+	RecordingView view(&log);
+	std::vector<Key> toClear(6, specialKey(KeyKind::Down));
+	toClear.push_back(enter());  // opens the question
+	toClear.push_back(enter());  // answers yes
+	run(toClear, view);
+	EXPECT_EQ(view.confirmShown, 1);
+	EXPECT_EQ(scores.clears, 1);
+}
+
+TEST_F(MenuControllerTest, ClearScoresKeepsEverythingOnQ) {
+	RecordingView view(&log);
+	std::vector<Key> toClear(6, specialKey(KeyKind::Down));
+	toClear.push_back(enter());
+	toClear.push_back(charKey('q'));
+	run(toClear, view);
+	EXPECT_EQ(view.confirmShown, 1);
+	EXPECT_EQ(scores.clears, 0);
+}
+
+TEST_F(MenuControllerTest, ClearScoresIgnoresOtherKeysAndEofKeepsEverything) {
+	RecordingView view(&log);
+	std::vector<Key> toClear(6, specialKey(KeyKind::Down));
+	toClear.push_back(enter());
+	toClear.push_back(charKey('x'));
+	toClear.push_back(specialKey(KeyKind::Down));
+	EXPECT_FALSE(run(toClear, view).start);
+	EXPECT_EQ(scores.clears, 0);
 }
