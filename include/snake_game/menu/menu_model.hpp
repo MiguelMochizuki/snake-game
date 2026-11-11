@@ -12,12 +12,12 @@
 /**
  * Row of the start menu
  */
-enum class MenuItem { Start, Level, Leaderboard, Help, Sound, Practice, ClearScores, Quit };
+enum class MenuItem { Start, Level, Leaderboard, Help, Sound, Practice, Quit };
 
 /**
  * What an action did to the menu
  */
-enum class MenuOutcome { None, Start, Quit, OpenLeaderboard, OpenHelp, ClearScores };
+enum class MenuOutcome { None, Start, Quit, OpenLeaderboard, OpenHelp };
 
 /**
  * Start menu state machine
@@ -79,7 +79,7 @@ public:
 	 * Parameters:
 	 * Action action: The action to apply
 	 *
-	 * Returns MenuOutcome: Start or Quit when the menu is done, OpenLeaderboard or OpenHelp to show a screen, ClearScores to ask for confirmation, otherwise None
+	 * Returns MenuOutcome: Start or Quit when the menu is done, OpenLeaderboard or OpenHelp to show a screen, otherwise None
 	 */
 	MenuOutcome apply(Action action);
 };

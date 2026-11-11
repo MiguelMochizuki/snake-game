@@ -15,7 +15,7 @@ The classic Snake game for the terminal, written in C++. It saves your scores be
 
 ## Download
 
-Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v2.3.2](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.3.2), which adds a practice mode that keeps games out of the leaderboard, a menu row that clears all scores, a new icon, and fixes the game over panel showing the snake one step back (v2.3.0 added the victory screen for filling the whole board).
+Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v2.3.2](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.3.2), which adds a practice mode that keeps games out of the leaderboard, a clear-scores key (C) on the leaderboard screen, a new icon, and fixes the game over panel showing the snake one step back (v2.3.0 added the victory screen for filling the whole board).
 
 | Platform | Architecture | Binary |
 |----------|-------------|--------|
@@ -144,7 +144,7 @@ The game opens on a menu. Pick a level, then start.
 | Enter | Choose the selected row | Nothing |
 | Q / Ctrl+C | Quit | End the game |
 
-The menu rows are Start, Level, Leaderboard, How to play, Sound, Practice, Clear scores and Quit. The levels set the time per step: Easy 300 ms, Normal 200 ms, Hard 100 ms. The menu shows the best score, games played and average over the last 10 games of the selected level. The Leaderboard lists the top 10 scores of a level (A/D switch level, Enter goes back). Sound is on at each launch and only beeps in a terminal. Practice is off at each launch; while it is on, finished games are not saved. Clear scores asks for confirmation (Enter deletes, Q keeps) and then deletes the saved history of every level, with no way back. Any other key does nothing.
+The menu rows are Start, Level, Leaderboard, How to play, Sound, Practice and Quit. The levels set the time per step: Easy 300 ms, Normal 200 ms, Hard 100 ms. The menu shows the best score, games played and average over the last 10 games of the selected level. The Leaderboard lists the top 10 scores of a level (A/D switch level, Enter goes back, C offers to clear every saved score: Enter deletes the history of all levels with no way back, Q keeps it). Sound is on at each launch and only beeps in a terminal. Practice is off at each launch;  while it is on, finished games are not saved. Any other key does nothing.
 
 After a game ends, you see the level, your final score and that level's statistics. Press **R** to play again straight away, **M** to go back to the menu (for example to change the level; your choice is kept) or **Q** to quit.
 

@@ -353,32 +353,43 @@ TEST_F(MenuControllerTest, ResultCarriesLevelAndSound) {
 	EXPECT_FALSE(r.sound);
 }
 
-TEST_F(MenuControllerTest, ClearScoresAsksThenDeletesOnEnter) {
-	RecordingView view(&log);
-	std::vector<Key> toClear(6, specialKey(KeyKind::Down));
-	toClear.push_back(enter());  // opens the question
-	toClear.push_back(enter());  // answers yes
-	run(toClear, view);
-	EXPECT_EQ(view.confirmShown, 1);
-	EXPECT_EQ(scores.clears, 1);
+/**
+ * Keys that open the leaderboard from the menu: two Downs, then Enter
+ */
+std::vector<Key> openLeaderboard() {
+	return {specialKey(KeyKind::Down), specialKey(KeyKind::Down), enter()};
 }
 
-TEST_F(MenuControllerTest, ClearScoresKeepsEverythingOnQ) {
+TEST_F(MenuControllerTest, CAsksOnTheLeaderboardThenDeletesOnEnter) {
 	RecordingView view(&log);
-	std::vector<Key> toClear(6, specialKey(KeyKind::Down));
-	toClear.push_back(enter());
-	toClear.push_back(charKey('q'));
-	run(toClear, view);
+	std::vector<Key> script = openLeaderboard();
+	script.insert(script.end(), {charKey('c'), enter(), charKey('q')});  // ask, yes, back
+	run(script, view);
+	EXPECT_EQ(view.confirmShown, 1);
+	EXPECT_EQ(scores.clears, 1);
+	EXPECT_EQ(view.boards.size(), 2u);  // the board is drawn again once cleared
+}
+
+TEST_F(MenuControllerTest, CKeepsEverythingOnQ) {
+	RecordingView view(&log);
+	std::vector<Key> script = openLeaderboard();
+	script.insert(script.end(), {charKey('c'), charKey('q')});
+	run(script, view);
 	EXPECT_EQ(view.confirmShown, 1);
 	EXPECT_EQ(scores.clears, 0);
 }
 
-TEST_F(MenuControllerTest, ClearScoresIgnoresOtherKeysAndEofKeepsEverything) {
+TEST_F(MenuControllerTest, ConfirmationIgnoresOtherKeysAndEofKeepsEverything) {
 	RecordingView view(&log);
-	std::vector<Key> toClear(6, specialKey(KeyKind::Down));
-	toClear.push_back(enter());
-	toClear.push_back(charKey('x'));
-	toClear.push_back(specialKey(KeyKind::Down));
-	EXPECT_FALSE(run(toClear, view).start);
+	std::vector<Key> script = openLeaderboard();
+	script.insert(script.end(), {charKey('c'), charKey('x'), specialKey(KeyKind::Down)});
+	EXPECT_FALSE(run(script, view).start);
+	EXPECT_EQ(scores.clears, 0);
+}
+
+TEST_F(MenuControllerTest, CDoesNothingOnTheMenuItself) {
+	RecordingView view(&log);
+	run({charKey('c'), enter()}, view);
+	EXPECT_EQ(view.confirmShown, 0);
 	EXPECT_EQ(scores.clears, 0);
 }

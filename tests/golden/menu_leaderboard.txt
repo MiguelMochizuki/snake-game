@@ -9,4 +9,5 @@
 #    4.  7           #
 #                    #
 ######################
-A/D level, Enter back
+A/D level, C clear
+Enter back

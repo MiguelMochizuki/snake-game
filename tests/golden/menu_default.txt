@@ -12,7 +12,6 @@
 #     How to play    #
 #     Sound <On>     #
 #     Practice <Off> #
-#     Clear scores   #
 #     Quit           #
 #                    #
 #   Best:     42     #

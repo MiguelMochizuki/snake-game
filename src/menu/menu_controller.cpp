@@ -23,19 +23,48 @@ MenuResult resultOf(const MenuModel& model, bool start) {
 }
 
 /**
- * Shows the leaderboard until the player goes back; Left and Right change the level shown
+ * Asks whether to delete every saved score and does it on Enter; Q keeps them, other keys are ignored
+ *
+ * Parameters:
+ * IKeySource& keys: Source of key presses
+ * const IInputHandler& input: Maps keys to actions
+ * IMenuView& view: Draws the question
+ * IScoreSource& scores: Cleared when the player confirms
+ *
+ * Returns bool: false if the key source ended (the program should quit), true otherwise
+ */
+bool runConfirmClear(IKeySource& keys, const IInputHandler& input, IMenuView& view, IScoreSource& scores) {
+	view.showConfirmClear();
+	while (true) {
+		std::optional<Key> key = keys.waitKey();
+		if (!key) {
+			return false;
+		}
+		std::optional<Action> action = input.handle(*key);
+		if (action == Action::Confirm) {
+			scores.clear();
+			return true;
+		}
+		if (action == Action::Quit) {
+			return true;
+		}
+	}
+}
+
+/**
+ * Shows the leaderboard until the player goes back; Left and Right change the level shown, C offers to clear every score
  *
  * Parameters:
  * IKeySource& keys: Source of key presses
  * const IInputHandler& input: Maps keys to actions
  * IMenuView& view: Draws the leaderboard
- * const IScoreSource& scores: Where the scores come from
+ * IScoreSource& scores: Where the scores come from, and where they are cleared
  * Level level: Level to start on
  *
  * Returns bool: false if the key source ended (the program should quit), true when the player went back
  */
 bool runLeaderboard(IKeySource& keys, const IInputHandler& input, IMenuView& view,
-		const IScoreSource& scores, Level level) {
+		IScoreSource& scores, Level level) {
 	while (true) {
 		view.showLeaderboard(LeaderboardSnapshot{level, scores.topScores(level, LEADERBOARD_SIZE)});
 		std::optional<Key> key = keys.waitKey();
@@ -47,6 +76,10 @@ bool runLeaderboard(IKeySource& keys, const IInputHandler& input, IMenuView& vie
 			level = nextLevel(level, -1);
 		} else if (action == Action::MoveRight) {
 			level = nextLevel(level, 1);
+		} else if (action == Action::Clear) {
+			if (!runConfirmClear(keys, input, view, scores)) {
+				return false;
+			}
 		} else if (action == Action::Confirm || action == Action::Quit) {
 			return true;
 		}
@@ -72,35 +105,6 @@ bool runHelp(IKeySource& keys, const IInputHandler& input, IMenuView& view) {
 		}
 		std::optional<Action> action = input.handle(*key);
 		if (action == Action::Confirm || action == Action::Quit) {
-			return true;
-		}
-	}
-}
-
-/**
- * Asks whether to delete every saved score and does it on Enter; Q or anything else but Enter's answer cancels
- *
- * Parameters:
- * IKeySource& keys: Source of key presses
- * const IInputHandler& input: Maps keys to actions
- * IMenuView& view: Draws the question
- * IScoreSource& scores: Cleared when the player confirms
- *
- * Returns bool: false if the key source ended (the program should quit), true otherwise
- */
-bool runConfirmClear(IKeySource& keys, const IInputHandler& input, IMenuView& view, IScoreSource& scores) {
-	view.showConfirmClear();
-	while (true) {
-		std::optional<Key> key = keys.waitKey();
-		if (!key) {
-			return false;
-		}
-		std::optional<Action> action = input.handle(*key);
-		if (action == Action::Confirm) {
-			scores.clear();
-			return true;
-		}
-		if (action == Action::Quit) {
 			return true;
 		}
 	}
@@ -155,11 +159,6 @@ MenuResult runMenu(IKeySource& keys, const IInputHandler& input, IMenuView& view
 				break;
 			case MenuOutcome::OpenHelp:
 				if (!runHelp(keys, input, view)) {
-					return resultOf(model, false);
-				}
-				break;
-			case MenuOutcome::ClearScores:
-				if (!runConfirmClear(keys, input, view, scores)) {
 					return resultOf(model, false);
 				}
 				break;

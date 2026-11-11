@@ -74,7 +74,7 @@ inline Key specialKey(KeyKind k) {
 /**
  * Game action a key can trigger
  */
-enum class Action { MoveUp, MoveDown, MoveLeft, MoveRight, Quit, Restart, Confirm, Menu };
+enum class Action { MoveUp, MoveDown, MoveLeft, MoveRight, Quit, Restart, Confirm, Menu, Clear };
 
 /**
  * Maps a key to an action

@@ -127,7 +127,6 @@ void TerminalMenuView::show(const MenuSnapshot& snapshot) {
 	frameRow(p, itemRow(snapshot.selected == MenuItem::Help, "How to play"));
 	frameRow(p, valueRow(snapshot.selected == MenuItem::Sound, "Sound", snapshot.sound ? "On" : "Off"));
 	frameRow(p, valueRow(snapshot.selected == MenuItem::Practice, "Practice", snapshot.practice ? "On" : "Off"));
-	frameRow(p, itemRow(snapshot.selected == MenuItem::ClearScores, "Clear scores"));
 	frameRow(p, itemRow(snapshot.selected == MenuItem::Quit, "Quit"));
 
 	frameRow(p, {});
@@ -175,7 +174,9 @@ void TerminalMenuView::showLeaderboard(const LeaderboardSnapshot& snapshot) {
 	frameRow(p, {});
 	p.put(WALL, rule);
 	p.endl();
-	p.put(DIM, "A/D level, Enter back");
+	p.put(DIM, "A/D level, C clear");
+	p.endl();
+	p.put(DIM, "Enter back");
 	p.endl();
 
 	out_ << buf.str();

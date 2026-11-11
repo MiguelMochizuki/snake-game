@@ -273,7 +273,6 @@ void SdlMenuView::show(const MenuSnapshot& snapshot) {
 			p.row("How to play", nullptr, snapshot.selected == MenuItem::Help);
 			p.row("Sound", &sound, snapshot.selected == MenuItem::Sound);
 			p.row("Practice", &practice, snapshot.selected == MenuItem::Practice);
-			p.row("Clear scores", nullptr, snapshot.selected == MenuItem::ClearScores);
 			p.row("Quit", nullptr, snapshot.selected == MenuItem::Quit);
 			p.rule();
 			p.stat("Best", std::to_string(snapshot.stats.best));
@@ -309,7 +308,8 @@ void SdlMenuView::showLeaderboard(const LeaderboardSnapshot& snapshot) {
 				p.stat(std::to_string(i + 1) + ".", std::to_string(snapshot.scores[i]), i == 0 ? theme::HEAD : theme::NUMBER);
 			}
 			p.rule();
-			p.line("A/D level  Enter back", theme::DIM);
+			p.line("A/D level  C clear", theme::DIM);
+			p.line("Enter back", theme::DIM);
 		});
 	};
 	draw();

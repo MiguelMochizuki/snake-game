@@ -7,7 +7,7 @@
 
 namespace {
 
-const int ITEM_COUNT = 8;
+const int ITEM_COUNT = 7;
 
 }  // namespace
 
@@ -110,14 +110,12 @@ MenuOutcome MenuModel::apply(Action action) {
 			if (selected_ == MenuItem::Practice) {
 				practice_ = !practice_;
 			}
-			if (selected_ == MenuItem::ClearScores) {
-				return MenuOutcome::ClearScores;
-			}
 			break;
 		case Action::Quit:
 			return MenuOutcome::Quit;
 		case Action::Restart:
 		case Action::Menu:
+		case Action::Clear:
 			break;
 	}
 	return MenuOutcome::None;

@@ -80,6 +80,7 @@ TickInput GameEngine::readTick(IKeySource& keys, const IInputHandler& handler) {
 			case Action::Restart: break;
 			case Action::Confirm: break;
 			case Action::Menu: break;
+			case Action::Clear: break;
 		}
 	}
 	return tick;

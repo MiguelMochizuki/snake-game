@@ -12,7 +12,6 @@
 [36m#[0m     How to play    [36m#[0m
 [36m#[0m     Sound <[1;33mOn[0m>     [36m#[0m
 [36m#[0m     Practice <[1;33mOff[0m> [36m#[0m
-[36m#[0m     Clear scores   [36m#[0m
 [36m#[0m     Quit           [36m#[0m
 [36m#[0m                    [36m#[0m
 [36m#[0m   [1mBest: [0m [1;33m   42[0m     [36m#[0m
