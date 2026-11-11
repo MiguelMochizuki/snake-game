@@ -1,8 +1,8 @@
 """
 make_icon.py
 Author: Miguel Mochizuki Silva
-Description: Draws the Snake app icon (a frame of the game: square-celled snake and red food on the dark
-playfield, in a rounded square) and writes icon.png, icon-512.png, icon.ico and icon.icns, plus src/gui/icon_data.cpp, the raw
+Description: Draws the Snake app icon (pixel-art close-up of the snake's head with the red food in front of it,
+on a dark rounded square) and writes icon.png, icon-512.png, icon.ico and icon.icns, plus src/gui/icon_data.cpp, the raw
 pixels embedded in snake-gui for its window icon. Needs Pillow.
 Usage: python3 tools/make_icon.py [--out assets] [--source src/gui/icon_data.cpp]
 """
@@ -21,13 +21,12 @@ HEAD = (124, 214, 162)
 FOOD = (218, 98, 92)
 
 
-# The icon is a frame of the game itself: the playfield on its dark surface, a snake of square cells with a gap
-# between them (head lighter, with eyes) and the round red food, laid out on a coarse 7x7 grid
-GRID = 7
+# The icon is a close-up of the snake's head in profile, pixel-art like the game's cells, with the food in front of it.
+# Everything is laid out on a UNITS x UNITS grid of square pixels
+UNITS = 24
+FILL = 0.94
 WALL = (52, 66, 61)
-# Tail to head; the head faces right, toward the food
-SNAKE = [(0, 5), (1, 5), (2, 5), (3, 5), (4, 5), (5, 5), (5, 4), (5, 3), (4, 3), (3, 3), (2, 3), (1, 3), (1, 2), (1, 1)]
-FOOD_CELL = (4, 1)
+GOLD = (236, 190, 72)
 
 
 def draw_icon():
@@ -36,31 +35,41 @@ def draw_icon():
     img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     d.rounded_rectangle((0, 0, s - 1, s - 1), radius=int(s * 0.225), fill=BACKGROUND)
+    d.rounded_rectangle((s * 0.03, s * 0.03, s * 0.97, s * 0.97), radius=int(s * 0.2), fill=SURFACE)
 
-    # Playfield: a hairline frame around the lighter surface, like the board in the game
-    lo, hi = s * 0.095, s * 0.905
-    d.rounded_rectangle((lo, lo, hi, hi), radius=int(s * 0.03), fill=WALL)
-    line = s * 0.006
-    d.rounded_rectangle((lo + line, lo + line, hi - line, hi - line), radius=int(s * 0.026), fill=SURFACE)
+    full = s / UNITS
+    u = full * FILL  # the drawing is a little smaller than the grid, so it keeps clear of the rounded corners
+    ox = oy = full * UNITS * (1 - FILL) / 2
 
-    cell = (hi - lo) / GRID
-    gap = cell * 0.09
+    def px(x0, y0, x1, y1, color):
+        """Fills the grid rectangle [x0, x1) x [y0, y1)."""
+        d.rectangle((ox + x0 * u, oy + y0 * u, ox + x1 * u - 1, oy + y1 * u - 1), fill=color)
 
-    def box(c, r):
-        x, y = lo + c * cell, lo + r * cell
-        return (x + gap, y + gap, x + cell - gap, y + cell - gap)
+    # Head: a flat top, a snout that sticks out, a darker belly
+    px(3, 5, 12, 6, HEAD)
+    px(2, 6, 14, 7, HEAD)
+    px(1, 7, 15, 8, HEAD)
+    px(1, 8, 16, 16, HEAD)
+    px(1, 16, 15, 18, BODY)
+    px(2, 18, 13, 19, BODY)
+    px(15, 15, 16, 16, BODY)
+    for x, y in ((4, 7), (6, 6), (8, 7), (3, 10), (5, 13), (2, 14), (7, 11)):  # scales
+        px(x, y, x + 1, y + 1, BODY)
 
-    for c, r in SNAKE[:-1]:
-        d.rectangle(box(c, r), fill=BODY)
-    hx0, hy0, hx1, hy1 = box(*SNAKE[-1])
-    d.rectangle((hx0, hy0, hx1, hy1), fill=HEAD)
-    er, ex = cell * 0.09, hx1 - cell * 0.28  # two eyes on the side the head faces
-    for ey in (hy0 + cell * 0.28, hy1 - cell * 0.28):
-        d.ellipse((ex - er, ey - er, ex + er, ey + er), fill=BACKGROUND)
+    # Eye with a slit pupil, and a nostril
+    px(9, 7, 13, 14, GOLD)
+    px(11, 7, 12, 14, BACKGROUND)
+    for x, y in ((9, 7), (12, 7), (9, 13), (12, 13)):  # round the eye's corners
+        px(x, y, x + 1, y + 1, HEAD)
+    px(14, 11, 15, 12, BODY)
 
-    fx0, fy0, fx1, fy1 = box(*FOOD_CELL)
-    fc, fr = ((fx0 + fx1) / 2, (fy0 + fy1) / 2), cell * 0.38
-    d.ellipse((fc[0] - fr, fc[1] - fr, fc[0] + fr, fc[1] + fr), fill=FOOD)
+    # Forked tongue reaching for the food
+    px(16, 12, 18, 13, FOOD)
+    px(18, 11, 19, 12, FOOD)
+    px(18, 13, 19, 14, FOOD)
+
+    cx, cy, r = ox + 21.6 * u, oy + 12.5 * u, 1.8 * u
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=FOOD)
     return img.resize((SIZE, SIZE), Image.LANCZOS)
 
 
