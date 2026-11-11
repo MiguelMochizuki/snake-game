@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(snake_game VERSION 2.2.0 LANGUAGES C CXX) # C is needed by SDL3 (GUI build); every C++ toolchain ships a C compiler
+project(snake_game VERSION 2.3.0 LANGUAGES C CXX) # C is needed by SDL3 (GUI build); every C++ toolchain ships a C compiler
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
