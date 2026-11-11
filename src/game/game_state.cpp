@@ -101,6 +101,10 @@ const Snake& GameState::getSnake() const {
 	return snake_;
 }
 
+bool GameState::isWon() const {
+	return snake_.getLength() == static_cast<size_t>(rows_) * static_cast<size_t>(cols_);
+}
+
 /**
  * Increments the score and updates best score if necessary
  */
@@ -175,8 +179,11 @@ bool GameState::moveSnake(int direction) {
 	updateOccupied();
 
 	if (ateFood) {
-		spawnFood();
 		incrementScore();
+		// On a full board there is no cell for new food: the game is won and the old food stays where it was
+		if (!isWon()) {
+			spawnFood();
+		}
 		updateOccupied();
 	}
 
@@ -189,6 +196,12 @@ bool GameState::moveSnake(int direction) {
 void GameState::reset() {
 	snake_ = Snake(cols_ / 2, rows_ / 2, 3);
 	score_ = 0;
+	// The map still holds the previous game's snake and food: rebuild it from the new snake alone, or the stale cells
+	// hide free ones (after a win they hide the last one, and spawnFood would think the board is full)
+	std::fill(occupied_.begin(), occupied_.end(), false);
+	for (const auto& segment : snake_.getSegments()) {
+		occupied_[segment.getY() * cols_ + segment.getX()] = true;
+	}
 	spawnFood();
 	updateOccupied();
 }
