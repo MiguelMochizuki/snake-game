@@ -39,6 +39,16 @@ public:
 	virtual void musicStop() {}
 
 	/**
+	 * Cuts the music loop and plays only its last bars; stops the music by default
+	 */
+	virtual void musicFinale() { musicStop(); }
+
+	/**
+	 * Plays the cue for winning a game; the game over cue by default
+	 */
+	virtual void win() { gameOver(); }
+
+	/**
 	 * Plays the cue for moving the menu selection; does nothing by default
 	 */
 	virtual void menuMove() {}

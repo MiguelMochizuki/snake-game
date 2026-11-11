@@ -31,6 +31,8 @@ public:
 	void gameOver() override { synth_.trigger(Blip::GameOver); }
 	void musicStart() override { synth_.startMusic(); }
 	void musicStop() override { synth_.stopMusic(); }
+	void musicFinale() override { synth_.finale(); }
+	void win() override { synth_.trigger(Blip::Win); }
 	void menuMove() override { synth_.trigger(Blip::MenuMove); }
 	void menuSelect() override { synth_.trigger(Blip::MenuSelect); }
 };

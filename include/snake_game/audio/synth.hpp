@@ -11,7 +11,7 @@
 /**
  * Short sound effects mixed on top of the music
  */
-enum class Blip { Eat, GameOver, MenuMove, MenuSelect };
+enum class Blip { Eat, GameOver, MenuMove, MenuSelect, Win };
 
 /**
  * Plays the soundtrack (Gounod's Ave Maria over Bach's C major Prelude, see score.hpp) in a loop and
@@ -23,6 +23,8 @@ enum class Blip { Eat, GameOver, MenuMove, MenuSelect };
  * int rate_: Sample rate in Hz
  * std::atomic<bool> musicOn_: Whether the music should play
  * std::atomic<int> blipRequest_: 0 for none, else 1 + the Blip to start
+ * std::atomic<bool> restartRequest_, finaleRequest_: Asks the render thread to start the music over or to jump to the ending
+ * bool finaleActive_: Whether the ending is playing, after which the music stops by itself
  * bool wasOn_, int step_, int stepPos_, int melodyIdx_: Render-thread state of the music: current sixteenth,
  * sample position inside it, and the next melody note that has not finished yet
  * int blipLeft_, blipTotal_, blipPos_: Render-thread state of the current blip
@@ -32,6 +34,9 @@ class Synth {
 	int rate_;
 	std::atomic<bool> musicOn_{false};
 	std::atomic<int> blipRequest_{0};
+	std::atomic<bool> restartRequest_{false};
+	std::atomic<bool> finaleRequest_{false};
+	bool finaleActive_ = false;
 	bool wasOn_ = false;
 	int step_ = 0;
 	int stepPos_ = 0;
@@ -60,6 +65,12 @@ public:
 	 * Stops the music
 	 */
 	void stopMusic();
+
+	/**
+	 * Cuts the loop and plays only the last bars of the piece, once; the music stops by itself at the end.
+	 * Starting the music again, even during the ending, starts it over from the beginning
+	 */
+	void finale();
 
 	/**
 	 * Starts a blip, replacing one still playing
