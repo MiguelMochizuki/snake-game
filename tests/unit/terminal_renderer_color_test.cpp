@@ -68,6 +68,18 @@ std::string coloredPanel() {
 	return out.str();
 }
 
+/**
+ * Renders the sample victory panel with color on
+ *
+ * Returns std::string: The colored panel
+ */
+std::string coloredVictory() {
+	std::ostringstream out;
+	TerminalRenderer renderer(out, true);
+	renderer.printVictory(Level::Hard, 3, {12, 7, 4.2857});
+	return out.str();
+}
+
 }  // namespace
 
 TEST(TerminalRendererColor, ColorBoard) {
@@ -114,4 +126,8 @@ TEST(TerminalRendererColor, EmptyNoColorKeepsColor) {
 		setenv("NO_COLOR", saved.c_str(), 1);
 	}
 #endif
+}
+
+TEST(TerminalRendererColor, ColorVictoryPanel) {
+	expectGolden("victory_panel_color.txt", coloredVictory());
 }

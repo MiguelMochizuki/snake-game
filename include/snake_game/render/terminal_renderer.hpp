@@ -26,6 +26,19 @@ class TerminalRenderer : public IRenderer {
 	bool firstRender_ = true;
 	bool color_;
 
+	/**
+	 * Prints the end of game panel: a centered title, the statistics and the key hints
+	 *
+	 * Parameters:
+	 * const std::string& title: Panel title, at most 30 characters
+	 * const char* titleStyle: SGR style of the title
+	 * size_t leftPad: Spaces before the title; the rest of the 30 columns is padded after it
+	 * Level level: The level that was played
+	 * int finalScore: The final score
+	 * const ScoreStats& stats: Best, games played and average of that level
+	 */
+	void printPanel(const std::string& title, const char* titleStyle, size_t leftPad, Level level, int finalScore, const ScoreStats& stats);
+
 public:
 	/**
 	 * Constructor for the TerminalRenderer class
@@ -75,6 +88,16 @@ public:
 	 * const ScoreStats& stats: Best, games played and average of that level
 	 */
 	void printGameOver(Level level, int finalScore, const ScoreStats& stats) override;
+
+	/**
+	 * Prints the victory panel with statistics: the game over panel with a yellow "YOU WIN!" title
+	 *
+	 * Parameters:
+	 * Level level: The level that was played
+	 * int finalScore: The final score
+	 * const ScoreStats& stats: Best, games played and average of that level
+	 */
+	void printVictory(Level level, int finalScore, const ScoreStats& stats) override;
 
 	/**
 	 * Sleeps between game steps

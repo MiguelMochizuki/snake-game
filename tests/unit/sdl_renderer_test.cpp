@@ -92,6 +92,33 @@ TEST(SdlRenderer, GameOverPanelChangesThePicture) {
 	EXPECT_NE(before, canvas->pixelsRgb());
 }
 
+TEST(SdlRenderer, VictoryPanelChangesThePicture) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	renderer.clear();
+	renderer.render(state);
+	std::vector<unsigned char> before = canvas->pixelsRgb();
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	std::vector<unsigned char> victory = canvas->pixelsRgb();
+	EXPECT_NE(before, victory);
+	renderer.clear();
+	renderer.render(state);
+	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	EXPECT_NE(victory, canvas->pixelsRgb());
+}
+
+TEST(SdlRenderer, VictoryOnATinyCanvasDoesNotCrash) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(10, 10);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	renderer.clear();
+	renderer.render(state);
+	renderer.printVictory(Level::Hard, 0, ScoreStats{0, 0, 0.0});
+}
+
 TEST(SdlRenderer, TinyCanvasDoesNotCrash) {
 	std::unique_ptr<Canvas> canvas = Canvas::offscreen(10, 10);
 	SdlApp app(*canvas, false);

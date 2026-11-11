@@ -22,6 +22,7 @@ inline constexpr const char* NUMBER = "\033[1;33m";
 inline constexpr const char* DIM = "\033[2m";
 inline constexpr const char* RESTART = "\033[92m";
 inline constexpr const char* QUIT = "\033[91m";
+inline constexpr const char* GOLD = "\033[1;93m";
 inline constexpr const char* RESET = "\033[0m";
 
 /**

@@ -37,6 +37,13 @@ TEST(TerminalRendererGolden, GameOverPanel) {
 	expectGolden("game_over_panel.txt", out.str());
 }
 
+TEST(TerminalRendererGolden, VictoryPanel) {
+	std::ostringstream out;
+	TerminalRenderer renderer(out);
+	renderer.printVictory(Level::Hard, 3, {12, 7, 4.2857});
+	expectGolden("victory_panel.txt", out.str());
+}
+
 TEST(TerminalRenderer, ClearEscapes) {
 	std::ostringstream out;
 	TerminalRenderer renderer(out);

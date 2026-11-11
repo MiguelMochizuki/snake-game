@@ -121,15 +121,31 @@ void TerminalRenderer::render(const GameState& state) {
  * const ScoreStats& stats: Best, games played and average of that level
  */
 void TerminalRenderer::printGameOver(Level level, int finalScore, const ScoreStats& stats) {
+	printPanel("GAME OVER!", FOOD, 9, level, finalScore, stats);
+}
+
+/**
+ * Prints the victory panel with statistics
+ *
+ * Parameters:
+ * Level level: The level that was played
+ * int finalScore: The final score
+ * const ScoreStats& stats: Best, games played and average of that level
+ */
+void TerminalRenderer::printVictory(Level level, int finalScore, const ScoreStats& stats) {
+	printPanel("YOU WIN!", GOLD, 11, level, finalScore, stats);
+}
+
+void TerminalRenderer::printPanel(const std::string& title, const char* titleStyle, size_t leftPad, Level level, int finalScore, const ScoreStats& stats) {
 	std::ostringstream buf;
 	Painter p(buf, color_);
 	const std::string rule(30, '=');
 	buf << "\n";
 	p.put(WALL, rule);
 	p.endl();
-	p.put(nullptr, "         ");
-	p.put(FOOD, "GAME OVER!");
-	p.put(nullptr, "           ");
+	p.put(nullptr, std::string(leftPad, ' '));
+	p.put(titleStyle, title);
+	p.put(nullptr, std::string(30 - leftPad - title.size(), ' '));
 	p.endl();
 	p.put(nullptr, std::string(30, ' '));
 	p.endl();

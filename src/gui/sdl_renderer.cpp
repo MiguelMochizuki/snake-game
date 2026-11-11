@@ -210,8 +210,24 @@ void SdlRenderer::render(const GameState& state) {
  * const ScoreStats& stats: Best, games played and average of that level
  */
 void SdlRenderer::printGameOver(Level level, int finalScore, const ScoreStats& stats) {
+	showPanel("GAME OVER", theme::FOOD, level, finalScore, stats);
+}
+
+/**
+ * Draws the victory panel over the last board and shows it
+ *
+ * Parameters:
+ * Level level: The level that was played
+ * int finalScore: The final score
+ * const ScoreStats& stats: Best, games played and average of that level
+ */
+void SdlRenderer::printVictory(Level level, int finalScore, const ScoreStats& stats) {
+	showPanel("YOU WIN", theme::GOLD, level, finalScore, stats);
+}
+
+void SdlRenderer::showPanel(const std::string& title, Color titleColor, Level level, int finalScore, const ScoreStats& stats) {
 	const std::string levelText = levelName(level);
-	panel_ = [this, levelText, finalScore, stats] {
+	panel_ = [this, title, titleColor, levelText, finalScore, stats] {
 		int scale = textScaleFor(canvas_.height());
 		const int columns = 26;
 		if (font::textWidth(std::string(columns + 4, ' '), scale) > canvas_.width()) {
@@ -239,7 +255,7 @@ void SdlRenderer::printGameOver(Level level, int finalScore, const ScoreStats& s
 			canvas_.fillRect(left, ty, right - left, border, theme::WALL);
 			ty += border + u;
 		};
-		textAt(left, "GAME OVER", theme::FOOD);
+		textAt(left, title, titleColor);
 		ty += rowH;
 		rule();
 		auto row = [&](const std::string& label, const std::string& value, Color color) {
