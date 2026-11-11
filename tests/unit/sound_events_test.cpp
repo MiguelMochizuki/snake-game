@@ -5,6 +5,7 @@
  */
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -34,6 +35,8 @@ public:
 	void gameOver() override { events.push_back("gameOver"); }
 	void musicStart() override { events.push_back("musicStart"); }
 	void musicStop() override { events.push_back("musicStop"); }
+	void musicFinale() override { events.push_back("musicFinale"); }
+	void win() override { events.push_back("win"); }
 	void menuMove() override { events.push_back("menuMove"); }
 	void menuSelect() override { events.push_back("menuSelect"); }
 };
@@ -61,7 +64,7 @@ using Events = std::vector<std::string>;
 
 }  // namespace
 
-TEST(SoundEvents, EngineStartsMusicOnRunAndStopsBeforeGameOver) {
+TEST(SoundEvents, EngineStartsMusicOnRunAndEndsWithTheFinaleBeforeGameOver) {
 	TempDir dir;
 	ScriptedKeys keys;
 	CompositeInputHandler input = makeInput();
@@ -72,7 +75,7 @@ TEST(SoundEvents, EngineStartsMusicOnRunAndStopsBeforeGameOver) {
 
 	engine.run();
 
-	EXPECT_EQ(sound.events, (Events{"musicStart", "musicStop", "gameOver"}));
+	EXPECT_EQ(sound.events, (Events{"musicStart", "musicFinale", "gameOver", "musicStop"}));
 }
 
 TEST(SoundEvents, MusicRestartsOnRestart) {
@@ -87,7 +90,53 @@ TEST(SoundEvents, MusicRestartsOnRestart) {
 
 	engine.run();
 
-	EXPECT_EQ(sound.events, (Events{"musicStart", "musicStop", "gameOver", "musicStart", "musicStop", "gameOver"}));
+	EXPECT_EQ(sound.events, (Events{"musicStart", "musicFinale", "gameOver", "musicStart", "musicFinale", "gameOver", "musicStop"}));
+}
+
+TEST(SoundEvents, WinningPlaysTheFinaleAndTheWinCue) {
+	TempDir dir;
+	ScriptedKeys keys;
+	CompositeInputHandler input = makeInput();
+	RecordingRenderer renderer;
+	RecordingSound sound;
+	GameEngine engine(keys, input, renderer, 1, 4, 0, 5, dir.path.string());  // seed 5: the first move eats the last food
+	engine.setSound(&sound);
+
+	engine.run();
+
+	EXPECT_EQ(sound.events, (Events{"musicStart", "eat", "musicFinale", "win", "musicStop"}));
+}
+
+namespace {
+
+/**
+ * Sound that only implements the required cues, to check the defaults of the others
+ */
+class BareSound : public ISound {
+public:
+	std::vector<std::string> events;
+
+	void eat() override {}
+	void gameOver() override { events.push_back("gameOver"); }
+	void musicStop() override { events.push_back("musicStop"); }
+};
+
+}  // namespace
+
+TEST(SoundEvents, DefaultWinIsGameOverAndDefaultFinaleIsStop) {
+	BareSound sound;
+	sound.win();
+	sound.musicFinale();
+	EXPECT_EQ(sound.events, (Events{"gameOver", "musicStop"}));
+}
+
+TEST(SoundEvents, SynthSoundWinMakesASound) {
+	Synth synth(44100);
+	SynthSound sound(synth);
+	sound.win();
+	std::vector<float> out(2000);
+	synth.render(out.data(), 2000);
+	EXPECT_NE(*std::max_element(out.begin(), out.end()), 0.0f);
 }
 
 TEST(SoundEvents, NullSoundAndBellIgnoreNewMethods) {

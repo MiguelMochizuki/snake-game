@@ -51,13 +51,13 @@ public:
  * Renderer that records every call
  *
  * Attributes:
- * int renders, clears, resets, gameOvers: Call counts
- * int lastScore: finalScore of the last printGameOver
+ * int renders, clears, resets, gameOvers, victories: Call counts
+ * int lastScore: finalScore of the last printGameOver or printVictory
  * std::vector<int> pauses: Argument of every pause()
  */
 class RecordingRenderer : public IRenderer {
 public:
-	int renders = 0, clears = 0, resets = 0, gameOvers = 0, lastScore = -1;
+	int renders = 0, clears = 0, resets = 0, gameOvers = 0, victories = 0, lastScore = -1;
 	std::vector<int> pauses;
 
 	void reset() override { ++resets; }
@@ -65,6 +65,10 @@ public:
 	void render(const GameState&) override { ++renders; }
 	void printGameOver(Level, int finalScore, const ScoreStats&) override {
 		++gameOvers;
+		lastScore = finalScore;
+	}
+	void printVictory(Level, int finalScore, const ScoreStats&) override {
+		++victories;
 		lastScore = finalScore;
 	}
 	void pause(int ms) override { pauses.push_back(ms); }

@@ -30,6 +30,8 @@ constexpr Color NUMBER{232, 240, 235};
 constexpr Color BODY{58, 148, 104};
 constexpr Color HEAD{124, 214, 162};
 constexpr Color FOOD{218, 98, 92};
+// Victory title
+constexpr Color GOLD{236, 190, 72};
 
 }  // namespace theme
 

@@ -121,12 +121,12 @@ TEST(GameState, InitialFoodCanLandOnSnakeQuirk) {
 	EXPECT_TRUE(gs.getSnake().hasPosition(gs.getFood().getX(), gs.getFood().getY()));
 }
 
-// Pinned quirk: reset() spawns food against the stale mask of the previous game. Fixing this flips this test.
-TEST(GameState, ResetFoodCanLandOnSnakeQuirk) {
+// reset() spawns food against the new snake, not the previous game's mask (that used to put food on the snake)
+TEST(GameState, ResetFoodNeverLandsOnTheSnake) {
 	GameState gs(20, 20, 0, 57);
 	step(gs, 0, 4);
 	gs.reset();
-	EXPECT_TRUE(gs.getSnake().hasPosition(gs.getFood().getX(), gs.getFood().getY()));
+	EXPECT_FALSE(gs.getSnake().hasPosition(gs.getFood().getX(), gs.getFood().getY()));
 }
 
 TEST(GameState, IsOccupiedOutOfBounds) {
@@ -230,15 +230,29 @@ TEST(GameState, InvalidDirectionThrowsSelfCollision) {
 	}
 }
 
-TEST(GameState, BoardFullThrows) {
+TEST(GameState, EatingTheLastFoodWinsAndScoresIt) {
 	// Seed 5 puts the first food on (3,0), the only cell not covered by the snake
 	GameState gs(1, 4, 0, 5);
 	ASSERT_EQ(gs.getFood().getX(), 3);
 	ASSERT_EQ(gs.getFood().getY(), 0);
-	try {
-		gs.moveSnake(3);
-		FAIL() << "expected exception";
-	} catch (const std::runtime_error& e) {
-		EXPECT_STREQ(e.what(), "Board is full!");
-	}
+	EXPECT_FALSE(gs.isWon());
+	EXPECT_NO_THROW(gs.moveSnake(3));
+	EXPECT_TRUE(gs.isWon());
+	EXPECT_EQ(gs.getScore(), 1);
+	EXPECT_EQ(gs.getBestScore(), 1);
+	EXPECT_EQ(gs.getSnake().getLength(), 4u);
+}
+
+TEST(GameState, ResetClearsTheWin) {
+	GameState gs(1, 4, 0, 5);
+	gs.moveSnake(3);
+	ASSERT_TRUE(gs.isWon());
+	gs.reset();
+	EXPECT_FALSE(gs.isWon());
+	EXPECT_EQ(gs.getScore(), 0);
+}
+
+TEST(GameState, NotWonWhileCellsAreFree) {
+	GameState gs(20, 20, 0, 1);
+	EXPECT_FALSE(gs.isWon());
 }

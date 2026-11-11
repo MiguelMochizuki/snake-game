@@ -92,6 +92,98 @@ TEST(SdlRenderer, GameOverPanelChangesThePicture) {
 	EXPECT_NE(before, canvas->pixelsRgb());
 }
 
+TEST(SdlRenderer, VictoryPanelChangesThePicture) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	renderer.clear();
+	renderer.render(state);
+	std::vector<unsigned char> before = canvas->pixelsRgb();
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	std::vector<unsigned char> victory = canvas->pixelsRgb();
+	EXPECT_NE(before, victory);
+	renderer.clear();
+	renderer.render(state);
+	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	EXPECT_NE(victory, canvas->pixelsRgb());
+}
+
+TEST(SdlRenderer, VictoryOnATinyCanvasDoesNotCrash) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(10, 10);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	renderer.clear();
+	renderer.render(state);
+	renderer.printVictory(Level::Hard, 0, ScoreStats{0, 0, 0.0});
+}
+
+TEST(SdlRenderer, VictoryDarkensTheBoard) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	ASSERT_FALSE(state.getFood().getX() == 0 && state.getFood().getY() == 0);
+	const Layout l = layoutFor(640, 720, 20, 20);
+	// The centre of the top-left cell: empty playfield, well away from the centred panel
+	const int px = l.originX + l.cell + l.cell / 2;
+	const int py = l.originY + l.cell + l.cell / 2;
+	renderer.clear();
+	renderer.render(state);
+	const Color before = pixelAt(canvas->pixelsRgb(), 640, px, py);
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	const Color after = pixelAt(canvas->pixelsRgb(), 640, px, py);
+	EXPECT_LT(after.r, before.r);
+	EXPECT_LT(after.g, before.g);
+	EXPECT_LT(after.b, before.b);
+}
+
+TEST(SdlRenderer, TheWinningFrameDrawsTheHeadNotTheFood) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(1, 4, 0, 5);
+	state.moveSnake(3);
+	ASSERT_TRUE(state.isWon());
+	const Layout l = layoutFor(640, 720, 4, 1);
+	const SnakeSegment* head = state.getSnake().getHead();
+	// A corner of the head cell: the food is a circle and leaves the corners alone, the head fills the square
+	const int px = l.originX + (head->getX() + 1) * l.cell + 1;
+	const int py = l.originY + (head->getY() + 1) * l.cell + 1;
+	renderer.clear();
+	renderer.render(state);
+	EXPECT_TRUE(same(pixelAt(canvas->pixelsRgb(), 640, px, py), theme::HEAD));
+}
+
+TEST(SdlRenderer, RedrawAfterVictoryKeepsTheBoardDark) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	renderer.clear();
+	renderer.render(state);
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	const std::vector<unsigned char> shown = canvas->pixelsRgb();
+	app.redraw();
+	EXPECT_EQ(shown, canvas->pixelsRgb());
+}
+
+TEST(SdlRenderer, ResetRestoresFullBrightness) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	renderer.clear();
+	renderer.render(state);
+	const std::vector<unsigned char> fresh = canvas->pixelsRgb();
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	renderer.reset();
+	renderer.clear();
+	renderer.render(state);
+	EXPECT_EQ(fresh, canvas->pixelsRgb());
+}
+
 TEST(SdlRenderer, TinyCanvasDoesNotCrash) {
 	std::unique_ptr<Canvas> canvas = Canvas::offscreen(10, 10);
 	SdlApp app(*canvas, false);

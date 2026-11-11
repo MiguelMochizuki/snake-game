@@ -27,6 +27,10 @@ const double TEMPO_BPM = 66.0;
 const int ARPEGGIO_STEPS = 1152;
 const int SCORE_STEPS = 1184;
 const int FINAL_CHORD_SIZE = 6;
+
+// The ending played when a game ends: the last two bars of arpeggio and the final chord (three bars), once, without the rest after it
+const int FINALE_START_STEP = ARPEGGIO_STEPS - 32;
+const int FINALE_END_STEP = ARPEGGIO_STEPS + 16;
 const int MELODY_COUNT = 211;
 
 extern const unsigned char ARPEGGIO_DATA[ARPEGGIO_STEPS];

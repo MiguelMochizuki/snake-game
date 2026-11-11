@@ -198,6 +198,10 @@ GameEnd GameEngine::run() {
 			if (sound_ && state_.getScore() > scoreBefore) {
 				sound_->eat();
 			}
+			if (state_.isWon()) {
+				running_ = false;
+				break;
+			}
 
 			renderer_->pause(speedMs_);
 		}
@@ -205,13 +209,25 @@ GameEnd GameEngine::run() {
 		int finalScore = state_.getFinalScore();
 		scoreManager_.saveScore(level_, finalScore);
 
+		const bool won = state_.isWon();
 		end = awaitChoice(keys_, input_, [&]() {
 			if (sound_) {
-				sound_->musicStop();
-				sound_->gameOver();
+				sound_->musicFinale();
+				if (won) {
+					sound_->win();
+				} else {
+					sound_->gameOver();
+				}
 			}
-			renderer_->printGameOver(level_, finalScore, scoreManager_.stats(level_));
+			if (won) {
+				renderer_->printVictory(level_, finalScore, scoreManager_.stats(level_));
+			} else {
+				renderer_->printGameOver(level_, finalScore, scoreManager_.stats(level_));
+			}
 		});
+		if (sound_ && end != GameEnd::Restart) {
+			sound_->musicStop();  // leaving for the menu or the shell: the ending must not play on
+		}
 
 		if (end != GameEnd::Quit) {
 			state_.reset();

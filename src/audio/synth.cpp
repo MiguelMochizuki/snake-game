@@ -23,8 +23,11 @@ struct BlipSpec {
 	float gain;
 };
 
-// Indexed by Blip: Eat, GameOver, MenuMove, MenuSelect
-const BlipSpec BLIPS[4] = {{1046.5, 0.08, 0.3f}, {196.0, 0.25, 0.3f}, {523.25, 0.04, 0.25f}, {1174.66, 0.06, 0.25f}};
+// Music commands posted by startMusic, stopMusic and finale
+const int CMD_NONE = 0, CMD_START = 1, CMD_STOP = 2, CMD_FINALE = 3;
+
+// Indexed by Blip: Eat, GameOver, MenuMove, MenuSelect, Win
+const BlipSpec BLIPS[5] = {{1046.5, 0.08, 0.3f}, {196.0, 0.25, 0.3f}, {523.25, 0.04, 0.25f}, {1174.66, 0.06, 0.25f}, {1318.5, 0.35, 0.3f}};
 
 /**
  * One sample of a square wave
@@ -71,14 +74,21 @@ Synth::Synth(int sampleRate) : rate_(sampleRate) {
  * Starts the music from the beginning
  */
 void Synth::startMusic() {
-	musicOn_ = true;
+	command_ = CMD_START;
 }
 
 /**
  * Stops the music
  */
 void Synth::stopMusic() {
-	musicOn_ = false;
+	command_ = CMD_STOP;
+}
+
+/**
+ * Cuts the loop and plays only the last bars once, then stops by itself
+ */
+void Synth::finale() {
+	command_ = CMD_FINALE;
 }
 
 /**
@@ -99,13 +109,28 @@ void Synth::trigger(Blip blip) {
  * int frames: Number of samples
  */
 void Synth::render(float* out, int frames) {
-	const bool on = musicOn_;
-	if (on && !wasOn_) {
+	switch (command_.exchange(CMD_NONE)) {
+	case CMD_START:
 		step_ = 0;
 		stepPos_ = 0;
 		melodyIdx_ = 0;
+		finaleActive_ = false;
+		playing_ = true;
+		break;
+	case CMD_STOP:
+		finaleActive_ = false;
+		playing_ = false;
+		break;
+	case CMD_FINALE:
+		step_ = FINALE_START_STEP;
+		stepPos_ = 0;
+		melodyIdx_ = 0;  // the loop below skips the notes that ended before the first step
+		finaleActive_ = true;
+		playing_ = true;
+		break;
+	default:
+		break;
 	}
-	wasOn_ = on;
 	const int request = blipRequest_.exchange(0);
 	if (request > 0) {
 		const BlipSpec& b = BLIPS[request - 1];
@@ -120,7 +145,7 @@ void Synth::render(float* out, int frames) {
 	const int release = static_cast<int>(MELODY_RELEASE * rate_);
 	for (int i = 0; i < frames; ++i) {
 		float sample = 0.0f;
-		if (on) {
+		if (playing_) {
 			// Every note restarts its phase, so the whole piece repeats exactly
 			if (step_ < ARPEGGIO_STEPS) {
 				const double phase = std::fmod(midiFrequency(ARPEGGIO_DATA[step_]) * stepPos_ / rate_, 1.0);
@@ -151,6 +176,11 @@ void Synth::render(float* out, int frames) {
 			}
 			if (++stepPos_ >= stepLen) {
 				stepPos_ = 0;
+				if (finaleActive_ && step_ + 1 >= FINALE_END_STEP) {
+					// The ending is over: stop here instead of looping or resting
+					finaleActive_ = false;
+					playing_ = false;
+				}
 				if (++step_ >= SCORE_STEPS) {
 					step_ = 0;
 					melodyIdx_ = 0;

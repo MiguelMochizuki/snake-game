@@ -13,6 +13,11 @@
 
 namespace {
 
+// The victory fade: from full brightness to this floor in FADE_STEPS frames of FADE_STEP_MS (about 600 ms)
+const float FADE_FLOOR = 0.35f;
+const int FADE_STEPS = 12;
+const int FADE_STEP_MS = 50;
+
 /**
  * Text scale for a canvas height
  *
@@ -128,8 +133,8 @@ void SdlRenderer::drawBoard(const GameState& state) {
 	const int line = std::max(1, l.cell / 12);
 	const int fx = cellX(0) - line - u / 2, fy = cellY(0) - line - u / 2;
 	const int fw = cols * l.cell + 2 * line + u, fh = rows * l.cell + 2 * line + u;
-	canvas_.fillRect(fx, fy, fw, fh, theme::WALL);
-	canvas_.fillRect(fx + line, fy + line, fw - 2 * line, fh - 2 * line, theme::SURFACE);
+	canvas_.fillRect(fx, fy, fw, fh, tone(theme::WALL));
+	canvas_.fillRect(fx + line, fy + line, fw - 2 * line, fh - 2 * line, tone(theme::SURFACE));
 
 	const auto& grid = state.getOccupied();
 	const int foodX = state.getFood().getX();
@@ -140,12 +145,13 @@ void SdlRenderer::drawBoard(const GameState& state) {
 			if (!grid[y * cols + x]) {
 				continue;
 			}
-			if (x == foodX && y == foodY) {
-				canvas_.fillCircle(cellX(x) + l.cell / 2, cellY(y) + l.cell / 2, std::max(1, l.cell / 2 - std::max(1, l.cell / 8)), theme::FOOD);
-			} else if (head && x == head->getX() && y == head->getY()) {
-				canvas_.fillRect(cellX(x), cellY(y), sq, sq, theme::HEAD);
+			if (head && x == head->getX() && y == head->getY()) {
+				// Checked before the food: on a full board the old food cell is under the head
+				canvas_.fillRect(cellX(x), cellY(y), sq, sq, tone(theme::HEAD));
+			} else if (x == foodX && y == foodY) {
+				canvas_.fillCircle(cellX(x) + l.cell / 2, cellY(y) + l.cell / 2, std::max(1, l.cell / 2 - std::max(1, l.cell / 8)), tone(theme::FOOD));
 			} else {
-				canvas_.fillRect(cellX(x), cellY(y), sq, sq, theme::BODY);
+				canvas_.fillRect(cellX(x), cellY(y), sq, sq, tone(theme::BODY));
 			}
 		}
 	}
@@ -157,18 +163,31 @@ void SdlRenderer::drawBoard(const GameState& state) {
 	const int topY = fy - lineH + (lineH - textH) / 2 - u / 2;
 	const std::string score = std::to_string(state.getScore());
 	const std::string best = std::to_string(state.getBestScore());
-	font::drawText(canvas_, fx, topY, "SCORE", scale, theme::DIM);
-	font::drawText(canvas_, fx + font::textWidth("SCORE ", scale), topY, score, scale, theme::NUMBER);
-	font::drawText(canvas_, fx + fw - font::textWidth(best, scale), topY, best, scale, theme::NUMBER);
-	font::drawText(canvas_, fx + fw - font::textWidth(best + " BEST ", scale), topY, "BEST", scale, theme::DIM);
-	font::drawText(canvas_, fx, fy + fh + (lineH - textH) / 2 + u / 2, "WASD or arrows to steer, Q to quit", scale, theme::DIM);
+	font::drawText(canvas_, fx, topY, "SCORE", scale, tone(theme::DIM));
+	font::drawText(canvas_, fx + font::textWidth("SCORE ", scale), topY, score, scale, tone(theme::NUMBER));
+	font::drawText(canvas_, fx + fw - font::textWidth(best, scale), topY, best, scale, tone(theme::NUMBER));
+	font::drawText(canvas_, fx + fw - font::textWidth(best + " BEST ", scale), topY, "BEST", scale, tone(theme::DIM));
+	font::drawText(canvas_, fx, fy + fh + (lineH - textH) / 2 + u / 2, "WASD or arrows to steer, Q to quit", scale, tone(theme::DIM));
+}
+
+/**
+ * Scales a color by the current brightness, which the victory fade lowers
+ *
+ * Parameters:
+ * Color color: A theme color
+ *
+ * Returns Color: The color at brightness dim_
+ */
+Color SdlRenderer::tone(Color color) const {
+	auto scale = [this](unsigned char c) { return static_cast<unsigned char>(c * dim_); };
+	return Color{scale(color.r), scale(color.g), scale(color.b)};
 }
 
 /**
  * Clears and redraws the last board and the game over panel if one is showing
  */
 void SdlRenderer::redrawAll() {
-	canvas_.clear(theme::BACKGROUND);
+	canvas_.clear(tone(theme::BACKGROUND));
 	if (last_) {
 		drawBoard(*last_);
 	}
@@ -181,10 +200,11 @@ void SdlRenderer::redrawAll() {
 void SdlRenderer::reset() {
 	last_.reset();
 	panel_ = nullptr;
+	dim_ = 1.0f;
 }
 
 void SdlRenderer::clear() {
-	canvas_.clear(theme::BACKGROUND);
+	canvas_.clear(tone(theme::BACKGROUND));
 }
 
 /**
@@ -196,6 +216,7 @@ void SdlRenderer::clear() {
 void SdlRenderer::render(const GameState& state) {
 	last_ = state;
 	panel_ = nullptr;
+	dim_ = 1.0f;
 	drawBoard(state);
 	canvas_.present();
 	app_.setScene([this] { redrawAll(); });
@@ -210,8 +231,35 @@ void SdlRenderer::render(const GameState& state) {
  * const ScoreStats& stats: Best, games played and average of that level
  */
 void SdlRenderer::printGameOver(Level level, int finalScore, const ScoreStats& stats) {
+	showPanel("GAME OVER", theme::FOOD, level, finalScore, stats);
+}
+
+/**
+ * Draws the victory panel over the last board and shows it
+ *
+ * Parameters:
+ * Level level: The level that was played
+ * int finalScore: The final score
+ * const ScoreStats& stats: Best, games played and average of that level
+ */
+void SdlRenderer::printVictory(Level level, int finalScore, const ScoreStats& stats) {
+	// The board fades to a dark backdrop for the panel; pump keeps the window responsive and notices a close request
+	if (last_) {
+		for (int i = 1; i <= FADE_STEPS && !app_.closeRequested(); ++i) {
+			dim_ = 1.0f - (1.0f - FADE_FLOOR) * static_cast<float>(i) / static_cast<float>(FADE_STEPS);
+			canvas_.clear(tone(theme::BACKGROUND));
+			drawBoard(*last_);
+			canvas_.present();
+			app_.pump(FADE_STEP_MS);
+		}
+	}
+	dim_ = FADE_FLOOR;
+	showPanel("YOU WIN", theme::GOLD, level, finalScore, stats);
+}
+
+void SdlRenderer::showPanel(const std::string& title, Color titleColor, Level level, int finalScore, const ScoreStats& stats) {
 	const std::string levelText = levelName(level);
-	panel_ = [this, levelText, finalScore, stats] {
+	panel_ = [this, title, titleColor, levelText, finalScore, stats] {
 		int scale = textScaleFor(canvas_.height());
 		const int columns = 26;
 		if (font::textWidth(std::string(columns + 4, ' '), scale) > canvas_.width()) {
@@ -239,7 +287,7 @@ void SdlRenderer::printGameOver(Level level, int finalScore, const ScoreStats& s
 			canvas_.fillRect(left, ty, right - left, border, theme::WALL);
 			ty += border + u;
 		};
-		textAt(left, "GAME OVER", theme::FOOD);
+		textAt(left, title, titleColor);
 		ty += rowH;
 		rule();
 		auto row = [&](const std::string& label, const std::string& value, Color color) {

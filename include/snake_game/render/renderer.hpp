@@ -46,6 +46,16 @@ public:
 	virtual void printGameOver(Level level, int finalScore, const ScoreStats& stats) = 0;
 
 	/**
+	 * Shows the victory panel with statistics, after the snake filled the board
+	 *
+	 * Parameters:
+	 * Level level: The level that was played
+	 * int finalScore: The final score
+	 * const ScoreStats& stats: Best, games played and average of that level
+	 */
+	virtual void printVictory(Level level, int finalScore, const ScoreStats& stats) = 0;
+
+	/**
 	 * Waits between game steps, keeping the front-end responsive if it needs to
 	 *
 	 * Parameters:

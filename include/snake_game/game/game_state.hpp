@@ -115,6 +115,13 @@ public:
 	const Snake& getSnake() const;
 
 	/**
+	 * Tells whether the snake fills the board, which is a win (O(1): the snake covers exactly the occupied cells)
+	 *
+	 * Returns bool: true if the snake length equals rows * cols
+	 */
+	bool isWon() const;
+
+	/**
 	 * Increments the score and updates best score if necessary
 	 */
 	void incrementScore();

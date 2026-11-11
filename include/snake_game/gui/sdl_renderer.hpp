@@ -63,9 +63,12 @@ class SdlRenderer : public IRenderer {
 	SdlApp& app_;
 	std::optional<GameState> last_;
 	std::function<void()> panel_;
+	float dim_ = 1.0f;
 
 	void drawBoard(const GameState& state);
 	void redrawAll();
+	Color tone(Color color) const;
+	void showPanel(const std::string& title, Color titleColor, Level level, int finalScore, const ScoreStats& stats);
 
 public:
 	/**
@@ -81,6 +84,7 @@ public:
 	void clear() override;
 	void render(const GameState& state) override;
 	void printGameOver(Level level, int finalScore, const ScoreStats& stats) override;
+	void printVictory(Level level, int finalScore, const ScoreStats& stats) override;
 	void pause(int ms) override;
 
 	/**

@@ -7,7 +7,8 @@ The classic Snake game for the terminal, written in C++. It saves your scores be
 - Start menu with three levels (Easy, Normal, Hard), a leaderboard, a how-to-play screen and a sound switch; press M at game over to return to it
 - Arrow keys or WASD
 - Best score, games played, average score and top 10, kept separately for each level and saved between sessions
-- Terminal beep when you eat and when the game ends; in builds with audio (the release binaries), Gounod's "Ave Maria" over Bach's C major Prelude plays during the game (about four minutes, then it starts again), with short blips when you eat, when the game ends and when you move around the menu
+- Terminal beep when you eat and when the game ends; in builds with audio (the release binaries), Gounod's "Ave Maria" over Bach's C major Prelude plays during the game (about four minutes, then it starts again), with short blips when you eat, when the game ends and when you move around the menu; when a game ends the loop is cut and only the last bars of the piece play, once
+- Filling the whole board is a win: the last food is scored and a victory screen replaces game over (a yellow panel in the terminal; in the window the board fades to dark under a gold one)
 - Colored board (cyan walls, green snake with a bright head, red food, yellow numbers)
 - Linux, macOS and Windows binaries, plus a Docker image
 - An optional graphical version, `snake-gui`, drawn with SDL3 (see [Graphical version](#graphical-version))

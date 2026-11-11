@@ -66,6 +66,11 @@ public:
 		save();
 	}
 
+	void printVictory(Level level, int finalScore, const ScoreStats& stats) override {
+		inner_.printVictory(level, finalScore, stats);
+		save();
+	}
+
 	void pause(int) override {}
 
 	/**
