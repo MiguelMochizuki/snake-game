@@ -35,7 +35,6 @@ public:
 	void gameOver() override { events.push_back("gameOver"); }
 	void musicStart() override { events.push_back("musicStart"); }
 	void musicStop() override { events.push_back("musicStop"); }
-	void musicFinale() override { events.push_back("musicFinale"); }
 	void win() override { events.push_back("win"); }
 	void menuMove() override { events.push_back("menuMove"); }
 	void menuSelect() override { events.push_back("menuSelect"); }
@@ -64,7 +63,7 @@ using Events = std::vector<std::string>;
 
 }  // namespace
 
-TEST(SoundEvents, EngineStartsMusicOnRunAndEndsWithTheFinaleBeforeGameOver) {
+TEST(SoundEvents, EngineStartsMusicOnRunAndStopsBeforeGameOver) {
 	TempDir dir;
 	ScriptedKeys keys;
 	CompositeInputHandler input = makeInput();
@@ -75,7 +74,7 @@ TEST(SoundEvents, EngineStartsMusicOnRunAndEndsWithTheFinaleBeforeGameOver) {
 
 	engine.run();
 
-	EXPECT_EQ(sound.events, (Events{"musicStart", "musicFinale", "gameOver", "musicStop"}));
+	EXPECT_EQ(sound.events, (Events{"musicStart", "musicStop", "gameOver"}));
 }
 
 TEST(SoundEvents, MusicRestartsOnRestart) {
@@ -90,10 +89,10 @@ TEST(SoundEvents, MusicRestartsOnRestart) {
 
 	engine.run();
 
-	EXPECT_EQ(sound.events, (Events{"musicStart", "musicFinale", "gameOver", "musicStart", "musicFinale", "gameOver", "musicStop"}));
+	EXPECT_EQ(sound.events, (Events{"musicStart", "musicStop", "gameOver", "musicStart", "musicStop", "gameOver"}));
 }
 
-TEST(SoundEvents, WinningPlaysTheFinaleAndTheWinCue) {
+TEST(SoundEvents, WinningStopsTheMusicAndPlaysTheWinCue) {
 	TempDir dir;
 	ScriptedKeys keys;
 	CompositeInputHandler input = makeInput();
@@ -104,7 +103,7 @@ TEST(SoundEvents, WinningPlaysTheFinaleAndTheWinCue) {
 
 	engine.run();
 
-	EXPECT_EQ(sound.events, (Events{"musicStart", "eat", "musicFinale", "win", "musicStop"}));
+	EXPECT_EQ(sound.events, (Events{"musicStart", "eat", "musicStop", "win"}));
 }
 
 namespace {
@@ -123,11 +122,10 @@ public:
 
 }  // namespace
 
-TEST(SoundEvents, DefaultWinIsGameOverAndDefaultFinaleIsStop) {
+TEST(SoundEvents, DefaultWinIsGameOver) {
 	BareSound sound;
 	sound.win();
-	sound.musicFinale();
-	EXPECT_EQ(sound.events, (Events{"gameOver", "musicStop"}));
+	EXPECT_EQ(sound.events, (Events{"gameOver"}));
 }
 
 TEST(SoundEvents, SynthSoundWinMakesASound) {

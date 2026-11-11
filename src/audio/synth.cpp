@@ -23,8 +23,8 @@ struct BlipSpec {
 	float gain;
 };
 
-// Music commands posted by startMusic, stopMusic and finale
-const int CMD_NONE = 0, CMD_START = 1, CMD_STOP = 2, CMD_FINALE = 3;
+// Music commands posted by startMusic and stopMusic
+const int CMD_NONE = 0, CMD_START = 1, CMD_STOP = 2;
 
 // Indexed by Blip: Eat, GameOver, MenuMove, MenuSelect, Win
 const BlipSpec BLIPS[5] = {{1046.5, 0.08, 0.3f}, {196.0, 0.25, 0.3f}, {523.25, 0.04, 0.25f}, {1174.66, 0.06, 0.25f}, {1318.5, 0.35, 0.3f}};
@@ -85,13 +85,6 @@ void Synth::stopMusic() {
 }
 
 /**
- * Cuts the loop and plays only the last bars once, then stops by itself
- */
-void Synth::finale() {
-	command_ = CMD_FINALE;
-}
-
-/**
  * Starts a blip, replacing one still playing
  *
  * Parameters:
@@ -114,19 +107,10 @@ void Synth::render(float* out, int frames) {
 		step_ = 0;
 		stepPos_ = 0;
 		melodyIdx_ = 0;
-		finaleActive_ = false;
 		playing_ = true;
 		break;
 	case CMD_STOP:
-		finaleActive_ = false;
 		playing_ = false;
-		break;
-	case CMD_FINALE:
-		step_ = FINALE_START_STEP;
-		stepPos_ = 0;
-		melodyIdx_ = 0;  // the loop below skips the notes that ended before the first step
-		finaleActive_ = true;
-		playing_ = true;
 		break;
 	default:
 		break;
@@ -176,11 +160,6 @@ void Synth::render(float* out, int frames) {
 			}
 			if (++stepPos_ >= stepLen) {
 				stepPos_ = 0;
-				if (finaleActive_ && step_ + 1 >= FINALE_END_STEP) {
-					// The ending is over: stop here instead of looping or resting
-					finaleActive_ = false;
-					playing_ = false;
-				}
 				if (++step_ >= SCORE_STEPS) {
 					step_ = 0;
 					melodyIdx_ = 0;

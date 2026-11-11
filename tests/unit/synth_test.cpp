@@ -148,73 +148,21 @@ TEST(Synth, SilentWhenStopped) {
 	EXPECT_TRUE(allZero(renderFrames(s, 5000)));
 }
 
-TEST(Synth, FinalePlaysTheLastBarsOnceAndStops) {
-	Synth s(LOW_RATE);
-	s.startMusic();
-	renderFrames(s, 3 * LOW_STEP);
-	s.finale();
-	const int len = (FINALE_END_STEP - FINALE_START_STEP) * LOW_STEP;
-	std::vector<float> out = renderFrames(s, 2 * len);
-	EXPECT_FALSE(allZero(out, 0, LOW_STEP)) << "the arpeggio of the last bars starts at once";
-	EXPECT_FALSE(allZero(out, len - 4 * LOW_STEP, len - LOW_STEP)) << "the final chord is still ringing";
-	EXPECT_TRUE(allZero(out, len + LOW_STEP)) << "it does not loop";
-}
-
-TEST(Synth, FinaleWorksWhenTheMusicWasOff) {
-	Synth s(LOW_RATE);
-	s.finale();
-	EXPECT_FALSE(allZero(renderFrames(s, LOW_STEP)));
-}
-
-TEST(Synth, StartingTheMusicDuringTheFinaleStartsOver) {
-	Synth a(LOW_RATE), b(LOW_RATE);
-	a.startMusic();
-	renderFrames(a, 5 * LOW_STEP);
-	a.finale();
-	renderFrames(a, 3 * LOW_STEP);
-	a.startMusic();
-	b.startMusic();
-	EXPECT_EQ(renderFrames(a, 4 * LOW_STEP), renderFrames(b, 4 * LOW_STEP));
-}
-
-TEST(Synth, MusicLoopsAgainAfterAFinale) {
-	Synth s(LOW_RATE);
-	s.startMusic();
-	s.finale();
-	renderFrames(s, (FINALE_END_STEP - FINALE_START_STEP + 2) * LOW_STEP);
-	s.startMusic();
-	std::vector<float> out = renderFrames(s, (SCORE_STEPS + 5) * LOW_STEP);
-	EXPECT_FALSE(allZero(out, 0, 5 * LOW_STEP)) << "a plain start plays the piece from its beginning";
-	EXPECT_FALSE(allZero(out, static_cast<size_t>(SCORE_STEPS) * LOW_STEP, out.size())) << "and loops as before";
-}
-
-TEST(Synth, TheLastCommandWinsWhenSeveralArriveBetweenCallbacks) {
-	Synth restarted(LOW_RATE), fresh(LOW_RATE);
-	restarted.startMusic();
-	renderFrames(restarted, 5 * LOW_STEP);
-	restarted.finale();
-	restarted.startMusic();  // R pressed right after the ending was requested
-	fresh.startMusic();
-	const int span = (FINALE_END_STEP - FINALE_START_STEP + 8) * LOW_STEP;
-	std::vector<float> a = renderFrames(restarted, span);
-	EXPECT_EQ(a, renderFrames(fresh, span)) << "the new game plays as if no ending had been asked for";
-
+TEST(Synth, TheLastMusicCommandWinsWhenSeveralArriveBetweenCallbacks) {
 	Synth stopped(LOW_RATE);
 	stopped.startMusic();
 	renderFrames(stopped, 5 * LOW_STEP);
-	stopped.finale();
-	stopped.stopMusic();  // leaving for the menu right after
+	stopped.startMusic();
+	stopped.stopMusic();  // quit right after a restart, before the audio thread ran
 	EXPECT_TRUE(allZero(renderFrames(stopped, 4 * LOW_STEP)));
-}
 
-TEST(Synth, StartingAfterTheEndingFinishedPlaysTheNextGame) {
-	Synth s(LOW_RATE);
-	s.startMusic();
-	s.finale();
-	// One callback long enough to hold the whole ending, then the next game starts right away
-	renderFrames(s, (FINALE_END_STEP - FINALE_START_STEP + 1) * LOW_STEP);
-	s.startMusic();
-	EXPECT_FALSE(allZero(renderFrames(s, 8 * LOW_STEP)));
+	Synth restarted(LOW_RATE), fresh(LOW_RATE);
+	restarted.startMusic();
+	renderFrames(restarted, 5 * LOW_STEP);
+	restarted.stopMusic();
+	restarted.startMusic();  // and the other way round: the game starts over from the beginning
+	fresh.startMusic();
+	EXPECT_EQ(renderFrames(restarted, 4 * LOW_STEP), renderFrames(fresh, 4 * LOW_STEP));
 }
 
 TEST(Synth, BlipsDecay) {
