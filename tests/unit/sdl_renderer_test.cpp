@@ -194,3 +194,18 @@ TEST(SdlRenderer, TinyCanvasDoesNotCrash) {
 	renderer.printGameOver(Level::Hard, 0, ScoreStats{0, 0, 0.0});
 	renderer.pause(1);
 }
+
+TEST(SdlRenderer, GameOverPanelRedrawsTheBoardInsteadOfTrustingTheBackBuffer) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	renderer.clear();
+	renderer.render(state);
+	// On a real window the buffer behind present() may hold an older frame: the game over panel must not depend on it
+	canvas->clear(Color{200, 0, 200});
+	renderer.printGameOver(Level::Normal, 0, ScoreStats{});
+	std::vector<unsigned char> px = canvas->pixelsRgb();
+	// The panel hides the head, so check that the stale pixels outside it are gone
+	EXPECT_TRUE(same(pixelAt(px, 640, 0, 0), theme::BACKGROUND));
+}

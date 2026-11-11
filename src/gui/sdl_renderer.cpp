@@ -309,8 +309,9 @@ void SdlRenderer::showPanel(const std::string& title, Color titleColor, Level le
 			px += font::textWidth(std::string(key.second) + "  ", scale);
 		}
 	};
-	panel_();
-	canvas_.present();
+	// Redraw the whole scene instead of painting over the canvas: after present() the buffer may hold an older frame,
+	// which showed the snake one step back under the panel
+	redrawAll();
 	app_.setScene([this] { redrawAll(); });
 }
 
