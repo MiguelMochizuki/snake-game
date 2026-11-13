@@ -139,7 +139,7 @@ snake-game/
 
 - **Language:** C++17, with `-Wall -Wextra -Wpedantic` (`/W4` on MSVC). Python 3 for the end-to-end tests and the maintenance scripts in `tools/`.
 - **Build:** CMake 3.16+, driven by a Makefile with three variants: terminal, audio and GUI.
-- **Libraries:** [SDL3](https://www.libsdl.org) (graphical version) and [miniaudio](https://github.com/mackron/miniaudio) (sound), both fetched when configuring and linked statically; [GoogleTest](https://github.com/google/googletest) (unit tests), fetched on the first configure.
+- **Libraries:** [SDL3](https://www.libsdl.org) (graphical version) and [miniaudio](https://github.com/mackron/miniaudio) (sound), optional and linked statically. miniaudio is fetched only with `SNAKE_GAME_BUILD_AUDIO=ON` and SDL3 only with `SNAKE_GAME_BUILD_GUI=ON`, which implies audio, so the default terminal build fetches neither; [GoogleTest](https://github.com/google/googletest) (unit tests), fetched on the first configure.
 - **Container:** Docker, in two stages (Alpine with build tools, then a minimal Alpine runtime).
 - **CI:** one GitHub Actions workflow, `.github/workflows/build-and-release.yml` (see [CI and releases](#ci-and-releases)).
 
