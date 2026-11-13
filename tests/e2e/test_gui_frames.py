@@ -11,6 +11,16 @@ import tempfile
 
 
 def run(binary, out_dir):
+	"""
+	Runs snake-gui off-screen in demo mode and collects its frames
+
+	Args:
+		binary (str): Path to snake-gui
+		out_dir (str): Directory that receives the PPM frames
+
+	Returns:
+		list: Sorted paths of the frames written
+	"""
 	env = {k: v for k, v in os.environ.items() if k not in ("DISPLAY", "WAYLAND_DISPLAY", "SDL_VIDEODRIVER")}
 	env.update(SNAKE_SEED="1", SNAKE_AUDIO="off")
 	with tempfile.TemporaryDirectory() as cwd:

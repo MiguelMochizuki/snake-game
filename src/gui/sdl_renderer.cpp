@@ -114,12 +114,6 @@ Layout layoutFor(int canvasW, int canvasH, int cols, int rows) {
 SdlRenderer::SdlRenderer(Canvas& canvas, SdlApp& app) : canvas_(canvas), app_(app) {
 }
 
-/**
- * Draws the board, snake, food and HUD of a state, without clearing or presenting
- *
- * Parameters:
- * const GameState& state: The state to draw
- */
 void SdlRenderer::drawBoard(const GameState& state) {
 	const int cols = state.getCols();
 	const int rows = state.getRows();
@@ -170,22 +164,11 @@ void SdlRenderer::drawBoard(const GameState& state) {
 	font::drawText(canvas_, fx, fy + fh + (lineH - textH) / 2 + u / 2, "WASD or arrows to steer, Q to quit", scale, tone(theme::DIM));
 }
 
-/**
- * Scales a color by the current brightness, which the victory fade lowers
- *
- * Parameters:
- * Color color: A theme color
- *
- * Returns Color: The color at brightness dim_
- */
 Color SdlRenderer::tone(Color color) const {
 	auto scale = [this](unsigned char c) { return static_cast<unsigned char>(c * dim_); };
 	return Color{scale(color.r), scale(color.g), scale(color.b)};
 }
 
-/**
- * Clears and redraws the last board and the game over panel if one is showing
- */
 void SdlRenderer::redrawAll() {
 	canvas_.clear(tone(theme::BACKGROUND));
 	if (last_) {

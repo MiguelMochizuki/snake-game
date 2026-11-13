@@ -2,7 +2,25 @@
 
 The classic Snake game for the terminal, written in C++. It saves your scores between sessions and also runs in Docker.
 
-## Features
+- [Overview](#overview)
+- [Highlights](#highlights)
+- [Quick Start](#quick-start)
+- [Project Organization](#project-organization)
+- [Main Tools & Stack](#main-tools--stack)
+- [Usage](#usage)
+- [Key Outputs & Reports](#key-outputs--reports)
+- [Documentation Conventions](#documentation-conventions)
+- [Contributing](#contributing)
+- [License](#license)
+- [Author](#author)
+
+## Overview
+
+Snake Game has two front-ends on one engine: a terminal game (`snake`) and an optional graphical one drawn with SDL3 (`snake-gui`). Both share the rules, the three levels and the menu. Each front-end saves its scores separately. Release binaries exist for Linux, macOS and Windows, and a Docker image runs the terminal game.
+
+## Highlights
+
+![The graphical version playing a full game with the demo autopilot](docs/snake-gui.gif)
 
 - Start menu with three levels (Easy, Normal, Hard), a leaderboard, a how-to-play screen, a sound switch and a practice mode that keeps your games out of the leaderboard; press M at game over to return to it
 - Arrow keys or WASD
@@ -13,7 +31,9 @@ The classic Snake game for the terminal, written in C++. It saves your scores be
 - Linux, macOS and Windows binaries, plus a Docker image
 - An optional graphical version, `snake-gui`, drawn with SDL3 (see [Graphical version](#graphical-version))
 
-## Download
+## Quick Start
+
+### Download
 
 Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v2.3.3](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.3.3), which draws the app icon as a close-up of the snake's head and, since v2.3.2, adds a practice mode that keeps games out of the leaderboard, a clear-scores key (C) on the leaderboard screen, a new icon, and fixes the game over panel showing the snake one step back (v2.3.0 added the victory screen for filling the whole board).
 
@@ -34,7 +54,7 @@ chmod +x snake-linux-x86_64
 
 On Windows, double-click the `.exe` or run it from a terminal that supports ANSI escape codes, such as Windows Terminal.
 
-### Graphical downloads
+Graphical downloads:
 
 | Platform | Architecture | Download |
 |----------|-------------|----------|
@@ -49,7 +69,7 @@ On Windows, double-click the `.exe` or run it from a terminal that supports ANSI
 - **Linux icon:** GNOME and some other desktops take the dock icon from an installed desktop entry, not from the window. An AppImage shows its icon once you integrate it (AppImageLauncher or Gear Lever do that); to install a source build like any other app, use `make install-gui` (see [Graphical version](#graphical-version)).
 - **macOS:** unzip and move `Snake.app` to Applications. The app is not signed, so the first time, right-click it, choose Open, then Open again.
 
-## Build from source
+### Build from source
 
 You need a C++17 compiler (g++ 7+, clang 5+ or MSVC 2017+), CMake 3.16+ and Make or Ninja.
 
@@ -76,62 +96,56 @@ For a different build type, pass `-DCMAKE_BUILD_TYPE=Debug` (or `Release`, the d
 
 On Ubuntu or Debian, `sudo apt-get install build-essential cmake` installs the dependencies. On macOS, use `brew install cmake`. On Windows with MinGW, configure with `cmake -S . -B build -G "MinGW Makefiles"`, then `cmake --build build`.
 
-## Sound
+## Project Organization
 
-The release binaries play music and blips through the system audio device. The sound switch in the menu turns all of it off. If no audio device can be opened, the game falls back to the terminal beep without any message. Set `SNAKE_AUDIO=off` to force the beep even when a device exists.
-
-The music is Charles Gounod's *Ave Maria* (1853) over Johann Sebastian Bach's Prelude in C major (BWV 846), both in the public domain, played at the score's calm 66 BPM. The notes come from the [Mutopia Project](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=2167) edition (typeset by Yann Leprince from the 1856 Heugel score, also public domain) through `tools/gen_score.py`, which writes `src/audio/score_data.cpp`.
-
-Audio is optional at build time: `cmake -S . -B build -DSNAKE_GAME_BUILD_AUDIO=ON` fetches [miniaudio](https://github.com/mackron/miniaudio) when configuring. The default build (`make`) and the Docker image have no audio and keep the terminal beep.
-
-## Graphical version
-
-![The graphical version playing a full game with the demo autopilot](docs/snake-gui.gif)
-
-`snake-gui` is a second front-end for the same game: the same rules, levels and menu, drawn in a resizable window with a bitmap font instead of the terminal. It is not part of the default build. Turn it on with:
-
-```bash
-make run-gui        # build (first time fetches SDL3) and play
-make gui            # build only: build-sdl/bin/snake-gui
-make install-gui    # install it for your user, like any other app
+```
+snake-game/
+├── .github/  # GitHub config
+├── apps/     # thin main() for each front-end
+├── assets/   # icons, desktop entry, Info.plist, Windows resource
+├── docs/     # demo GIF
+├── include/  # public headers, one folder per module
+├── src/      # implementations, mirrors include/
+├── tests/    # test suite
+├── tools/    # packaging, icon and soundtrack generators
+├── Dockerfile
+├── CMakeLists.txt
+├── Makefile
+├── CONTRIBUTING.md
+├── LICENSE
+└── README.md
 ```
 
-`make install-gui` copies the program, so you can delete the source folder afterwards. On Linux it installs `~/.local/bin/snake-gui` with an app-menu entry and icon (`make uninstall-gui` removes them); on macOS it installs `~/Applications/Snake.app`. On Windows, use the zip from the Releases page.
+### Key modules
 
-Or with CMake directly: `cmake -S . -B build -DSNAKE_GAME_BUILD_GUI=ON && cmake --build build`, then `./build/bin/snake-gui`.
+- `apps/snake.cpp` is `main()`: it wires the menu, engine, renderer and key source together. `apps/snake_gui.cpp` does the same for the SDL front-end (only with `SNAKE_GAME_BUILD_GUI=ON`).
+- `include/snake_game/` has one folder per module:
+  - `game/`: Snake, Food, GameState, Level and the GameEngine loop
+  - `input/`: key source, key decoder and the WASD, arrow and command handlers
+  - `menu/`: MenuModel, IMenuView, the terminal view and runMenu
+  - `render/`: IRenderer, TerminalRenderer, TerminalPainter and Sound
+  - `audio/`: Synth (chord music and blips) and AudioDevice (only with audio built)
+  - `gui/`: SDL canvas, bitmap font, renderer, menu view, key source and demo autopilot (only with the GUI built)
+  - `score/`: ScoreManager and the score source it reads
+- `tests/` holds the unit (GoogleTest), golden and end-to-end tests.
 
-This fetches SDL3 and miniaudio when configuring and links them statically. On Linux, SDL needs the development packages of your window system first. For Wayland: `libwayland-dev libxkbcommon-dev wayland-protocols libdecor-0-dev libegl-dev libdrm-dev libgbm-dev`; for X11 (SDL checks for it even on Wayland) also `libx11-dev libxext-dev libxcursor-dev libxi-dev libxrandr-dev libxss-dev libxtst-dev libxfixes-dev libxkbcommon-x11-dev`; for sound output `libasound2-dev libpulse-dev libudev-dev`. Without a window system (a CI machine, say), add `-DSDL_UNIX_CONSOLE_BUILD=ON` to build and use only the off-screen mode below.
+### Data flow
 
-The keys are the same as in the terminal (arrows or WASD, Enter, R, M, Q), and closing the window quits. The Docker image stays terminal-only.
+- `GameEngine` runs the loop, `GameState` holds the snake and food, and `TerminalRenderer` draws the board. Everything except `main()` builds into the `snake_core` library.
+- Input goes through a key source and a set of handlers (WASD, arrows and commands), so the engine never reads the terminal directly.
+- The menu is split the same way: `MenuModel` holds its state, `IMenuView` draws it and its leaderboard and help screens (`TerminalMenuView` does so in ASCII), and `runMenu` connects them to the keys. `snake-gui` is exactly that: another `IRenderer`, `IMenuView` and key source on the same engine.
 
-Two options exist for demos and recordings. `snake-gui --demo` lets an autopilot play, with the menu skipped and the scores kept out of your leaderboard. `snake-gui --demo --frames DIR [--stride N] [--max-steps M]` draws off-screen with no window, writes `frame-00000.ppm`, `frame-00001.ppm` and so on to `DIR`, and gives the same frames for the same `SNAKE_SEED`. The GIF above was made from such frames:
+## Main Tools & Stack
 
-```bash
-SNAKE_SEED=9 build/bin/snake-gui --demo --frames frames --stride 5
-ffmpeg -framerate 25 -i frames/frame-%05d.ppm -vf "scale=480:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=48:stats_mode=diff[p];[b][p]paletteuse=dither=none" -loop 0 docs/snake-gui.gif
-```
+- **Language:** C++17, with `-Wall -Wextra -Wpedantic` (`/W4` on MSVC). Python 3 for the end-to-end tests and the maintenance scripts in `tools/`.
+- **Build:** CMake 3.16+, driven by a Makefile with three variants: terminal, audio and GUI.
+- **Libraries:** [SDL3](https://www.libsdl.org) (graphical version) and [miniaudio](https://github.com/mackron/miniaudio) (sound), optional and linked statically. miniaudio is fetched only with `SNAKE_GAME_BUILD_AUDIO=ON` and SDL3 only with `SNAKE_GAME_BUILD_GUI=ON`, which implies audio, so the default terminal build fetches neither; [GoogleTest](https://github.com/google/googletest) (unit tests), fetched on the first configure.
+- **Container:** Docker, in two stages (Alpine with build tools, then a minimal Alpine runtime).
+- **CI:** one GitHub Actions workflow, `.github/workflows/build-and-release.yml` (see [CI and releases](#ci-and-releases)).
 
-## Docker
+## Usage
 
-```bash
-docker pull miguelmochizuki/snake-game
-docker run --rm -it -v $(pwd)/data:/app/data miguelmochizuki/snake-game
-```
-
-The image is published for linux/amd64 and linux/arm64. Without the `-v` option, scores are lost when the container exits.
-
-To build the image yourself (Docker 20.10 or newer):
-
-```bash
-make run-docker      # build the image and play with a persistent score volume
-make docker          # build only
-make clean-docker    # remove the image
-make clean-docker-data  # remove the score volume
-```
-
-The image builds in two stages (Alpine with build tools, then a minimal Alpine runtime) and runs as the non-root user `snakeuser`.
-
-## How to play
+### How to play
 
 The game opens on a menu. Pick a level, then start.
 
@@ -150,39 +164,60 @@ After a game ends, you see the level, your final score and that level's statisti
 
 Set `NO_COLOR` to any non-empty value to turn colors off, for example `NO_COLOR=1 ./snake`. An empty value keeps them on, as [no-color.org](https://no-color.org) describes.
 
-### Scores
+### Sound
 
-The terminal game saves scores in a `data/` directory next to where you start it. `snake-gui` uses your OS's app-data folder instead, so it behaves the same however it is launched: `~/.local/share/snake-game/` on Linux (or under `$XDG_DATA_HOME`), `~/Library/Application Support/snake-game/` on macOS and `%APPDATA%\snake-game\` on Windows. The two do not share scores. Uninstalling leaves them in place. The files are:
+The release binaries play music and blips through the system audio device. The sound switch in the menu turns all of it off. If no audio device can be opened, the game falls back to the terminal beep without any message. Set `SNAKE_AUDIO=off` to force the beep even when a device exists.
 
-- `scores_v2.txt` holds the level and score of every game.
-- `scores_v2.checksum` detects edited files.
+The music is Charles Gounod's *Ave Maria* (1853) over Johann Sebastian Bach's Prelude in C major (BWV 846), both in the public domain, played at the score's calm 66 BPM. The notes come from the [Mutopia Project](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=2167) edition (typeset by Yann Leprince from the 1856 Heugel score, also public domain) through `tools/gen_score.py`, which writes `src/audio/score_data.cpp`.
 
-Files from v1.x (`best_score.txt`, `score_history.txt`, `score_checksum.txt`) are imported once as Normal scores if their checksum is valid. They are never changed or deleted.
+Audio is optional at build time: `cmake -S . -B build -DSNAKE_GAME_BUILD_AUDIO=ON` fetches [miniaudio](https://github.com/mackron/miniaudio) when configuring. The default build (`make`) and the Docker image have no audio and keep the terminal beep.
 
-## Code layout
+### Graphical version
 
-```
-apps/snake.cpp      main(): wires the menu, engine, renderer and key source together
-apps/snake_gui.cpp  the same for the SDL front-end (only with SNAKE_GAME_BUILD_GUI=ON)
-include/snake_game/
-  game/             Snake, Food, GameState, Level and the GameEngine loop
-  input/            key source, key decoder and the WASD, arrow and command handlers
-  menu/             MenuModel, IMenuView, the terminal view and runMenu
-  render/           IRenderer, TerminalRenderer, TerminalPainter and Sound
-  audio/            Synth (chord music and blips) and AudioDevice (only with audio built)
-  gui/              SDL canvas, bitmap font, renderer, menu view, key source and demo autopilot (only with the GUI built)
-  score/            ScoreManager and the score source it reads
-src/                implementations, mirroring include/snake_game
-tests/              unit (GoogleTest), golden and end-to-end tests
-assets/             app icons, desktop entry, macOS Info.plist, Windows resource file
-tools/              packaging (package.sh), icon generation and checks, soundtrack generator, desktop install
+`snake-gui` is a second front-end for the same game: the same rules, levels and menu, drawn in a resizable window with a bitmap font instead of the terminal. It is not part of the default build. Turn it on with:
+
+```bash
+make run-gui        # build (first time fetches SDL3) and play
+make gui            # build only: build-sdl/bin/snake-gui
+make install-gui    # install it for your user, like any other app
 ```
 
-- `GameEngine` runs the loop, `GameState` holds the snake and food, and `TerminalRenderer` draws the board. Everything except `main()` builds into the `snake_core` library.
-- Input goes through a key source and a set of handlers (WASD, arrows and commands), so the engine never reads the terminal directly.
-- The menu is split the same way: `MenuModel` holds its state, `IMenuView` draws it and its leaderboard and help screens (`TerminalMenuView` does so in ASCII), and `runMenu` connects them to the keys. `snake-gui` is exactly that: another `IRenderer`, `IMenuView` and key source on the same engine.
+`make install-gui` copies the program, so you can delete the source folder afterwards. On Linux it installs `~/.local/bin/snake-gui` with an app-menu entry and icon (`make uninstall-gui` removes them); on macOS it installs `~/Applications/Snake.app`. On Windows, use the zip from the Releases page.
 
-## Tests
+Or with CMake directly: `cmake -S . -B build -DSNAKE_GAME_BUILD_GUI=ON && cmake --build build`, then `./build/bin/snake-gui`.
+
+This fetches SDL3 and miniaudio when configuring and links them statically. On Linux, SDL needs the development packages of your window system first. For Wayland: `libwayland-dev libxkbcommon-dev wayland-protocols libdecor-0-dev libegl-dev libdrm-dev libgbm-dev`; for X11 (SDL checks for it even on Wayland) also `libx11-dev libxext-dev libxcursor-dev libxi-dev libxrandr-dev libxss-dev libxtst-dev libxfixes-dev libxkbcommon-x11-dev`; for sound output `libasound2-dev libpulse-dev libudev-dev`. Without a window system (a CI machine, say), add `-DSDL_UNIX_CONSOLE_BUILD=ON` to build and use only the off-screen mode below.
+
+The keys are the same as in the terminal (arrows or WASD, Enter, R, M, Q), and closing the window quits. The Docker image stays terminal-only.
+
+Two options exist for demos and recordings. `snake-gui --demo` lets an autopilot play, with the menu skipped and the scores kept out of your leaderboard. `snake-gui --demo --frames DIR [--stride N] [--max-steps M]` draws off-screen with no window, writes `frame-00000.ppm`, `frame-00001.ppm` and so on to `DIR`, and gives the same frames for the same `SNAKE_SEED`. The GIF at the top of this README was made from such frames:
+
+```bash
+SNAKE_SEED=9 build/bin/snake-gui --demo --frames frames --stride 5
+ffmpeg -framerate 25 -i frames/frame-%05d.ppm -vf "scale=480:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=48:stats_mode=diff[p];[b][p]paletteuse=dither=none" -loop 0 docs/snake-gui.gif
+```
+
+### Docker
+
+```bash
+docker pull miguelmochizuki/snake-game
+docker run --rm -it -v $(pwd)/data:/app/data miguelmochizuki/snake-game
+```
+
+The image is published for linux/amd64 and linux/arm64. Without the `-v` option, scores are lost when the container exits.
+
+To build the image yourself (Docker 20.10 or newer):
+
+```bash
+make run-docker      # build the image and play with a persistent score volume
+make docker          # build only
+make clean-docker    # remove the image
+make clean-docker-data  # remove the score volume
+```
+
+The image runs as the non-root user `snakeuser`.
+
+### Tests
 
 The suite has three parts, all run by CTest:
 
@@ -216,7 +251,7 @@ Normal play needs none of these. The tests use them to make the game predictable
 - `SNAKE_SKIP_MENU` (any non-empty value) starts the game without the menu. The end-to-end harness sets it to `1` by default.
 - `SNAKE_E2E_TIMEOUT_SCALE` (integer, default 1) multiplies the end-to-end timeouts and the step time. Raise it on slow machines. The Docker build uses 10.
 
-## CI and releases
+### CI and releases
 
 One GitHub Actions workflow handles both. On every push to `main` and every pull request, it builds and tests Linux x86-64, Linux ARM64 (on a native ARM64 runner), Windows x86-64, Windows ARM64 and macOS Universal. The Docker image runs the whole suite as part of its build, for amd64 and arm64 (arm64 under emulation). The graphical builds are packaged on the same runners, and the Windows and macOS jobs fail if the exe or app bundle has lost its icon (`tools/check_icon.py`).
 
@@ -229,11 +264,9 @@ git push origin v2.0.0
 
 The workflow then creates a GitHub release with all the binaries and publishes the Docker image to Docker Hub. A failing platform job blocks the release. The image builds at the same time as the binaries.
 
-### Version history
-
 Every release, with its notes and binaries, is on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page.
 
-## Troubleshooting
+### Troubleshooting
 
 **Input does not work.** The terminal must support raw input mode. On Windows, use one that understands ANSI escape codes, such as Windows Terminal or ConEmu.
 
@@ -245,9 +278,28 @@ sudo usermod -aG docker $USER
 
 **Scores are not saved in Docker.** Mount `data/` as a volume (`-v $(pwd)/data:/app/data`) and check its permissions with `chmod 755 data/`.
 
+## Key Outputs & Reports
+
+### Scores
+
+The terminal game saves scores in a `data/` directory next to where you start it. `snake-gui` uses your OS's app-data folder instead, so it behaves the same however it is launched: `~/.local/share/snake-game/` on Linux (or under `$XDG_DATA_HOME`), `~/Library/Application Support/snake-game/` on macOS and `%APPDATA%\snake-game\` on Windows. The two do not share scores. Uninstalling leaves them in place. The files are:
+
+- `scores_v2.txt` holds the level and score of every game.
+- `scores_v2.checksum` detects edited files.
+
+Files from v1.x (`best_score.txt`, `score_history.txt`, `score_checksum.txt`) are imported once as Normal scores if their checksum is valid. They are never changed or deleted.
+
+### Demo frames
+
+`snake-gui --demo --frames DIR` writes `frame-NNNNN.ppm` files, which `docs/snake-gui.gif` is built from (see [Graphical version](#graphical-version)). The GIF is a static sample checked into the repository.
+
+## Documentation Conventions
+
+Code and docs follow the conventions in [CONTRIBUTING.md](CONTRIBUTING.md): a header comment on every file, a block comment on every declaration, and tabs for indentation in both C++ and Python.
+
 ## Contributing
 
-Code and docs follow the conventions in [CONTRIBUTING.md](CONTRIBUTING.md). Fork the repository, make your changes on a branch, run `make test` (and try the game with `make run-docker`), then open a pull request.
+Fork the repository, make your changes on a branch, run `make test` (and try the game with `make run-docker`), then open a pull request.
 
 Ideas not done yet: network multiplayer.
 
