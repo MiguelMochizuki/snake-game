@@ -16,7 +16,7 @@ The classic Snake game for the terminal, written in C++. It saves your scores be
 
 ## Overview
 
-Snake Game has two front-ends on one engine: a terminal game (`snake`) and an optional graphical one drawn with SDL3 (`snake-gui`). Both share the rules, the three levels, the menu and the saved scores. Release binaries exist for Linux, macOS and Windows, and a Docker image runs the terminal game.
+Snake Game has two front-ends on one engine: a terminal game (`snake`) and an optional graphical one drawn with SDL3 (`snake-gui`). Both share the rules, the three levels and the menu. Each front-end saves its scores separately. Release binaries exist for Linux, macOS and Windows, and a Docker image runs the terminal game.
 
 ## Highlights
 
