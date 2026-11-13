@@ -44,12 +44,6 @@ SdlApp::SdlApp(Canvas& canvas, bool interactive) : canvas_(canvas), interactive_
 	}
 }
 
-/**
- * Handles one SDL event
- *
- * Parameters:
- * const void* event: A pointer to an SDL_Event
- */
 void SdlApp::handle(const void* event) {
 	const SDL_Event& e = *static_cast<const SDL_Event*>(event);
 	switch (e.type) {

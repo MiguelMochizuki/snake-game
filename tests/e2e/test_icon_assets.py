@@ -54,6 +54,9 @@ def png_pixels(data):
 
 
 def test_png():
+    """
+    Checks icon.png is 1024x1024 with transparent corners and an opaque centre
+    """
     w, h, rows = png_pixels(read("icon.png"))
     assert (w, h) == (1024, 1024), (w, h)
     assert rows[0][3] == 0, "corner must be transparent (rounded square)"
@@ -61,18 +64,27 @@ def test_png():
 
 
 def test_png_512():
+    """
+    Checks icon-512.png is 512x512 with a transparent corner and an opaque centre
+    """
     w, h, rows = png_pixels(read("icon-512.png"))
     assert (w, h) == (512, 512), (w, h)
     assert rows[0][3] == 0 and rows[h // 2][(w // 2) * 4 + 3] == 255
 
 
 def test_ico():
+    """
+    Checks icon.ico is an icon file holding at least six sizes
+    """
     data = read("icon.ico")
     reserved, kind, count = struct.unpack("<HHH", data[:6])
     assert (reserved, kind) == (0, 1) and count >= 6, (kind, count)
 
 
 def test_icns():
+    """
+    Checks icon.icns starts with the icns magic bytes
+    """
     assert read("icon.icns")[:4] == b"icns"
 
 

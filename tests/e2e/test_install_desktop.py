@@ -19,6 +19,9 @@ def run(*args):
 
 
 def test_install_and_uninstall():
+    """
+    Checks install copies the binary, desktop entry and icon (even with a space in the path) and uninstall removes them
+    """
     data = tempfile.mkdtemp()
     binary = os.path.join(data, "my game", "snake-gui")  # a space in the path must survive
     os.makedirs(os.path.dirname(binary))

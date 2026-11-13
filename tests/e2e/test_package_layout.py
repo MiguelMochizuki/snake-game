@@ -30,6 +30,9 @@ def package(target, extra_env=None):
 
 
 def test_linux_appdir():
+    """
+    Checks the Linux package builds an AppDir with the launcher, desktop entry, icon and executable binary
+    """
     out, tmp = package("linux")
     d = os.path.join(out, "Snake.AppDir")
     for rel in ("AppRun", "snake-gui.desktop", "snake.png", ".DirIcon", "usr/bin/snake-gui"):
@@ -39,6 +42,9 @@ def test_linux_appdir():
 
 
 def test_macos_bundle():
+    """
+    Checks the macOS package builds an app bundle with the binary, icns icon and versioned Info.plist
+    """
     out, tmp = package("macos")
     app = os.path.join(out, "Snake.app", "Contents")
     assert os.access(os.path.join(app, "MacOS", "snake-gui"), os.X_OK)
@@ -49,6 +55,9 @@ def test_macos_bundle():
 
 
 def test_windows_zip():
+    """
+    Checks the Windows package zip holds snake-gui.exe and README.txt
+    """
     out, tmp = package("windows", {"NO_ZIP": ""})
     names = zipfile.ZipFile(os.path.join(out, "snake-gui-windows.zip")).namelist()
     assert "snake-gui.exe" in names and "README.txt" in names, names

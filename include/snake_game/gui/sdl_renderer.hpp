@@ -65,9 +65,39 @@ class SdlRenderer : public IRenderer {
 	std::function<void()> panel_;
 	float dim_ = 1.0f;
 
+	/**
+	 * Draws the board, snake, food and HUD of a state, without clearing or presenting
+	 *
+	 * Parameters:
+	 * const GameState& state: The state to draw
+	 */
 	void drawBoard(const GameState& state);
+
+	/**
+	 * Clears and redraws the last board and the game over panel if one is showing
+	 */
 	void redrawAll();
+
+	/**
+	 * Scales a color by the current brightness, which the victory fade lowers
+	 *
+	 * Parameters:
+	 * Color color: A theme color
+	 *
+	 * Returns Color: The color at brightness dim_
+	 */
 	Color tone(Color color) const;
+
+	/**
+	 * Stores a closure that draws the end-of-round panel over the board, then redraws everything
+	 *
+	 * Parameters:
+	 * const std::string& title: Panel heading
+	 * Color titleColor: Color of the heading
+	 * Level level: Difficulty that was played
+	 * int finalScore: Score of the round
+	 * const ScoreStats& stats: Best, games played and average for the level
+	 */
 	void showPanel(const std::string& title, Color titleColor, Level level, int finalScore, const ScoreStats& stats);
 
 public:

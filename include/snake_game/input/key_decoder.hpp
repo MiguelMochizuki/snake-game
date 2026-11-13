@@ -21,6 +21,9 @@
  */
 class KeyDecoder {
 private:
+	/**
+	 * Where the decoder is in an escape sequence: Ground (plain bytes), Esc (after ESC), Csi (after ESC [) or Ss3 (after ESC O)
+	 */
 	enum class State { Ground, Esc, Csi, Ss3 };
 
 	State state_ = State::Ground;

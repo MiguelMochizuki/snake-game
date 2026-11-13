@@ -40,6 +40,12 @@ class SdlApp {
 	bool closeRequested_ = false;
 	std::function<void()> scene_;
 
+	/**
+	 * Handles one SDL event
+	 *
+	 * Parameters:
+	 * const void* event: A pointer to an SDL_Event
+	 */
 	void handle(const void* event);
 
 public:
