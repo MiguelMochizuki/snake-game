@@ -194,9 +194,9 @@ TEST(SdlRenderer, TheWinningFrameDrawsTheHeadNotTheFood) {
 	ASSERT_TRUE(state.isWon());
 	const Layout l = layoutFor(640, 720, 4, 1);
 	const SnakeSegment* head = state.getSnake().getHead();
-	// A corner of the head cell: the food is a circle and leaves the corners alone, the head fills the square
-	const int px = l.originX + (head->getX() + 1) * l.cell + 1;
-	const int py = l.originY + (head->getY() + 1) * l.cell + 1;
+	// The centre of the head cell: an apple drawn there would show the food colour
+	const int px = l.originX + (head->getX() + 1) * l.cell + l.cell / 2;
+	const int py = l.originY + (head->getY() + 1) * l.cell + l.cell / 2;
 	renderer.clear();
 	renderer.render(state);
 	EXPECT_TRUE(same(pixelAt(canvas->pixelsRgb(), 640, px, py), theme::HEAD));

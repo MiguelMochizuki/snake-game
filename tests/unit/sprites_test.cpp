@@ -135,8 +135,10 @@ TEST(Sprites, BodyCentreIsTheBodyColour) {
 	const int sq = spriteSquare(CELL);
 	PixelSurface s = freshSurface();
 	drawSnake(s, {SpriteCell{120, 120}, SpriteCell{80, 120}, SpriteCell{40, 120}}, CELL, PALETTE);
-	EXPECT_TRUE(same(at(s, 80 + sq / 2, 120 + sq / 2), PALETTE.body));
-	EXPECT_TRUE(same(at(s, 40 + sq / 2, 120 + sq / 2), PALETTE.body));
+	// Above the diamond marked on the back, which covers the exact centre
+	EXPECT_TRUE(same(at(s, 80 + sq / 2, 120 + sq / 6), PALETTE.body));
+	EXPECT_TRUE(same(at(s, 40 + sq / 2, 120 + sq / 6), PALETTE.body));
+	EXPECT_FALSE(same(at(s, 80 + sq / 2, 120 + sq / 2), PALETTE.body));  // the diamond is there
 }
 
 TEST(Sprites, EyesFollowTheDirection) {
