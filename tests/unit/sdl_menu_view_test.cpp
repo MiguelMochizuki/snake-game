@@ -47,6 +47,23 @@ TEST(SdlMenuView, MenuDrawsSelectedRowHighlighted) {
 	EXPECT_NE(level, quit);
 }
 
+TEST(SdlMenuView, MenuShowsTheSpriteSnakeAndApple) {
+	Fixture f;
+	f.blank();
+	f.view.show(snapshot(MenuItem::Start));
+	// Colours that only the sprites use: the snake's eyes and the apple's leaf and stem
+	bool eye = false, leaf = false, stem = false;
+	const std::vector<unsigned char> px = f.canvas->pixelsRgb();
+	for (size_t i = 0; i + 2 < px.size(); i += 3) {
+		eye = eye || (px[i] == theme::GOLD.r && px[i + 1] == theme::GOLD.g && px[i + 2] == theme::GOLD.b);
+		leaf = leaf || (px[i] == theme::LEAF.r && px[i + 1] == theme::LEAF.g && px[i + 2] == theme::LEAF.b);
+		stem = stem || (px[i] == theme::STEM.r && px[i + 1] == theme::STEM.g && px[i + 2] == theme::STEM.b);
+	}
+	EXPECT_TRUE(eye);
+	EXPECT_TRUE(leaf);
+	EXPECT_TRUE(stem);
+}
+
 TEST(SdlMenuView, SoundSwitchChangesThePicture) {
 	Fixture f;
 	f.view.show(MenuSnapshot{MenuItem::Sound, Level::Normal, ScoreStats{0, 0, 0.0}, true});
