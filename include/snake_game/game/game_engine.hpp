@@ -97,12 +97,12 @@ public:
 	static TickInput readTick(IKeySource& keys, const IInputHandler& handler);
 
 	/**
-	 * Discards keys typed before the prompt, shows the game over panel, then waits for restart, menu or quit
+	 * Shows the game over panel, discards keys typed before and while it appeared, then waits for restart, menu or quit
 	 *
 	 * Parameters:
 	 * IKeySource& keys: Source of key presses
 	 * const IInputHandler& handler: Maps keys to actions
-	 * const std::function<void()>& showPanel: Draws the game over panel, called after the flush
+	 * const std::function<void()>& showPanel: Draws the game over panel, called before the flush
 	 *
 	 * Returns GameEnd: Restart or Menu on those keys; Quit on Quit or EOF. Moves and unmapped keys are ignored
 	 */

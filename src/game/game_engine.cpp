@@ -62,7 +62,7 @@ TickInput GameEngine::readTick(IKeySource& keys, const IInputHandler& handler) {
 }
 
 /**
- * Discards keys typed before the prompt, shows the game over panel, then waits for restart, menu or quit
+ * Shows the game over panel, discards keys typed before and while it appeared, then waits for restart, menu or quit
  *
  * Parameters:
  * IKeySource& keys: Source of key presses
@@ -73,8 +73,9 @@ TickInput GameEngine::readTick(IKeySource& keys, const IInputHandler& handler) {
  */
 GameEnd GameEngine::awaitChoice(IKeySource& keys, const IInputHandler& handler,
 		const std::function<void()>& showPanel) {
-	keys.flush();
+	// Flush after the panel: it may take a while to appear (the victory fade), and keys typed meanwhile must not answer it
 	showPanel();
+	keys.flush();
 	while (true) {
 		std::optional<Key> key = keys.waitKey();
 		if (!key) {

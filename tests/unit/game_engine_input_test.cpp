@@ -165,12 +165,18 @@ TEST_F(EngineInputTest, ReadTickIgnoresMenuKey) {
 	EXPECT_FALSE(t.move);
 }
 
-TEST_F(EngineInputTest, AwaitChoiceFlushesFirst) {
+TEST_F(EngineInputTest, AwaitChoiceFlushesAfterThePanel) {
 	keys.stale = {charKey('r')};
 	keys.waits = {charKey('q')};
 	EXPECT_EQ(GameEngine::awaitChoice(keys, input, [this]() { keys.log.push_back("panel"); }), GameEnd::Quit);
 	EXPECT_EQ(keys.flushCount, 1);
-	EXPECT_EQ(keys.log, (std::vector<std::string>{"flush", "panel"}));
+	EXPECT_EQ(keys.log, (std::vector<std::string>{"panel", "flush"}));
+}
+
+TEST_F(EngineInputTest, AwaitChoiceDiscardsKeysTypedWhileThePanelIsShown) {
+	// The victory panel fades in first, so a key pressed during that wait must not answer it
+	keys.waits = {charKey('q')};
+	EXPECT_EQ(GameEngine::awaitChoice(keys, input, [this]() { keys.stale.push_back(charKey('r')); }), GameEnd::Quit);
 }
 
 TEST_F(EngineInputTest, AwaitChoiceKeepsKeysTypedAfterPanel) {
