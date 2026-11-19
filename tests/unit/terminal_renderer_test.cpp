@@ -68,3 +68,10 @@ TEST(TerminalRenderer, ClearEscapes) {
 	renderer.clear();
 	EXPECT_EQ(out.str(), "\033[2J\033[H");
 }
+
+TEST(TerminalRendererGolden, PanelCutsATitleThatDoesNotFit) {
+	std::ostringstream out;
+	TerminalRenderer renderer(out);
+	renderer.printPanel("A TITLE FAR TOO LONG FOR THE BOX", terminal::FOOD, 9, Level::Hard, 3, {12, 7, 4.2857});
+	expectGolden("panel_long_title.txt", out.str());
+}

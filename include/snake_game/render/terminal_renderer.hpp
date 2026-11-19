@@ -27,19 +27,6 @@ class TerminalRenderer : public IRenderer {
 	bool firstRender_ = true;
 	bool color_;
 
-	/**
-	 * Prints the end of game panel: a centered title, the statistics and the key hints
-	 *
-	 * Parameters:
-	 * const std::string& title: Panel title, at most 30 characters
-	 * terminal::Style titleStyle: SGR style of the title
-	 * size_t leftPad: Spaces before the title; the rest of the 30 columns is padded after it
-	 * Level level: The level that was played
-	 * int finalScore: The final score
-	 * const ScoreStats& stats: Best, games played and average of that level
-	 */
-	void printPanel(const std::string& title, terminal::Style titleStyle, size_t leftPad, Level level, int finalScore, const ScoreStats& stats);
-
 public:
 	/**
 	 * Constructor for the TerminalRenderer class
@@ -79,6 +66,19 @@ public:
 	 * const GameState& state: The game state to render
 	 */
 	void render(const GameState& state) override;
+
+	/**
+	 * Prints the end of game panel: a centered title, the statistics and the key hints
+	 *
+	 * Parameters:
+	 * const std::string& title: Panel title; whatever does not fit in the 30 columns after leftPad is cut off
+	 * terminal::Style titleStyle: SGR style of the title
+	 * size_t leftPad: Spaces before the title (at most 30); the rest of the 30 columns is padded after it
+	 * Level level: The level that was played
+	 * int finalScore: The final score
+	 * const ScoreStats& stats: Best, games played and average of that level
+	 */
+	void printPanel(const std::string& title, terminal::Style titleStyle, size_t leftPad, Level level, int finalScore, const ScoreStats& stats);
 
 	/**
 	 * Prints the game over panel with statistics
