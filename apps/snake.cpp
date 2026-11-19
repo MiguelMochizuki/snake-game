@@ -70,7 +70,9 @@ int main() {
 	input.add(std::make_unique<ArrowInputHandler>());
 	input.add(std::make_unique<CommandInputHandler>());
 	const bool color = TerminalRenderer::colorEnabledFromEnv();
-	GameEngine engine(keys, input, 20, 20, 200, readSeed(), color);
+	TerminalRenderer renderer(std::cout, color);
+	ScoreManager scores;
+	GameEngine engine(keys, input, renderer, scores, 20, 20, 200, readSeed());
 	TerminalBell bell(std::cout);
 	const bool canBeep = soundCapable();
 	ISound* cues = canBeep ? &bell : nullptr;
@@ -91,8 +93,6 @@ int main() {
 		bool sound = true;
 		bool practice = false;
 		if (showMenu) {
-			// Read the scores afresh: the round that just ended may have changed them
-			ScoreManager scores;
 			TerminalMenuView view(std::cout, color);
 			MenuResult choice = runMenu(keys, input, view, menu, scores, cues);
 			if (!choice.start) {

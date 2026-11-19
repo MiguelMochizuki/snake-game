@@ -20,6 +20,7 @@
 #include "snake_game/input/key_source.hpp"
 #include "snake_game/input/wasd_input_handler.hpp"
 #include "snake_game/render/renderer.hpp"
+#include "snake_game/score/score_manager.hpp"
 
 namespace fakes {
 

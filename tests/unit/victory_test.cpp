@@ -17,7 +17,8 @@ TEST(Victory, EngineShowsVictoryNotGameOver) {
 	CompositeInputHandler input = makeInput();
 	RecordingRenderer renderer;
 	// A 1x4 board with seed 5: the snake starts three cells long and the first move eats the last food
-	GameEngine engine(keys, input, renderer, 1, 4, 0, 5, dir.path.string());
+	ScoreManager store(dir.path.string());
+	GameEngine engine(keys, input, renderer, store, 1, 4, 0, 5);
 
 	engine.run();
 
@@ -35,7 +36,8 @@ TEST(Victory, RestartAfterAWinPlaysAgain) {
 	keys.waits.push_back(charKey('r'));
 	CompositeInputHandler input = makeInput();
 	RecordingRenderer renderer;
-	GameEngine engine(keys, input, renderer, 1, 4, 0, 5, dir.path.string());
+	ScoreManager store(dir.path.string());
+	GameEngine engine(keys, input, renderer, store, 1, 4, 0, 5);
 
 	engine.run();
 
@@ -48,7 +50,8 @@ TEST(Victory, AWallCrashIsStillGameOver) {
 	ScriptedKeys keys;
 	CompositeInputHandler input = makeInput();
 	RecordingRenderer renderer;
-	GameEngine engine(keys, input, renderer, 20, 20, 0, 42, dir.path.string());
+	ScoreManager store(dir.path.string());
+	GameEngine engine(keys, input, renderer, store, 20, 20, 0, 42);
 
 	engine.run();
 

@@ -10,6 +10,7 @@
 #include "snake_game/game/level.hpp"
 #include "snake_game/render/renderer.hpp"
 #include "snake_game/score/score_source.hpp"
+#include "snake_game/terminal/painter.hpp"
 #include <cstddef>
 #include <iostream>
 
@@ -31,13 +32,13 @@ class TerminalRenderer : public IRenderer {
 	 *
 	 * Parameters:
 	 * const std::string& title: Panel title, at most 30 characters
-	 * const char* titleStyle: SGR style of the title
+	 * terminal::Style titleStyle: SGR style of the title
 	 * size_t leftPad: Spaces before the title; the rest of the 30 columns is padded after it
 	 * Level level: The level that was played
 	 * int finalScore: The final score
 	 * const ScoreStats& stats: Best, games played and average of that level
 	 */
-	void printPanel(const std::string& title, const char* titleStyle, size_t leftPad, Level level, int finalScore, const ScoreStats& stats);
+	void printPanel(const std::string& title, terminal::Style titleStyle, size_t leftPad, Level level, int finalScore, const ScoreStats& stats);
 
 public:
 	/**

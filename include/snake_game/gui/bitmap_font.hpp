@@ -6,7 +6,7 @@
 #ifndef BITMAP_FONT_HPP
 #define BITMAP_FONT_HPP
 
-#include "snake_game/gui/canvas.hpp"
+#include "snake_game/gui/draw_surface.hpp"
 #include <string>
 
 namespace font {
@@ -51,13 +51,13 @@ bool glyphPixel(char c, int col, int row);
  * Draws a text
  *
  * Parameters:
- * Canvas& canvas: Where to draw
+ * IDrawSurface& canvas: Where to draw
  * int x, int y: Top-left corner
  * const std::string& text: The text
  * int scale: Pixels per glyph pixel, at least 1
  * Color color: Text colour
  */
-void drawText(Canvas& canvas, int x, int y, const std::string& text, int scale, Color color);
+void drawText(IDrawSurface& canvas, int x, int y, const std::string& text, int scale, Color color);
 
 }  // namespace font
 

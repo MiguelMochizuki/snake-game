@@ -24,7 +24,7 @@
  * std::vector<std::pair<Level, int>> records_: Every game, oldest first
  * uint64_t checksum_: Checksum read from the file
  */
-class ScoreManager : public IScoreSource {
+class ScoreManager : public IScoreStore {
 public:
 	static constexpr std::size_t AVERAGE_WINDOW = 10;
 
@@ -96,7 +96,7 @@ public:
 	 *
 	 * Returns int: The best score, 0 if the level has no games
 	 */
-	int bestScore(Level level) const;
+	int bestScore(Level level) const override;
 
 	/**
 	 * Gets the number of games played on a level
@@ -125,7 +125,7 @@ public:
 	 * Level level: The level it was played on
 	 * int score: The final score
 	 */
-	void saveScore(Level level, int score);
+	void saveScore(Level level, int score) override;
 
 	ScoreStats stats(Level level) const override;
 	std::vector<int> topScores(Level level, std::size_t n) const override;

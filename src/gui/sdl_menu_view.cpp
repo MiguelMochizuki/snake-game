@@ -38,7 +38,7 @@ int scaleFor(int canvasW, int canvasH) {
  * One screen laid out as a single column: everything is spaced in multiples of u = 2 x the text scale, and a dry pass measures the height so the block can be centred
  *
  * Attributes:
- * Canvas& canvas: Where to draw
+ * IDrawSurface& canvas: Where to draw
  * bool dry: true to only advance y, drawing nothing
  * int scale: Pixels per glyph pixel
  * int u: Spacing unit
@@ -47,7 +47,7 @@ int scaleFor(int canvasW, int canvasH) {
  * int y: Top of the next element
  */
 struct Page {
-	Canvas& canvas;
+	IDrawSurface& canvas;
 	bool dry;
 	int scale;
 	int u;
@@ -59,11 +59,11 @@ struct Page {
 	 * Starts a pass over a screen
 	 *
 	 * Parameters:
-	 * Canvas& c: Where to draw
+	 * IDrawSurface& c: Where to draw
 	 * bool dryRun: Whether to only measure
 	 * int top: Where the block starts
 	 */
-	Page(Canvas& c, bool dryRun, int top) : canvas(c), dry(dryRun) {
+	Page(IDrawSurface& c, bool dryRun, int top) : canvas(c), dry(dryRun) {
 		scale = scaleFor(c.width(), c.height());
 		u = 2 * scale;
 		w = COLUMNS * font::GLYPH * scale;
@@ -234,10 +234,10 @@ std::string fixed(double value, int decimals) {
  * Draws a screen twice: once to measure it, once centred vertically
  *
  * Parameters:
- * Canvas& canvas: Where to draw
+ * IDrawSurface& canvas: Where to draw
  * const std::function<void(Page&)>& content: Lays out the screen on a page
  */
-void drawScreen(Canvas& canvas, const std::function<void(Page&)>& content) {
+void drawScreen(IDrawSurface& canvas, const std::function<void(Page&)>& content) {
 	Page measure(canvas, true, 0);
 	content(measure);
 	const int top = std::max(measure.u, (canvas.height() - measure.y) / 2);
@@ -248,7 +248,7 @@ void drawScreen(Canvas& canvas, const std::function<void(Page&)>& content) {
 
 }  // namespace
 
-SdlMenuView::SdlMenuView(Canvas& canvas, SdlApp& app) : canvas_(canvas), app_(app) {
+SdlMenuView::SdlMenuView(IDrawSurface& canvas, SdlApp& app) : canvas_(canvas), app_(app) {
 }
 
 /**

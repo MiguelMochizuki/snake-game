@@ -6,25 +6,25 @@
 #ifndef CANVAS_HPP
 #define CANVAS_HPP
 
-#include "snake_game/gui/theme.hpp"
+#include "snake_game/gui/draw_surface.hpp"
 #include <memory>
 #include <string>
 #include <vector>
 
 /**
- * Draws filled rectangles and circles on an SDL renderer; the same code serves a window and an off-screen surface
+ * Draws filled rectangles and circles on an SDL renderer, and reads them back; the same code serves a window and an off-screen surface
  *
  * Attributes:
  * std::unique_ptr<Impl> impl_: The SDL window, surface and renderer
  */
-class Canvas {
+class Canvas : public IDrawSurface {
 	struct Impl;
 	std::unique_ptr<Impl> impl_;
 
 	Canvas();
 
 public:
-	~Canvas();
+	~Canvas() override;
 
 	/**
 	 * Opens a resizable window
@@ -49,48 +49,12 @@ public:
 	 */
 	static std::unique_ptr<Canvas> offscreen(int width, int height);
 
-	/**
-	 * Returns int: Current width in pixels (follows a window resize)
-	 */
-	int width() const;
-
-	/**
-	 * Returns int: Current height in pixels (follows a window resize)
-	 */
-	int height() const;
-
-	/**
-	 * Fills the whole canvas
-	 *
-	 * Parameters:
-	 * Color color: Fill colour
-	 */
-	void clear(Color color);
-
-	/**
-	 * Fills a rectangle
-	 *
-	 * Parameters:
-	 * int x, int y: Top-left corner
-	 * int w, int h: Size in pixels
-	 * Color color: Fill colour
-	 */
-	void fillRect(int x, int y, int w, int h, Color color);
-
-	/**
-	 * Fills a circle
-	 *
-	 * Parameters:
-	 * int cx, int cy: Centre
-	 * int radius: Radius in pixels
-	 * Color color: Fill colour
-	 */
-	void fillCircle(int cx, int cy, int radius, Color color);
-
-	/**
-	 * Shows what was drawn; does nothing on an off-screen canvas
-	 */
-	void present();
+	int width() const override;
+	int height() const override;
+	void clear(Color color) override;
+	void fillRect(int x, int y, int w, int h, Color color) override;
+	void fillCircle(int cx, int cy, int radius, Color color) override;
+	void present() override;
 
 	/**
 	 * Reads the canvas back
@@ -98,16 +62,6 @@ public:
 	 * Returns std::vector<unsigned char>: Row-major RGB bytes, width x height x 3
 	 */
 	std::vector<unsigned char> pixelsRgb() const;
-
-	/**
-	 * Writes the canvas as a binary PPM (P6) image
-	 *
-	 * Parameters:
-	 * const std::string& path: Output file
-	 *
-	 * Returns bool: true if the file was written
-	 */
-	bool writePpm(const std::string& path) const;
 };
 
 #endif

@@ -4,7 +4,8 @@
  * Description: ASCII start menu implementation
  */
 #include "snake_game/menu/terminal_menu_view.hpp"
-#include "snake_game/render/terminal_painter.hpp"
+#include "snake_game/terminal/format.hpp"
+#include "snake_game/terminal/painter.hpp"
 #include <sstream>
 #include <string>
 #include <utility>
@@ -16,7 +17,7 @@ namespace {
 
 const std::size_t INNER = 20;
 
-using Segment = std::pair<const char*, std::string>;
+using Segment = std::pair<Style, std::string>;
 
 /**
  * Writes one framed row, padding the segments to the inner width
@@ -34,7 +35,7 @@ void frameRow(Painter& p, const std::vector<Segment>& segments) {
 		p.put(s.first, s.second);
 		used += s.second.size();
 	}
-	p.put(nullptr, std::string(used < INNER ? INNER - used : 0, ' '));
+	p.put(PLAIN, std::string(used < INNER ? INNER - used : 0, ' '));
 	p.put(WALL, "#");
 	p.endl();
 }
@@ -49,7 +50,7 @@ void frameRow(Painter& p, const std::vector<Segment>& segments) {
  * Returns std::vector<Segment>: The row's segments
  */
 std::vector<Segment> itemRow(bool selected, const std::string& label) {
-	return {{nullptr, "   "}, {selected ? LABEL : nullptr, (selected ? "> " : "  ") + label}};
+	return {{PLAIN, "   "}, {selected ? LABEL : PLAIN, (selected ? "> " : "  ") + label}};
 }
 
 /**
@@ -64,10 +65,10 @@ std::vector<Segment> itemRow(bool selected, const std::string& label) {
  */
 std::vector<Segment> valueRow(bool selected, const std::string& label, const std::string& value) {
 	std::vector<Segment> row = itemRow(selected, label);
-	row.push_back({nullptr, " "});
-	row.push_back({selected ? LABEL : nullptr, "<"});
+	row.push_back({PLAIN, " "});
+	row.push_back({selected ? LABEL : PLAIN, "<"});
 	row.push_back({NUMBER, value});
-	row.push_back({selected ? LABEL : nullptr, ">"});
+	row.push_back({selected ? LABEL : PLAIN, ">"});
 	return row;
 }
 
@@ -81,7 +82,7 @@ std::vector<Segment> valueRow(bool selected, const std::string& label, const std
  * Returns std::vector<Segment>: The row's segments
  */
 std::vector<Segment> statRow(const std::string& label, const std::string& number) {
-	return {{nullptr, "   "}, {LABEL, label}, {nullptr, " "}, {NUMBER, number}};
+	return {{PLAIN, "   "}, {LABEL, label}, {PLAIN, " "}, {NUMBER, number}};
 }
 
 }  // namespace
@@ -114,11 +115,11 @@ void TerminalMenuView::show(const MenuSnapshot& snapshot) {
 	p.endl();
 	frameRow(p, {});
 	const std::string box(14, '#');
-	frameRow(p, {{nullptr, "   "}, {BODY, box}});
-	frameRow(p, {{nullptr, "   "}, {BODY, "#"}, {HEAD, " SNAKE GAME "}, {BODY, "#"}});
-	frameRow(p, {{nullptr, "   "}, {BODY, box}});
+	frameRow(p, {{PLAIN, "   "}, {BODY, box}});
+	frameRow(p, {{PLAIN, "   "}, {BODY, "#"}, {HEAD, " SNAKE GAME "}, {BODY, "#"}});
+	frameRow(p, {{PLAIN, "   "}, {BODY, box}});
 	frameRow(p, {});
-	frameRow(p, {{nullptr, "   "}, {BODY, "OOOOOO"}, {HEAD, "O"}, {nullptr, "   "}, {FOOD, "*"}});
+	frameRow(p, {{PLAIN, "   "}, {BODY, "OOOOOO"}, {HEAD, "O"}, {PLAIN, "   "}, {FOOD, "*"}});
 	frameRow(p, {});
 
 	frameRow(p, itemRow(snapshot.selected == MenuItem::Start, "Start"));
@@ -161,14 +162,14 @@ void TerminalMenuView::showLeaderboard(const LeaderboardSnapshot& snapshot) {
 	p.put(WALL, rule);
 	p.endl();
 	frameRow(p, {});
-	frameRow(p, {{nullptr, "   "}, {HEAD, "TOP SCORES"}});
-	frameRow(p, {{nullptr, "   "}, {LABEL, "<"}, {NUMBER, levelName(snapshot.level)}, {LABEL, ">"}});
+	frameRow(p, {{PLAIN, "   "}, {HEAD, "TOP SCORES"}});
+	frameRow(p, {{PLAIN, "   "}, {LABEL, "<"}, {NUMBER, levelName(snapshot.level)}, {LABEL, ">"}});
 	frameRow(p, {});
 	if (snapshot.scores.empty()) {
-		frameRow(p, {{nullptr, "   "}, {DIM, "No games yet"}});
+		frameRow(p, {{PLAIN, "   "}, {DIM, "No games yet"}});
 	}
 	for (std::size_t i = 0; i < snapshot.scores.size(); ++i) {
-		frameRow(p, {{nullptr, "   "}, {LABEL, padded(i + 1, 2) + "."}, {nullptr, "  "},
+		frameRow(p, {{PLAIN, "   "}, {LABEL, padded(i + 1, 2) + "."}, {PLAIN, "  "},
 			{NUMBER, std::to_string(snapshot.scores[i])}});
 	}
 	frameRow(p, {});
@@ -202,12 +203,12 @@ void TerminalMenuView::showHelp() {
 	p.put(WALL, rule);
 	p.endl();
 	frameRow(p, {});
-	frameRow(p, {{nullptr, "   "}, {HEAD, "HOW TO PLAY"}});
+	frameRow(p, {{PLAIN, "   "}, {HEAD, "HOW TO PLAY"}});
 	for (const std::string& line : text) {
 		if (line.empty()) {
 			frameRow(p, {});
 		} else {
-			frameRow(p, {{nullptr, "   "}, {nullptr, line}});
+			frameRow(p, {{PLAIN, "   "}, {PLAIN, line}});
 		}
 	}
 	frameRow(p, {});
@@ -234,12 +235,12 @@ void TerminalMenuView::showConfirmClear() {
 	p.put(WALL, rule);
 	p.endl();
 	frameRow(p, {});
-	frameRow(p, {{nullptr, "   "}, {FOOD, "CLEAR SCORES"}});
+	frameRow(p, {{PLAIN, "   "}, {FOOD, "CLEAR SCORES"}});
 	for (const std::string& line : text) {
 		if (line.empty()) {
 			frameRow(p, {});
 		} else {
-			frameRow(p, {{nullptr, "   "}, {nullptr, line}});
+			frameRow(p, {{PLAIN, "   "}, {PLAIN, line}});
 		}
 	}
 	frameRow(p, {});

@@ -6,7 +6,8 @@
 #include "snake_game/render/terminal_renderer.hpp"
 #include <chrono>
 #include <thread>
-#include "snake_game/render/terminal_painter.hpp"
+#include "snake_game/terminal/format.hpp"
+#include "snake_game/terminal/painter.hpp"
 #include "snake_game/input/wasd_input_handler.hpp"
 #include <iostream>
 #include <cstdlib>
@@ -82,7 +83,7 @@ void TerminalRenderer::render(const GameState& state) {
 		p.put(WALL, "#");
 		for (int x = 0; x < cols; ++x) {
 			if (!grid[y * cols + x]) {
-				p.put(nullptr, " ");
+				p.put(PLAIN, " ");
 			} else if (x == headX && y == headY) {
 				// Checked before the food: on a full board the old food cell is under the head
 				p.put(HEAD, "O");
@@ -100,11 +101,11 @@ void TerminalRenderer::render(const GameState& state) {
 	p.endl();
 
 	p.put(LABEL, "Score:");
-	p.put(nullptr, " ");
+	p.put(PLAIN, " ");
 	p.put(NUMBER, std::to_string(state.getScore()));
 	p.endl();
 	p.put(LABEL, "Best:");
-	p.put(nullptr, " ");
+	p.put(PLAIN, " ");
 	p.put(NUMBER, std::to_string(state.getBestScore()));
 	p.endl();
 	p.put(DIM, "Controls: WASD to move, Q to quit");
@@ -137,55 +138,55 @@ void TerminalRenderer::printVictory(Level level, int finalScore, const ScoreStat
 	printPanel("YOU WIN!", GOLD, 11, level, finalScore, stats);
 }
 
-void TerminalRenderer::printPanel(const std::string& title, const char* titleStyle, size_t leftPad, Level level, int finalScore, const ScoreStats& stats) {
+void TerminalRenderer::printPanel(const std::string& title, Style titleStyle, size_t leftPad, Level level, int finalScore, const ScoreStats& stats) {
 	std::ostringstream buf;
 	Painter p(buf, color_);
 	const std::string rule(30, '=');
 	buf << "\n";
 	p.put(WALL, rule);
 	p.endl();
-	p.put(nullptr, std::string(leftPad, ' '));
+	p.put(PLAIN, std::string(leftPad, ' '));
 	p.put(titleStyle, title);
-	p.put(nullptr, std::string(30 - leftPad - title.size(), ' '));
+	p.put(PLAIN, std::string(30 - leftPad - title.size(), ' '));
 	p.endl();
-	p.put(nullptr, std::string(30, ' '));
+	p.put(PLAIN, std::string(30, ' '));
 	p.endl();
 	const std::string name = levelName(level);
-	p.put(nullptr, "  ");
+	p.put(PLAIN, "  ");
 	p.put(LABEL, "Level:");
-	p.put(nullptr, std::string(13 - name.size(), ' '));
+	p.put(PLAIN, std::string(13 - name.size(), ' '));
 	p.put(NUMBER, name);
 	p.endl();
-	p.put(nullptr, "  ");
+	p.put(PLAIN, "  ");
 	p.put(LABEL, "Final Score:");
-	p.put(nullptr, "  ");
+	p.put(PLAIN, "  ");
 	p.put(NUMBER, padded(finalScore, 5));
 	p.endl();
-	p.put(nullptr, "  ");
+	p.put(PLAIN, "  ");
 	p.put(LABEL, "Best Score:");
-	p.put(nullptr, "   ");
+	p.put(PLAIN, "   ");
 	p.put(NUMBER, padded(stats.best, 5));
 	p.endl();
-	p.put(nullptr, "  ");
+	p.put(PLAIN, "  ");
 	p.put(LABEL, "Games Played:");
-	p.put(nullptr, " ");
+	p.put(PLAIN, " ");
 	p.put(NUMBER, padded(stats.games, 5));
 	p.endl();
-	p.put(nullptr, "  ");
+	p.put(PLAIN, "  ");
 	p.put(LABEL, "Average Score:");
 	p.put(NUMBER, padded(stats.average, 6, 1));
 	p.endl();
-	p.put(nullptr, std::string(30, ' '));
+	p.put(PLAIN, std::string(30, ' '));
 	p.endl();
-	p.put(nullptr, "  ");
+	p.put(PLAIN, "  ");
 	p.put(RESTART, "[R]");
-	p.put(nullptr, " Restart  ");
+	p.put(PLAIN, " Restart  ");
 	p.put(LABEL, "[M]");
-	p.put(nullptr, " Menu       ");
+	p.put(PLAIN, " Menu       ");
 	p.endl();
-	p.put(nullptr, "  ");
+	p.put(PLAIN, "  ");
 	p.put(QUIT, "[Q]");
-	p.put(nullptr, " Quit" + std::string(20, ' '));
+	p.put(PLAIN, " Quit" + std::string(20, ' '));
 	p.endl();
 	p.put(WALL, rule);
 	p.endl();

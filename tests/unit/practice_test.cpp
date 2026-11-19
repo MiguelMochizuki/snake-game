@@ -16,7 +16,8 @@ TEST(Practice, GamesAreNotSaved) {
 	ScriptedKeys keys;
 	CompositeInputHandler input = makeInput();
 	RecordingRenderer renderer;
-	GameEngine engine(keys, input, renderer, 20, 20, 0, 42, dir.path.string());
+	ScoreManager store(dir.path.string());
+	GameEngine engine(keys, input, renderer, store, 20, 20, 0, 42);
 	engine.setPractice(true);
 
 	engine.run();
@@ -31,7 +32,8 @@ TEST(Practice, SwitchingItOffSavesAgain) {
 	ScriptedKeys keys;
 	CompositeInputHandler input = makeInput();
 	RecordingRenderer renderer;
-	GameEngine engine(keys, input, renderer, 20, 20, 0, 42, dir.path.string());
+	ScoreManager store(dir.path.string());
+	GameEngine engine(keys, input, renderer, store, 20, 20, 0, 42);
 	engine.setPractice(true);
 	engine.setPractice(false);
 

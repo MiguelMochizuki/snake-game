@@ -123,9 +123,10 @@ snake-game/
   - `game/`: Snake, Food, GameState, Level and the GameEngine loop
   - `input/`: key source, key decoder and the WASD, arrow and command handlers
   - `menu/`: MenuModel, IMenuView, the terminal view and runMenu
-  - `render/`: IRenderer, TerminalRenderer, TerminalPainter and Sound
+  - `render/`: IRenderer, TerminalRenderer and Sound
+  - `terminal/`: Painter (ANSI styles) and text formatting shared by the terminal views
   - `audio/`: Synth (chord music and blips) and AudioDevice (only with audio built)
-  - `gui/`: SDL canvas, bitmap font, renderer, menu view, key source and demo autopilot (only with the GUI built)
+  - `gui/`: IDrawSurface and its SDL canvas, bitmap font, renderer, menu view, key source and demo autopilot (only with the GUI built)
   - `score/`: ScoreManager and the score source it reads
 - `tests/` holds the unit (GoogleTest), golden and end-to-end tests.
 

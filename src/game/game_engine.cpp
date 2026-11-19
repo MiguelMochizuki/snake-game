@@ -5,7 +5,6 @@
  */
 #include "snake_game/game/game_engine.hpp"
 #include <stdexcept>
-#include <iostream>
 
 /**
  * Constructor for the GameEngine class
@@ -13,43 +12,19 @@
  * Parameters:
  * IKeySource& keys: Source of key presses
  * const IInputHandler& input: Maps keys to actions
- * int rows: Number of rows in the board (default: 20)
- * int cols: Number of columns in the board (default: 20)
- * int speedMs: Game speed in milliseconds (default: 200)
- * unsigned seed: Seed for food placement
- * bool color: Whether to render with ANSI colors
- */
-GameEngine::GameEngine(IKeySource& keys, const IInputHandler& input, int rows, int cols, int speedMs, unsigned seed, bool color)
-	: scoreManager_()
-	, state_(rows, cols, scoreManager_.bestScore(Level::Normal), seed)
-	, keys_(keys)
-	, input_(input)
-	, ownedRenderer_(std::make_unique<TerminalRenderer>(std::cout, color))
-	, renderer_(ownedRenderer_.get())
-	, direction_(Direction::RIGHT)
-	, running_(true)
-	, speedMs_(speedMs) {
-}
-
-/**
- * Constructor for the GameEngine class taking any renderer
- *
- * Parameters:
- * IKeySource& keys: Source of key presses
- * const IInputHandler& input: Maps keys to actions
  * IRenderer& renderer: Draws the game and paces it
+ * IScoreStore& scores: Saves finished games and gives the best score
  * int rows: Number of rows in the board
  * int cols: Number of columns in the board
  * int speedMs: Game speed in milliseconds
  * unsigned seed: Seed for food placement
- * const std::string& dataDir: Directory of the score file
  */
-GameEngine::GameEngine(IKeySource& keys, const IInputHandler& input, IRenderer& renderer, int rows, int cols, int speedMs, unsigned seed, const std::string& dataDir)
-	: scoreManager_(dataDir)
-	, state_(rows, cols, scoreManager_.bestScore(Level::Normal), seed)
+GameEngine::GameEngine(IKeySource& keys, const IInputHandler& input, IRenderer& renderer, IScoreStore& scores, int rows, int cols, int speedMs, unsigned seed)
+	: scores_(scores)
+	, state_(rows, cols, scores_.bestScore(Level::Normal), seed)
 	, keys_(keys)
 	, input_(input)
-	, renderer_(&renderer)
+	, renderer_(renderer)
 	, direction_(Direction::RIGHT)
 	, running_(true)
 	, speedMs_(speedMs) {
@@ -87,7 +62,7 @@ TickInput GameEngine::readTick(IKeySource& keys, const IInputHandler& handler) {
 }
 
 /**
- * Discards keys typed before the prompt, shows the game over panel, then waits for restart, menu or quit
+ * Shows the game over panel, discards keys typed before and while it appeared, then waits for restart, menu or quit
  *
  * Parameters:
  * IKeySource& keys: Source of key presses
@@ -98,8 +73,9 @@ TickInput GameEngine::readTick(IKeySource& keys, const IInputHandler& handler) {
  */
 GameEnd GameEngine::awaitChoice(IKeySource& keys, const IInputHandler& handler,
 		const std::function<void()>& showPanel) {
-	keys.flush();
+	// Flush after the panel: it may take a while to appear (the victory fade), and keys typed meanwhile must not answer it
 	showPanel();
+	keys.flush();
 	while (true) {
 		std::optional<Key> key = keys.waitKey();
 		if (!key) {
@@ -147,7 +123,7 @@ bool GameEngine::isOpposite(Direction current, Direction next) {
 void GameEngine::setLevel(Level level, int speedMs) {
 	level_ = level;
 	speedMs_ = speedMs;
-	state_.setBestScore(scoreManager_.bestScore(level));
+	state_.setBestScore(scores_.bestScore(level));
 }
 
 /**
@@ -178,8 +154,8 @@ void GameEngine::setPractice(bool practice) {
 GameEnd GameEngine::run() {
 	GameEnd end;
 	do {
-		renderer_->clear();
-		renderer_->render(state_);
+		renderer_.clear();
+		renderer_.render(state_);
 		if (sound_) {
 			sound_->musicStart();
 		}
@@ -204,8 +180,8 @@ GameEnd GameEngine::run() {
 				break;
 			}
 
-			renderer_->clear();
-			renderer_->render(state_);
+			renderer_.clear();
+			renderer_.render(state_);
 			if (sound_ && state_.getScore() > scoreBefore) {
 				sound_->eat();
 			}
@@ -214,12 +190,12 @@ GameEnd GameEngine::run() {
 				break;
 			}
 
-			renderer_->pause(speedMs_);
+			renderer_.pause(speedMs_);
 		}
 
 		int finalScore = state_.getFinalScore();
 		if (!practice_) {
-			scoreManager_.saveScore(level_, finalScore);
+			scores_.saveScore(level_, finalScore);
 		}
 
 		const bool won = state_.isWon();
@@ -233,9 +209,9 @@ GameEnd GameEngine::run() {
 				}
 			}
 			if (won) {
-				renderer_->printVictory(level_, finalScore, scoreManager_.stats(level_));
+				renderer_.printVictory(level_, finalScore, scores_.stats(level_));
 			} else {
-				renderer_->printGameOver(level_, finalScore, scoreManager_.stats(level_));
+				renderer_.printGameOver(level_, finalScore, scores_.stats(level_));
 			}
 		});
 
@@ -243,7 +219,7 @@ GameEnd GameEngine::run() {
 			state_.reset();
 			direction_ = Direction::RIGHT;
 			running_ = true;
-			renderer_->reset();
+			renderer_.reset();
 		}
 	} while (end == GameEnd::Restart);
 	return end;

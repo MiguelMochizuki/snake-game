@@ -111,7 +111,7 @@ Layout layoutFor(int canvasW, int canvasH, int cols, int rows) {
 	return l;
 }
 
-SdlRenderer::SdlRenderer(Canvas& canvas, SdlApp& app) : canvas_(canvas), app_(app) {
+SdlRenderer::SdlRenderer(IDrawSurface& canvas, SdlApp& app) : canvas_(canvas), app_(app) {
 }
 
 void SdlRenderer::drawBoard(const GameState& state) {
