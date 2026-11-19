@@ -105,13 +105,14 @@ int runDemo(const Options& options) {
 	input.add(std::make_unique<ArrowInputHandler>());
 	input.add(std::make_unique<CommandInputHandler>());
 	// A demo must not change the real leaderboard, nor depend on earlier games
-	const std::filesystem::path scores = std::filesystem::temp_directory_path() / ("snake_demo_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+	const std::filesystem::path scoresDir = std::filesystem::temp_directory_path() / ("snake_demo_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
 	{
-		GameEngine engine(keys, input, renderer, 20, 20, 100, readSeed(), scores.string());
+		ScoreManager scores(scoresDir.string());
+		GameEngine engine(keys, input, renderer, scores, 20, 20, 100, readSeed());
 		engine.setLevel(Level::Normal, readFrameMs().value_or(100));
 		engine.run();
 	}
-	std::filesystem::remove_all(scores);
+	std::filesystem::remove_all(scoresDir);
 	return 0;
 }
 
@@ -159,8 +160,8 @@ int main(int argc, char** argv) {
 	ISound* cues = audio ? &synthSound : nullptr;
 
 	// Scores live in the OS app-data folder, so the game behaves the same wherever it was started from
-	const std::string dataDir = userDataDir();
-	GameEngine engine(keys, input, renderer, 20, 20, 200, readSeed(), dataDir);
+	ScoreManager scores(userDataDir());
+	GameEngine engine(keys, input, renderer, scores, 20, 20, 200, readSeed());
 	MenuModel menu;
 	bool showMenu = !skipMenu();
 	do {
@@ -169,8 +170,6 @@ int main(int argc, char** argv) {
 		bool sound = true;
 		bool practice = false;
 		if (showMenu) {
-			// Read the scores afresh: the round that just ended may have changed them
-			ScoreManager scores(dataDir);
 			MenuResult choice = runMenu(keys, input, menuView, menu, scores, cues);
 			if (!choice.start) {
 				return 0;

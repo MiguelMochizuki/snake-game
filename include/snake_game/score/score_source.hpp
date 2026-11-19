@@ -1,7 +1,7 @@
 /**
  * score_source.hpp
  * Author: Miguel Mochizuki Silva
- * Description: Read-only view of the saved scores, per level
+ * Description: Interfaces over the saved scores, per level: a read-only view and a store that also records games
  */
 #ifndef SCORE_SOURCE_HPP
 #define SCORE_SOURCE_HPP
@@ -59,6 +59,31 @@ public:
 	 * Deletes every saved game of every level
 	 */
 	virtual void clear() = 0;
+};
+
+/**
+ * What the game engine needs from the saved scores: the menu's view plus recording finished games
+ */
+class IScoreStore : public IScoreSource {
+public:
+	/**
+	 * Gets the best score of a level
+	 *
+	 * Parameters:
+	 * Level level: The level
+	 *
+	 * Returns int: The best score, 0 if the level has no games
+	 */
+	virtual int bestScore(Level level) const = 0;
+
+	/**
+	 * Saves the score of a finished game
+	 *
+	 * Parameters:
+	 * Level level: The level it was played on
+	 * int score: The final score
+	 */
+	virtual void saveScore(Level level, int score) = 0;
 };
 
 #endif

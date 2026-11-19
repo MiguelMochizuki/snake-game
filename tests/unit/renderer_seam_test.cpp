@@ -29,7 +29,8 @@ TEST(RendererSeam, EngineDrivesInjectedRenderer) {
 	ScriptedKeys keys;
 	CompositeInputHandler input = makeInput();
 	RecordingRenderer renderer;
-	GameEngine engine(keys, input, renderer, 20, 20, 7, 42, dir.path.string());
+	ScoreManager store(dir.path.string());
+	GameEngine engine(keys, input, renderer, store, 20, 20, 7, 42);
 
 	EXPECT_EQ(engine.run(), GameEnd::Quit);
 
@@ -48,7 +49,8 @@ TEST(RendererSeam, RestartResetsRendererAndPlaysAgain) {
 	keys.waits.push_back(charKey('r'));
 	CompositeInputHandler input = makeInput();
 	RecordingRenderer renderer;
-	GameEngine engine(keys, input, renderer, 20, 20, 7, 42, dir.path.string());
+	ScoreManager store(dir.path.string());
+	GameEngine engine(keys, input, renderer, store, 20, 20, 7, 42);
 
 	EXPECT_EQ(engine.run(), GameEnd::Quit);
 

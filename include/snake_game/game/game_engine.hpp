@@ -12,11 +12,8 @@
 #include "snake_game/game/level.hpp"
 #include "snake_game/render/sound.hpp"
 #include "snake_game/render/renderer.hpp"
-#include "snake_game/render/terminal_renderer.hpp"
-#include "snake_game/score/score_manager.hpp"
-#include <ctime>
+#include "snake_game/score/score_source.hpp"
 #include <functional>
-#include <memory>
 #include <optional>
 #include <string>
 
@@ -41,11 +38,11 @@ enum class GameEnd { Restart, Menu, Quit };
  * Main game engine - orchestrates the game loop
  *
  * Attributes:
- * ScoreManager scoreManager_: Manages score persistence
+ * IScoreStore& scores_: Where finished games are saved and the best score is read
  * GameState state_: Current game state
  * IKeySource& keys_: Source of key presses
  * const IInputHandler& input_: Maps keys to actions
- * TerminalRenderer renderer_: Renderer for displaying the game
+ * IRenderer& renderer_: Renderer for displaying the game
  * Direction direction_: Current direction
  * bool running_: Flag indicating if the game is running
  * int speedMs_: Game speed in milliseconds per frame
@@ -55,12 +52,11 @@ enum class GameEnd { Restart, Menu, Quit };
  */
 class GameEngine {
 private:
-	ScoreManager scoreManager_;
+	IScoreStore& scores_;
 	GameState state_;
 	IKeySource& keys_;
 	const IInputHandler& input_;
-	std::unique_ptr<TerminalRenderer> ownedRenderer_;
-	IRenderer* renderer_;
+	IRenderer& renderer_;
 	Direction direction_;
 	bool running_;
 	int speedMs_;
@@ -75,28 +71,14 @@ public:
 	 * Parameters:
 	 * IKeySource& keys: Source of key presses, must outlive the engine
 	 * const IInputHandler& input: Maps keys to actions, must outlive the engine
-	 * int rows: Number of rows in the board (default: 20)
-	 * int cols: Number of columns in the board (default: 20)
-	 * int speedMs: Game speed in milliseconds (default: 200)
-	 * unsigned seed: Seed for food placement (default: current time)
-	 * bool color: Whether to render with ANSI colors (default: false)
-	 */
-	GameEngine(IKeySource& keys, const IInputHandler& input, int rows = 20, int cols = 20, int speedMs = 200, unsigned seed = static_cast<unsigned>(std::time(nullptr)), bool color = false);
-
-	/**
-	 * Constructor taking any renderer, for front-ends other than the terminal
-	 *
-	 * Parameters:
-	 * IKeySource& keys: Source of key presses, must outlive the engine
-	 * const IInputHandler& input: Maps keys to actions, must outlive the engine
 	 * IRenderer& renderer: Draws the game and paces it, must outlive the engine
+	 * IScoreStore& scores: Saves finished games and gives the best score, must outlive the engine
 	 * int rows: Number of rows in the board
 	 * int cols: Number of columns in the board
 	 * int speedMs: Game speed in milliseconds
 	 * unsigned seed: Seed for food placement
-	 * const std::string& dataDir: Directory of the score file (default: "data")
 	 */
-	GameEngine(IKeySource& keys, const IInputHandler& input, IRenderer& renderer, int rows, int cols, int speedMs, unsigned seed, const std::string& dataDir = "data");
+	GameEngine(IKeySource& keys, const IInputHandler& input, IRenderer& renderer, IScoreStore& scores, int rows, int cols, int speedMs, unsigned seed);
 
 	/**
 	 * Destructor for the GameEngine class

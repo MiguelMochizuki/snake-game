@@ -71,7 +71,8 @@ TEST(SoundEvents, EngineStartsMusicOnRunAndStopsBeforeGameOver) {
 	CompositeInputHandler input = makeInput();
 	RecordingRenderer renderer;
 	RecordingSound sound;
-	GameEngine engine(keys, input, renderer, 20, 20, 0, 42, dir.path.string());
+	ScoreManager store(dir.path.string());
+	GameEngine engine(keys, input, renderer, store, 20, 20, 0, 42);
 	engine.setSound(&sound);
 
 	engine.run();
@@ -86,7 +87,8 @@ TEST(SoundEvents, MusicRestartsOnRestart) {
 	CompositeInputHandler input = makeInput();
 	RecordingRenderer renderer;
 	RecordingSound sound;
-	GameEngine engine(keys, input, renderer, 20, 20, 0, 42, dir.path.string());
+	ScoreManager store(dir.path.string());
+	GameEngine engine(keys, input, renderer, store, 20, 20, 0, 42);
 	engine.setSound(&sound);
 
 	engine.run();
@@ -100,7 +102,8 @@ TEST(SoundEvents, WinningStopsTheMusicAndPlaysTheWinCue) {
 	CompositeInputHandler input = makeInput();
 	RecordingRenderer renderer;
 	RecordingSound sound;
-	GameEngine engine(keys, input, renderer, 1, 4, 0, 5, dir.path.string());  // seed 5: the first move eats the last food
+	ScoreManager store(dir.path.string());
+	GameEngine engine(keys, input, renderer, store, 1, 4, 0, 5);  // seed 5: the first move eats the last food
 	engine.setSound(&sound);
 
 	engine.run();
