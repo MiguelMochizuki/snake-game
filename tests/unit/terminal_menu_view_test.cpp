@@ -284,3 +284,12 @@ TEST(TerminalMenuView, SubScreensHaveNoEscapeBesidesTheClearWithoutColor) {
 		EXPECT_EQ(out.find('\033', CLEAR.size()), std::string::npos);
 	}
 }
+
+TEST(TerminalMenuView, ConfirmClearNamesTheLevel) {
+	for (Level level : {Level::Easy, Level::Normal, Level::Hard}) {
+		std::ostringstream os;
+		TerminalMenuView view(os, false);
+		view.showConfirmClear(level);
+		EXPECT_NE(os.str().find("score of " + std::string(levelName(level)) + "?"), std::string::npos) << levelName(level);
+	}
+}

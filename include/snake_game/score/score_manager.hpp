@@ -129,7 +129,7 @@ public:
 
 	ScoreStats stats(Level level) const override;
 	std::vector<int> topScores(Level level, std::size_t n) const override;
-	void clear() override;
+	void clear(Level level) override;
 };
 
 #endif

@@ -300,19 +300,31 @@ TEST_F(ScoreManagerTest, ExistingV2FileWinsOverOldFiles) {
 	EXPECT_EQ(m2.bestScore(Level::Hard), 4);
 }
 
-TEST_F(ScoreManagerTest, ClearDeletesEveryLevelAndSurvivesAReload) {
+TEST_F(ScoreManagerTest, ClearOneLevelKeepsTheOthers) {
 	{
 		ScoreManager sm(dir_.string());
 		sm.saveScore(Level::Easy, 5);
+		sm.saveScore(Level::Normal, 7);
 		sm.saveScore(Level::Hard, 9);
-		sm.clear();
-		EXPECT_EQ(sm.totalGames(Level::Easy), 0u);
-		EXPECT_EQ(sm.bestScore(Level::Hard), 0);
+		sm.clear(Level::Normal);
+		EXPECT_EQ(sm.totalGames(Level::Normal), 0u);
+		EXPECT_EQ(sm.bestScore(Level::Easy), 5);
 	}
+	// A reload proves the file and its checksum agree: a mismatch would zero every score
 	ScoreManager reloaded(dir_.string());
-	EXPECT_EQ(reloaded.totalGames(Level::Easy), 0u);
-	EXPECT_EQ(reloaded.totalGames(Level::Hard), 0u);
+	EXPECT_EQ(reloaded.totalGames(Level::Normal), 0u);
+	EXPECT_EQ(reloaded.bestScore(Level::Easy), 5);
+	EXPECT_EQ(reloaded.bestScore(Level::Hard), 9);
 	reloaded.saveScore(Level::Normal, 3);
 	ScoreManager again(dir_.string());
 	EXPECT_EQ(again.bestScore(Level::Normal), 3);
+}
+
+TEST_F(ScoreManagerTest, ClearAnEmptyLevelIsHarmless) {
+	ScoreManager sm(dir_.string());
+	sm.saveScore(Level::Easy, 5);
+	sm.clear(Level::Hard);
+	ScoreManager reloaded(dir_.string());
+	EXPECT_EQ(reloaded.bestScore(Level::Easy), 5);
+	EXPECT_EQ(reloaded.totalGames(Level::Hard), 0u);
 }

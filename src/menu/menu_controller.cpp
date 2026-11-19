@@ -23,18 +23,19 @@ MenuResult resultOf(const MenuModel& model, bool start) {
 }
 
 /**
- * Asks whether to delete every saved score and does it on Enter; Q keeps them, other keys are ignored
+ * Asks whether to delete every saved score of a level and does it on Enter; Q keeps them, other keys are ignored
  *
  * Parameters:
  * IKeySource& keys: Source of key presses
  * const IInputHandler& input: Maps keys to actions
  * IMenuView& view: Draws the question
  * IScoreSource& scores: Cleared when the player confirms
+ * Level level: The level to clear
  *
  * Returns bool: false if the key source ended (the program should quit), true otherwise
  */
-bool runConfirmClear(IKeySource& keys, const IInputHandler& input, IMenuView& view, IScoreSource& scores) {
-	view.showConfirmClear();
+bool runConfirmClear(IKeySource& keys, const IInputHandler& input, IMenuView& view, IScoreSource& scores, Level level) {
+	view.showConfirmClear(level);
 	while (true) {
 		std::optional<Key> key = keys.waitKey();
 		if (!key) {
@@ -42,7 +43,7 @@ bool runConfirmClear(IKeySource& keys, const IInputHandler& input, IMenuView& vi
 		}
 		std::optional<Action> action = input.handle(*key);
 		if (action == Action::Confirm) {
-			scores.clear();
+			scores.clear(level);
 			return true;
 		}
 		if (action == Action::Quit) {
@@ -52,7 +53,7 @@ bool runConfirmClear(IKeySource& keys, const IInputHandler& input, IMenuView& vi
 }
 
 /**
- * Shows the leaderboard until the player goes back; Left and Right change the level shown, C offers to clear every score
+ * Shows the leaderboard until the player goes back; Left and Right change the level shown, C offers to clear the scores of the level shown
  *
  * Parameters:
  * IKeySource& keys: Source of key presses
@@ -77,7 +78,7 @@ bool runLeaderboard(IKeySource& keys, const IInputHandler& input, IMenuView& vie
 		} else if (action == Action::MoveRight) {
 			level = nextLevel(level, 1);
 		} else if (action == Action::Clear) {
-			if (!runConfirmClear(keys, input, view, scores)) {
+			if (!runConfirmClear(keys, input, view, scores, level)) {
 				return false;
 			}
 		} else if (action == Action::Confirm || action == Action::Quit) {

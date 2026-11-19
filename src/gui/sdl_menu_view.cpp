@@ -348,15 +348,18 @@ void SdlMenuView::showHelp() {
 }
 
 /**
- * Draws the question asked before every saved score is deleted
+ * Draws the question asked before the saved scores of a level are deleted
+ *
+ * Parameters:
+ * Level level: The level that would be cleared
  */
-void SdlMenuView::showConfirmClear() {
-	auto draw = [this] {
+void SdlMenuView::showConfirmClear(Level level) {
+	auto draw = [this, level] {
 		drawScreen(canvas_, [&](Page& p) {
 			p.title("CLEAR SCORES");
 			p.gap(2);
 			p.rule();
-			for (const std::string& line : {"Delete every saved", "score of every level?"}) {
+			for (const std::string& line : {std::string("Delete every saved"), "score of " + std::string(levelName(level)) + "?"}) {
 				p.line(line, theme::LABEL);
 			}
 			p.gap(2);

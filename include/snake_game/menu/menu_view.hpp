@@ -79,11 +79,14 @@ public:
 	virtual void showHelp() = 0;
 
 	/**
-	 * Draws the question that must be answered before every saved score is deleted
+	 * Draws the question that must be answered before the saved scores of a level are deleted
+	 *
+	 * Parameters:
+	 * Level level: The level that would be cleared
 	 *
 	 * Returns void:
 	 */
-	virtual void showConfirmClear() = 0;
+	virtual void showConfirmClear(Level level) = 0;
 };
 
 #endif

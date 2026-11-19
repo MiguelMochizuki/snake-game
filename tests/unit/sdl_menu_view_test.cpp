@@ -66,8 +66,16 @@ TEST(SdlMenuView, PracticeSwitchChangesThePicture) {
 TEST(SdlMenuView, ConfirmClearIsNotBlank) {
 	Fixture f;
 	std::vector<unsigned char> empty = f.blank();
-	f.view.showConfirmClear();
+	f.view.showConfirmClear(Level::Normal);
 	EXPECT_NE(empty, f.canvas->pixelsRgb());
+}
+
+TEST(SdlMenuView, ConfirmClearDiffersPerLevel) {
+	Fixture f;
+	f.view.showConfirmClear(Level::Easy);
+	std::vector<unsigned char> easy = f.canvas->pixelsRgb();
+	f.view.showConfirmClear(Level::Hard);
+	EXPECT_NE(easy, f.canvas->pixelsRgb());
 }
 
 TEST(SdlMenuView, LeaderboardEmptyAndFilledDiffer) {
