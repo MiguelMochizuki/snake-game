@@ -226,8 +226,9 @@ void SdlRenderer::printGameOver(Level level, int finalScore, const ScoreStats& s
  * const ScoreStats& stats: Best, games played and average of that level
  */
 void SdlRenderer::printVictory(Level level, int finalScore, const ScoreStats& stats) {
-	// The board fades to a dark backdrop for the panel; pump keeps the window responsive and notices a close request
-	if (last_) {
+	// The board fades to a dark backdrop for the panel; pump keeps the window responsive and notices a close request.
+	// Off-screen nobody watches the fade, so it is skipped rather than waited out
+	if (last_ && app_.interactive()) {
 		for (int i = 1; i <= FADE_STEPS && !app_.closeRequested(); ++i) {
 			dim_ = 1.0f - (1.0f - FADE_FLOOR) * static_cast<float>(i) / static_cast<float>(FADE_STEPS);
 			canvas_.clear(tone(theme::BACKGROUND));

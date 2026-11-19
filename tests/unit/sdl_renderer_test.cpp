@@ -5,6 +5,7 @@
  */
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <vector>
 
 #include "snake_game/game/game_state.hpp"
@@ -107,6 +108,19 @@ TEST(SdlRenderer, VictoryPanelChangesThePicture) {
 	renderer.render(state);
 	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4, 9.5});
 	EXPECT_NE(victory, canvas->pixelsRgb());
+}
+
+TEST(SdlRenderer, VictoryDoesNotWaitOffScreen) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	renderer.clear();
+	renderer.render(state);
+	const auto start = std::chrono::steady_clock::now();
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	// The fade lasts 600 ms on a window; off-screen there is nobody to watch it
+	EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::milliseconds(200));
 }
 
 TEST(SdlRenderer, VictoryOnATinyCanvasDoesNotCrash) {
