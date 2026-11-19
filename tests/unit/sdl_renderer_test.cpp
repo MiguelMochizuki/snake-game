@@ -5,7 +5,10 @@
  */
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <vector>
+
+#include <SDL3/SDL.h>
 
 #include "snake_game/game/game_state.hpp"
 #include "snake_game/gui/canvas.hpp"
@@ -107,6 +110,49 @@ TEST(SdlRenderer, VictoryPanelChangesThePicture) {
 	renderer.render(state);
 	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4, 9.5});
 	EXPECT_NE(victory, canvas->pixelsRgb());
+}
+
+TEST(SdlRenderer, VictoryDoesNotWaitOffScreen) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	renderer.clear();
+	renderer.render(state);
+	const auto start = std::chrono::steady_clock::now();
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	// The fade lasts 600 ms on a window; off-screen there is nobody to watch it
+	EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::milliseconds(200));
+}
+
+TEST(SdlRenderer, ClosingTheWindowDuringTheFadeStillDrawsThePanel) {
+	// The reference picture: the same win with no fade to interrupt
+	std::unique_ptr<Canvas> plain = Canvas::offscreen(640, 720);
+	SdlApp plainApp(*plain, false);
+	SdlRenderer plainRenderer(*plain, plainApp);
+	GameState state(20, 20, 0, 42);
+	plainRenderer.clear();
+	plainRenderer.render(state);
+	plainRenderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, true);
+	SdlRenderer renderer(*canvas, app);
+	renderer.clear();
+	renderer.render(state);
+	app.pump(0);
+	SDL_Event close;
+	SDL_zero(close);
+	close.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
+	SDL_PushEvent(&close);
+	const auto start = std::chrono::steady_clock::now();
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	const auto took = std::chrono::steady_clock::now() - start;
+
+	EXPECT_TRUE(app.closeRequested());
+	// Only the first of the 12 steps runs (about 50 ms), not the whole 600 ms
+	EXPECT_LT(took, std::chrono::milliseconds(300));
+	EXPECT_EQ(canvas->pixelsRgb(), plain->pixelsRgb());
 }
 
 TEST(SdlRenderer, VictoryOnATinyCanvasDoesNotCrash) {
