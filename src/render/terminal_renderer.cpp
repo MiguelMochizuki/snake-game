@@ -12,6 +12,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <iomanip>
+#include <algorithm>
 #include <sstream>
 
 using namespace terminal;
@@ -145,9 +146,12 @@ void TerminalRenderer::printPanel(const std::string& title, Style titleStyle, si
 	buf << "\n";
 	p.put(WALL, rule);
 	p.endl();
-	p.put(PLAIN, std::string(leftPad, ' '));
-	p.put(titleStyle, title);
-	p.put(PLAIN, std::string(30 - leftPad - title.size(), ' '));
+	// A title wider than the box is cut, so the line never grows past 30 columns
+	const size_t pad = std::min<size_t>(leftPad, 30);
+	const std::string shown = title.substr(0, 30 - pad);
+	p.put(PLAIN, std::string(pad, ' '));
+	p.put(titleStyle, shown);
+	p.put(PLAIN, std::string(30 - pad - shown.size(), ' '));
 	p.endl();
 	p.put(PLAIN, std::string(30, ' '));
 	p.endl();
