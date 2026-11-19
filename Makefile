@@ -10,10 +10,12 @@
 #   terminal  build/        the terminal game, no extra dependencies (BUILD=dir overrides)
 #   audio     build-audio/  the terminal game with chord music (fetches miniaudio)
 #   gui       build-sdl/    the graphical game, implies audio (fetches SDL3 and miniaudio)
+#   icon      build-icon/   only the tool that draws the app icon, with no SDL and no tests
 BUILD ?= build
 BUILD_DIR = $(BUILD)
 AUDIO_BUILD_DIR = build-audio
 GUI_BUILD_DIR = build-sdl
+ICON_BUILD_DIR = build-icon
 DATA_DIR = data
 
 # CMake options
@@ -122,7 +124,7 @@ test-all: test test-audio test-gui
 .PHONY: clean clean-local clean-data clean-local-data rebuild rebuild-local
 clean clean-local:
 	@echo "$(YELLOW)Cleaning build files...$(NC)"
-	@rm -rf $(BUILD_DIR) $(AUDIO_BUILD_DIR) $(GUI_BUILD_DIR)
+	@rm -rf $(BUILD_DIR) $(AUDIO_BUILD_DIR) $(GUI_BUILD_DIR) $(ICON_BUILD_DIR)
 	@echo "$(YELLOW)Clean complete!$(NC)"
 
 clean-data clean-local-data:
@@ -165,11 +167,15 @@ else ifeq ($(OS_NAME),Linux)
 	@echo "$(YELLOW)Removed the Snake binary, entry and icon$(NC)"
 endif
 
-# Needs Python 3 with Pillow (pip install pillow)
+# Draws the icon with the game's own sprites (a small tool that needs no SDL), then packs it with Python 3 and
+# Pillow (pip install pillow)
 .PHONY: icon
 icon:
+	@echo "$(BLUE)Building the icon tool...$(NC)"
+	@$(CMAKE) -S . -B $(ICON_BUILD_DIR) $(CMAKE_FLAGS) -DSNAKE_GAME_BUILD_ICON=ON -DSNAKE_GAME_BUILD_APPS=OFF -DSNAKE_GAME_BUILD_TESTS=OFF
+	@$(CMAKE) --build $(ICON_BUILD_DIR) --target snake_icon -j
 	@echo "$(BLUE)Drawing the app icon...$(NC)"
-	@python3 tools/make_icon.py
+	@python3 tools/make_icon.py --tool $(ICON_BUILD_DIR)/bin/snake_icon
 	@echo "$(GREEN)Icons written to assets/$(NC)"
 
 # ==============================

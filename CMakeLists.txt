@@ -14,6 +14,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 option(SNAKE_GAME_BUILD_APPS "Build the game executable" ON)
 option(SNAKE_GAME_BUILD_TESTS "Build unit and end-to-end tests" ON)
 option(SNAKE_GAME_BUILD_GUI "Build snake-gui, the SDL3 front-end (fetched at configure time; implies audio)" OFF)
+option(SNAKE_GAME_BUILD_ICON "Build snake_icon, the tool that draws the app icon artwork (needs no SDL; used by make icon)" OFF)
 option(SNAKE_GAME_BUILD_AUDIO "Build with music and sound output through miniaudio (fetched at configure time)" OFF)
 
 # Compiler warnings, shared by all targets (including tests)
@@ -64,6 +65,12 @@ add_library(snake_draw STATIC
 )
 target_include_directories(snake_draw PUBLIC include)
 snake_game_set_warnings(snake_draw)
+
+if(SNAKE_GAME_BUILD_ICON)
+	add_executable(snake_icon tools/icon_main.cpp)
+	target_link_libraries(snake_icon PRIVATE snake_draw)
+	snake_game_set_warnings(snake_icon)
+endif()
 
 if(SNAKE_GAME_BUILD_GUI)
 	set(SNAKE_GAME_BUILD_AUDIO ON CACHE BOOL "" FORCE)
