@@ -56,10 +56,11 @@ if(UNIX)
 	target_link_libraries(snake_core PUBLIC pthread)
 endif()
 
-# Drawing code that needs no SDL: the in-memory surface and the PPM writer (sprites join them later)
+# Drawing code that needs no SDL: the in-memory surface and the PPM writer and the sprites
 add_library(snake_draw STATIC
 	src/gui/pixel_surface.cpp
 	src/gui/ppm.cpp
+	src/gui/sprites.cpp
 )
 target_include_directories(snake_draw PUBLIC include)
 snake_game_set_warnings(snake_draw)

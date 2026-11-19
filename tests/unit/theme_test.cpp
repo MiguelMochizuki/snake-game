@@ -54,3 +54,12 @@ TEST(Theme, HierarchyStaysOrdered) {
 	EXPECT_LT(contrast(theme::DIM, theme::BACKGROUND), contrast(theme::LABEL, theme::BACKGROUND));
 	EXPECT_LT(contrast(theme::LABEL, theme::BACKGROUND), contrast(theme::NUMBER, theme::BACKGROUND));
 }
+
+TEST(Theme, SpriteColoursAreDistinct) {
+	const Color all[] = {theme::BODY, theme::HEAD, theme::SCALE, theme::GOLD, theme::FOOD, theme::STEM, theme::LEAF, theme::BACKGROUND, theme::SURFACE};
+	for (size_t i = 0; i < sizeof(all) / sizeof(all[0]); ++i) {
+		for (size_t j = i + 1; j < sizeof(all) / sizeof(all[0]); ++j) {
+			EXPECT_FALSE(all[i].r == all[j].r && all[i].g == all[j].g && all[i].b == all[j].b) << i << " and " << j;
+		}
+	}
+}

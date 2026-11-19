@@ -288,6 +288,26 @@ TEST(SdlRenderer, RedrawAfterGameOverKeepsTheBoardDark) {
 	EXPECT_EQ(shown, canvas->pixelsRgb());
 }
 
+TEST(SdlRenderer, SpritesFadeWithTheBoard) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	auto foodPixels = [&] {
+		const std::vector<unsigned char> px = canvas->pixelsRgb();
+		int n = 0;
+		for (size_t i = 0; i + 2 < px.size(); i += 3) {
+			n += (px[i] == theme::FOOD.r && px[i + 1] == theme::FOOD.g && px[i + 2] == theme::FOOD.b) ? 1 : 0;
+		}
+		return n;
+	};
+	renderer.clear();
+	renderer.render(state);
+	ASSERT_GT(foodPixels(), 0);  // the apple is on the board at full brightness
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	EXPECT_EQ(foodPixels(), 0);  // after the fade the same apple is drawn dimmed
+}
+
 TEST(SdlRenderer, ResetRestoresFullBrightness) {
 	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
 	SdlApp app(*canvas, false);

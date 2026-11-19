@@ -30,8 +30,13 @@ constexpr Color NUMBER{232, 240, 235};
 constexpr Color BODY{58, 148, 104};
 constexpr Color HEAD{124, 214, 162};
 constexpr Color FOOD{218, 98, 92};
-// Victory title
+// Victory title, and the snake's eyes
 constexpr Color GOLD{236, 190, 72};
+
+// Sprite details: the scale marks on the snake, the apple's stem and leaf
+constexpr Color SCALE{44, 112, 78};
+constexpr Color STEM{128, 92, 58};
+constexpr Color LEAF{142, 196, 84};
 
 }  // namespace theme
 
