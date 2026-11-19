@@ -129,7 +129,7 @@ bool glyphPixel(char c, int col, int row) {
 	return (GLYPHS[c - 32][row] >> col) & 1;
 }
 
-void drawText(Canvas& canvas, int x, int y, const std::string& text, int scale, Color color) {
+void drawText(IDrawSurface& canvas, int x, int y, const std::string& text, int scale, Color color) {
 	if (scale < 1) {
 		scale = 1;
 	}

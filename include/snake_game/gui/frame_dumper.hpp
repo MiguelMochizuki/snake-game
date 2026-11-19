@@ -7,6 +7,7 @@
 #define FRAME_DUMPER_HPP
 
 #include "snake_game/gui/canvas.hpp"
+#include "snake_game/gui/ppm.hpp"
 #include "snake_game/render/renderer.hpp"
 #include <cstdio>
 #include <string>
@@ -36,7 +37,7 @@ class FrameDumper : public IRenderer {
 	void save() {
 		char name[32];
 		std::snprintf(name, sizeof name, "/frame-%05d.ppm", written_++);
-		canvas_.writePpm(dir_ + name);
+		writePpm(canvas_, dir_ + name);
 	}
 
 public:

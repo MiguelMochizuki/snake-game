@@ -187,25 +187,3 @@ std::vector<unsigned char> Canvas::pixelsRgb() const {
 	SDL_DestroySurface(rgb);
 	return out;
 }
-
-/**
- * Writes the canvas as a binary PPM (P6) image
- *
- * Parameters:
- * const std::string& path: Output file
- *
- * Returns bool: true if the file was written
- */
-bool Canvas::writePpm(const std::string& path) const {
-	const std::vector<unsigned char> px = pixelsRgb();
-	if (px.empty()) {
-		return false;
-	}
-	std::FILE* f = std::fopen(path.c_str(), "wb");
-	if (!f) {
-		return false;
-	}
-	std::fprintf(f, "P6\n%d %d\n255\n", width(), height());
-	const bool ok = std::fwrite(px.data(), 1, px.size(), f) == px.size();
-	return std::fclose(f) == 0 && ok;
-}

@@ -93,6 +93,7 @@ if(SNAKE_GAME_BUILD_GUI)
 		src/gui/user_data_dir.cpp
 		src/gui/icon_data.cpp
 		src/gui/canvas.cpp
+		src/gui/ppm.cpp
 		src/gui/bitmap_font.cpp
 		src/gui/sdl_app.cpp
 		src/gui/sdl_key_source.cpp

@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "snake_game/gui/canvas.hpp"
+#include "snake_game/gui/ppm.hpp"
 #include "snake_game/gui/theme.hpp"
 
 namespace {
@@ -68,7 +69,7 @@ TEST(Canvas, WritePpmWritesHeaderAndPixels) {
 	std::unique_ptr<Canvas> c = Canvas::offscreen(64, 48);
 	c->clear(theme::BACKGROUND);
 	const std::filesystem::path path = std::filesystem::temp_directory_path() / "snake_canvas_test.ppm";
-	ASSERT_TRUE(c->writePpm(path.string()));
+	ASSERT_TRUE(writePpm(*c, path.string()));
 	std::ifstream in(path, std::ios::binary);
 	std::stringstream content;
 	content << in.rdbuf();

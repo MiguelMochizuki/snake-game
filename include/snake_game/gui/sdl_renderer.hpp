@@ -7,7 +7,7 @@
 #define SDL_RENDERER_HPP
 
 #include "snake_game/game/game_state.hpp"
-#include "snake_game/gui/canvas.hpp"
+#include "snake_game/gui/draw_surface.hpp"
 #include "snake_game/gui/sdl_app.hpp"
 #include "snake_game/render/renderer.hpp"
 #include <functional>
@@ -50,16 +50,16 @@ int cellSizeFor(int canvasW, int canvasH, int cols, int rows, int hudHeight);
 Layout layoutFor(int canvasW, int canvasH, int cols, int rows);
 
 /**
- * Draws the game on a Canvas and paces it by handling window events
+ * Draws the game on a surface and paces it by handling window events
  *
  * Attributes:
- * Canvas& canvas_: Where to draw
+ * IDrawSurface& canvas_: Where to draw
  * SdlApp& app_: Event pump used while waiting and for redraws on resize
  * std::optional<GameState> last_: The last state drawn
  * std::function<void()> panel_: Draws the game over panel, empty while a game runs
  */
 class SdlRenderer : public IRenderer {
-	Canvas& canvas_;
+	IDrawSurface& canvas_;
 	SdlApp& app_;
 	std::optional<GameState> last_;
 	std::function<void()> panel_;
@@ -105,10 +105,10 @@ public:
 	 * Constructor for the SdlRenderer class
 	 *
 	 * Parameters:
-	 * Canvas& canvas: Where to draw, must outlive the renderer
+	 * IDrawSurface& canvas: Where to draw, must outlive the renderer
 	 * SdlApp& app: Event pump, must outlive the renderer
 	 */
-	SdlRenderer(Canvas& canvas, SdlApp& app);
+	SdlRenderer(IDrawSurface& canvas, SdlApp& app);
 
 	void reset() override;
 	void clear() override;
