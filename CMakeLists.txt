@@ -56,6 +56,14 @@ if(UNIX)
 	target_link_libraries(snake_core PUBLIC pthread)
 endif()
 
+# Drawing code that needs no SDL: the in-memory surface and the PPM writer (sprites join them later)
+add_library(snake_draw STATIC
+	src/gui/pixel_surface.cpp
+	src/gui/ppm.cpp
+)
+target_include_directories(snake_draw PUBLIC include)
+snake_game_set_warnings(snake_draw)
+
 if(SNAKE_GAME_BUILD_GUI)
 	set(SNAKE_GAME_BUILD_AUDIO ON CACHE BOOL "" FORCE)
 endif()
@@ -93,7 +101,6 @@ if(SNAKE_GAME_BUILD_GUI)
 		src/gui/user_data_dir.cpp
 		src/gui/icon_data.cpp
 		src/gui/canvas.cpp
-		src/gui/ppm.cpp
 		src/gui/bitmap_font.cpp
 		src/gui/sdl_app.cpp
 		src/gui/sdl_key_source.cpp
@@ -102,7 +109,7 @@ if(SNAKE_GAME_BUILD_GUI)
 		src/gui/demo_pilot.cpp
 	)
 	target_include_directories(snake_gui_core PUBLIC include)
-	target_link_libraries(snake_gui_core PUBLIC snake_core SDL3::SDL3)
+	target_link_libraries(snake_gui_core PUBLIC snake_core snake_draw SDL3::SDL3)
 	snake_game_set_warnings(snake_gui_core)
 endif()
 

@@ -25,7 +25,7 @@ if(NOT SNAKE_GAME_BUILD_GUI)
 endif()
 
 add_executable(snake_unit_tests ${UNIT_SOURCES})
-target_link_libraries(snake_unit_tests PRIVATE snake_core GTest::gtest_main)
+target_link_libraries(snake_unit_tests PRIVATE snake_core snake_draw GTest::gtest_main)
 if(SNAKE_GAME_BUILD_GUI)
 	target_link_libraries(snake_unit_tests PRIVATE snake_gui_core)
 endif()
