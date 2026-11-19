@@ -5,6 +5,8 @@
  */
 #include <gtest/gtest.h>
 
+#include <cstdlib>
+
 #include <SDL3/SDL.h>
 
 #include "snake_game/gui/app_icon.hpp"
@@ -51,6 +53,28 @@ TEST(AppIcon, ContainsTheSnakeAndTheFood) {
 	}
 	EXPECT_TRUE(body);
 	EXPECT_TRUE(food);
+}
+
+TEST(AppIcon, ShowsTheSpritesApple) {
+	// Close, not equal: the 128 px window icon is a smoothed shrink of the artwork
+	auto near = [](const unsigned char* p, Color c) {
+		return std::abs(p[0] - c.r) <= 30 && std::abs(p[1] - c.g) <= 30 && std::abs(p[2] - c.b) <= 30;
+	};
+	bool leaf = false, stem = false, eye = false;
+	for (int y = 0; y < ICON_SIZE; ++y) {
+		for (int x = 0; x < ICON_SIZE; ++x) {
+			const unsigned char* p = iconPixel(x, y);
+			if (p[3] != 255) {
+				continue;
+			}
+			leaf = leaf || near(p, theme::LEAF);
+			stem = stem || near(p, theme::STEM);
+			eye = eye || near(p, theme::GOLD);
+		}
+	}
+	EXPECT_TRUE(leaf);
+	EXPECT_TRUE(stem);
+	EXPECT_TRUE(eye);
 }
 
 TEST(AppIcon, SurfaceMatchesTheData) {

@@ -1,6 +1,6 @@
 # Snake Game
 
-The classic Snake game for the terminal, written in C++. It saves your scores between sessions and also runs in Docker.
+The classic Snake game in C++, with a graphical version drawn with SDL3 and a terminal version. It saves your scores between sessions.
 
 - [Overview](#overview)
 - [Highlights](#highlights)
@@ -16,7 +16,7 @@ The classic Snake game for the terminal, written in C++. It saves your scores be
 
 ## Overview
 
-Snake Game has two front-ends on one engine: a terminal game (`snake`) and an optional graphical one drawn with SDL3 (`snake-gui`). Both share the rules, the three levels and the menu. Each front-end saves its scores separately. Release binaries exist for Linux, macOS and Windows, and a Docker image runs the terminal game.
+Snake Game has two front-ends on one engine: the graphical game (`snake-gui`, drawn with SDL3), which is the main version, and a terminal game (`snake`). Both share the rules, the three levels and the menu. Each front-end saves its scores separately. Release binaries of both exist for Linux, macOS and Windows. A Docker image runs the terminal game anywhere Docker does, as a convenience.
 
 ## Highlights
 
@@ -27,15 +27,17 @@ Snake Game has two front-ends on one engine: a terminal game (`snake`) and an op
 - Best score, games played, average score and top 10, kept separately for each level and saved between sessions
 - Terminal beep when you eat and when the game ends; in builds with audio (the release binaries), Gounod's "Ave Maria" over Bach's C major Prelude plays during the game (about four minutes, then it starts again), with short blips when you eat, when the game ends and when you move around the menu
 - Filling the whole board is a win: the last food is scored and a victory screen replaces game over (a yellow panel in the terminal; in the window the board fades to dark under a gold one)
-- Colored board (cyan walls, green snake with a bright head, red food, yellow numbers)
-- Linux, macOS and Windows binaries, plus a Docker image
-- An optional graphical version, `snake-gui`, drawn with SDL3 (see [Graphical version](#graphical-version))
+- In the graphical version the snake and the food are drawn with sprites: a shaded, rounded snake with diamonds on its back, a head that faces where it goes with golden slit-pupil eyes and a forked tongue, and a red apple with a stem and a leaf. The app icon is drawn by the same code
+- In the graphical version the game over panel appears over a board that fades to dark, as the victory one does
+- Colored board in the terminal (cyan walls, green snake with a bright head, red food, yellow numbers)
+- Linux, macOS and Windows binaries, plus a terminal-only Docker image
+- The graphical version, `snake-gui`, is the one to get first (see [Graphical version](#graphical-version))
 
 ## Quick Start
 
 ### Download
 
-Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v2.3.3](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.3.3), which draws the app icon as a close-up of the snake's head and, since v2.3.2, adds a practice mode that keeps games out of the leaderboard, a clear-scores key (C) on the leaderboard screen, a new icon, and fixes the game over panel showing the snake one step back (v2.3.0 added the victory screen for filling the whole board).
+Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v2.4.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.4.0), which makes C on the leaderboard clear only the level you are looking at, draws the snake and the food in the graphical version with sprites (and redraws the app icon with them), and fades the board under the game over panel. Earlier releases added a practice mode that keeps games out of the leaderboard (v2.3.2) and the victory screen for filling the whole board (v2.3.0).
 
 | Platform | Architecture | Binary |
 |----------|-------------|--------|
@@ -107,7 +109,7 @@ snake-game/
 ├── include/  # public headers, one folder per module
 ├── src/      # implementations, mirrors include/
 ├── tests/    # test suite
-├── tools/    # packaging, icon and soundtrack generators
+├── tools/    # icon and soundtrack generators, packaging checks
 ├── Dockerfile
 ├── CMakeLists.txt
 ├── Makefile
@@ -126,7 +128,7 @@ snake-game/
   - `render/`: IRenderer, TerminalRenderer and Sound
   - `terminal/`: Painter (ANSI styles) and text formatting shared by the terminal views
   - `audio/`: Synth (chord music and blips) and AudioDevice (only with audio built)
-  - `gui/`: IDrawSurface and its SDL canvas, bitmap font, renderer, menu view, key source and demo autopilot (only with the GUI built)
+  - `gui/`: IDrawSurface, the in-memory PixelSurface, the sprites, the SDL canvas, bitmap font, renderer, menu view, key source and demo autopilot. The SDL-free drawing code (`snake_draw`: sprites, PixelSurface and the PPM writer) builds in every variant; the rest only with the GUI built
   - `score/`: ScoreManager and the score source it reads
 - `tests/` holds the unit (GoogleTest), golden and end-to-end tests.
 
@@ -159,7 +161,7 @@ The game opens on a menu. Pick a level, then start.
 | Enter | Choose the selected row | Nothing |
 | Q / Ctrl+C | Quit | End the game |
 
-The menu rows are Start, Level, Leaderboard, How to play, Sound, Practice and Quit. The levels set the time per step: Easy 300 ms, Normal 200 ms, Hard 100 ms. The menu shows the best score, games played and average over the last 10 games of the selected level. The Leaderboard lists the top 10 scores of a level (A/D switch level, Enter goes back, C offers to clear every saved score: Enter deletes the history of all levels with no way back, Q keeps it). Sound is on at each launch and only beeps in a terminal. Practice is off at each launch; while it is on, finished games are not saved. Any other key does nothing.
+The menu rows are Start, Level, Leaderboard, How to play, Sound, Practice and Quit. The levels set the time per step: Easy 300 ms, Normal 200 ms, Hard 100 ms. The menu shows the best score, games played and average over the last 10 games of the selected level. The Leaderboard lists the top 10 scores of a level (A/D switch level, Enter goes back, C offers to clear the scores of the level shown: Enter deletes that level's history with no way back and the other levels are untouched, Q keeps it). Sound is on at each launch and only beeps in a terminal. Practice is off at each launch; while it is on, finished games are not saved. Any other key does nothing.
 
 After a game ends, you see the level, your final score and that level's statistics. Press **R** to play again straight away, **M** to go back to the menu (for example to change the level; your choice is kept) or **Q** to quit.
 
@@ -175,7 +177,7 @@ Audio is optional at build time: `cmake -S . -B build -DSNAKE_GAME_BUILD_AUDIO=O
 
 ### Graphical version
 
-`snake-gui` is a second front-end for the same game: the same rules, levels and menu, drawn in a resizable window with a bitmap font instead of the terminal. It is not part of the default build. Turn it on with:
+`snake-gui` is the main version of the game: the same rules, levels and menu as the terminal one, drawn in a resizable window with a bitmap font and sprites. Release builds include it. From source, it is not part of the default build; turn it on with:
 
 ```bash
 make run-gui        # build (first time fetches SDL3) and play
@@ -189,7 +191,9 @@ Or with CMake directly: `cmake -S . -B build -DSNAKE_GAME_BUILD_GUI=ON && cmake 
 
 This fetches SDL3 and miniaudio when configuring and links them statically. On Linux, SDL needs the development packages of your window system first. For Wayland: `libwayland-dev libxkbcommon-dev wayland-protocols libdecor-0-dev libegl-dev libdrm-dev libgbm-dev`; for X11 (SDL checks for it even on Wayland) also `libx11-dev libxext-dev libxcursor-dev libxi-dev libxrandr-dev libxss-dev libxtst-dev libxfixes-dev libxkbcommon-x11-dev`; for sound output `libasound2-dev libpulse-dev libudev-dev`. Without a window system (a CI machine, say), add `-DSDL_UNIX_CONSOLE_BUILD=ON` to build and use only the off-screen mode below.
 
-The keys are the same as in the terminal (arrows or WASD, Enter, R, M, Q), and closing the window quits. The Docker image stays terminal-only.
+The keys are the same as in the terminal (arrows or WASD, Enter, R, M, Q), and closing the window quits. The Docker image stays terminal-only: it is there so a build runs anywhere Docker does, not as a replacement for the graphical game.
+
+The sprites live in `src/gui/sprites.cpp` and draw on `IDrawSurface`, so they need no SDL. The same code draws the app icon: `make icon` builds the small `snake_icon` tool (no SDL, no tests, nothing fetched) and `tools/make_icon.py` turns its picture into `assets/icon.*` and the window icon embedded in the binary.
 
 Two options exist for demos and recordings. `snake-gui --demo` lets an autopilot play, with the menu skipped and the scores kept out of your leaderboard. `snake-gui --demo --frames DIR [--stride N] [--max-steps M]` draws off-screen with no window, writes `frame-00000.ppm`, `frame-00001.ppm` and so on to `DIR`, and gives the same frames for the same `SNAKE_SEED`. The GIF at the top of this README was made from such frames:
 

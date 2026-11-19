@@ -53,7 +53,6 @@ public:
 	int height() const override;
 	void clear(Color color) override;
 	void fillRect(int x, int y, int w, int h, Color color) override;
-	void fillCircle(int cx, int cy, int radius, Color color) override;
 	void present() override;
 
 	/**

@@ -5,6 +5,7 @@
  */
 #include "snake_game/gui/sdl_menu_view.hpp"
 #include "snake_game/gui/bitmap_font.hpp"
+#include "snake_game/gui/sprites.hpp"
 #include <algorithm>
 #include <functional>
 #include <iomanip>
@@ -140,19 +141,20 @@ struct Page {
 	}
 
 	/**
-	 * The snake and its food drawn from the same blocks as the board
+	 * The snake and its apple, drawn with the same sprites as the board
 	 */
 	void art() {
 		const int cell = 3 * u;
-		const int sq = cell - std::max(1, scale / 2);
 		if (!dry) {
-			int px = x + 2 * u;
-			for (int i = 0; i < 6; ++i, px += cell) {
-				canvas.fillRect(px, y, sq, sq, theme::BODY);
+			const int left = x + 2 * u;
+			std::vector<SpriteCell> cells;
+			for (int i = 6; i >= 0; --i) {  // head first, so the head is the rightmost cell
+				cells.push_back(SpriteCell{left + i * cell, y});
 			}
-			canvas.fillRect(px, y, sq, sq, theme::HEAD);
-			px += 3 * cell;
-			canvas.fillCircle(px + cell / 2, y + cell / 2, std::max(1, cell / 2 - 1), theme::FOOD);
+			const SpritePalette palette{theme::BODY, theme::HEAD, theme::SCALE, theme::GOLD, theme::BACKGROUND,
+				theme::FOOD, theme::FOOD, theme::STEM, theme::LEAF, theme::BACKGROUND};
+			drawSnake(canvas, cells, cell, palette);
+			drawApple(canvas, SpriteCell{left + 9 * cell, y}, cell, palette);
 		}
 		y += cell;
 	}
@@ -348,15 +350,18 @@ void SdlMenuView::showHelp() {
 }
 
 /**
- * Draws the question asked before every saved score is deleted
+ * Draws the question asked before the saved scores of a level are deleted
+ *
+ * Parameters:
+ * Level level: The level that would be cleared
  */
-void SdlMenuView::showConfirmClear() {
-	auto draw = [this] {
+void SdlMenuView::showConfirmClear(Level level) {
+	auto draw = [this, level] {
 		drawScreen(canvas_, [&](Page& p) {
 			p.title("CLEAR SCORES");
 			p.gap(2);
 			p.rule();
-			for (const std::string& line : {"Delete every saved", "score of every level?"}) {
+			for (const std::string& line : {std::string("Delete every saved"), "score of " + std::string(levelName(level)) + "?"}) {
 				p.line(line, theme::LABEL);
 			}
 			p.gap(2);

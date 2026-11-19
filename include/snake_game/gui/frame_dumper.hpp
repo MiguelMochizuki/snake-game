@@ -37,7 +37,7 @@ class FrameDumper : public IRenderer {
 	void save() {
 		char name[32];
 		std::snprintf(name, sizeof name, "/frame-%05d.ppm", written_++);
-		writePpm(canvas_, dir_ + name);
+		writePpm(canvas_.width(), canvas_.height(), canvas_.pixelsRgb(), dir_ + name);
 	}
 
 public:

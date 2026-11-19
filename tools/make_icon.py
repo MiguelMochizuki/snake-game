@@ -1,114 +1,118 @@
 """
 make_icon.py
 Author: Miguel Mochizuki Silva
-Description: Draws the Snake app icon (pixel-art close-up of the snake's head with the red food in front of it,
-on a dark rounded square) and writes icon.png, icon-512.png, icon.ico and icon.icns, plus src/gui/icon_data.cpp, the raw
-pixels embedded in snake-gui for its window icon. Needs Pillow.
-Usage: python3 tools/make_icon.py [--out assets] [--source src/gui/icon_data.cpp]
+Description: Builds the Snake app icon from the artwork that the game's own sprites draw (tool: snake_icon),
+puts it on a dark rounded square and writes icon.png, icon-512.png, icon.ico and icon.icns, plus src/gui/icon_data.cpp,
+the raw pixels embedded in snake-gui for its window icon. Needs Pillow; `make icon` builds the tool first.
+Usage: python3 tools/make_icon.py [--tool build-icon/bin/snake_icon] [--out assets] [--source src/gui/icon_data.cpp]
 """
 import argparse
 import os
+import subprocess
+import tempfile
 
 from PIL import Image, ImageDraw
 
 SIZE = 1024
 ICON_SIZE = 128  # window icon embedded in the binary
-SCALE = 4  # supersampling for smooth edges
-BACKGROUND = (15, 18, 17)
-SURFACE = (24, 30, 28)
-BODY = (58, 148, 104)
-HEAD = (124, 214, 162)
-FOOD = (218, 98, 92)
+SCALE = 4  # supersampling for smooth corners
+BACKGROUND = (15, 18, 17)  # the frame around the playfield, as in include/snake_game/gui/theme.hpp
 
 
-# The icon is a close-up of the snake's head in profile, pixel-art like the game's cells, with the food in front of it.
-# Everything is laid out on a UNITS x UNITS grid of square pixels
-UNITS = 24
-FILL = 0.94
-WALL = (52, 66, 61)
-GOLD = (236, 190, 72)
+def render_artwork(tool):
+	"""
+	Runs the tool and reads the artwork it draws
+
+	Args:
+		tool (str): Path to the snake_icon executable
+
+	Returns:
+		Image.Image: The artwork, SIZE x SIZE, RGB
+	"""
+	with tempfile.TemporaryDirectory() as tmp:
+		ppm = os.path.join(tmp, "artwork.ppm")
+		subprocess.run([tool, ppm, str(SIZE)], check=True)
+		return Image.open(ppm).convert("RGB")
 
 
-def draw_icon():
-    """Draws the icon at SIZE x SIZE with a transparent rounded-square outside."""
-    s = SIZE * SCALE
-    img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    d.rounded_rectangle((0, 0, s - 1, s - 1), radius=int(s * 0.225), fill=BACKGROUND)
-    d.rounded_rectangle((s * 0.03, s * 0.03, s * 0.97, s * 0.97), radius=int(s * 0.2), fill=SURFACE)
+def rounded_mask(box, radius):
+	"""
+	Draws an antialiased mask of a rounded rectangle
 
-    full = s / UNITS
-    u = full * FILL  # the drawing is a little smaller than the grid, so it keeps clear of the rounded corners
-    ox = oy = full * UNITS * (1 - FILL) / 2
+	Args:
+		box (tuple): Left, top, right and bottom as fractions of the side
+		radius (float): Corner radius as a fraction of the side
 
-    def px(x0, y0, x1, y1, color):
-        """Fills the grid rectangle [x0, x1) x [y0, y1)."""
-        d.rectangle((ox + x0 * u, oy + y0 * u, ox + x1 * u - 1, oy + y1 * u - 1), fill=color)
+	Returns:
+		Image.Image: A SIZE x SIZE mask, 255 inside the rectangle
+	"""
+	s = SIZE * SCALE
+	mask = Image.new("L", (s, s), 0)
+	ImageDraw.Draw(mask).rounded_rectangle([v * s for v in box], radius=radius * s, fill=255)
+	return mask.resize((SIZE, SIZE), Image.LANCZOS)
 
-    # Head: a flat top, a snout that sticks out, a darker belly
-    px(3, 5, 12, 6, HEAD)
-    px(2, 6, 14, 7, HEAD)
-    px(1, 7, 15, 8, HEAD)
-    px(1, 8, 16, 16, HEAD)
-    px(1, 16, 15, 18, BODY)
-    px(2, 18, 13, 19, BODY)
-    px(15, 15, 16, 16, BODY)
-    for x, y in ((4, 7), (6, 6), (8, 7), (3, 10), (5, 13), (2, 14), (7, 11)):  # scales
-        px(x, y, x + 1, y + 1, BODY)
 
-    # Eye with a slit pupil, and a nostril
-    px(9, 7, 13, 14, GOLD)
-    px(11, 7, 12, 14, BACKGROUND)
-    for x, y in ((9, 7), (12, 7), (9, 13), (12, 13)):  # round the eye's corners
-        px(x, y, x + 1, y + 1, HEAD)
-    px(14, 11, 15, 12, BODY)
+def draw_icon(tool):
+	"""
+	Puts the artwork on the rounded squares: a dark frame, then the playfield inside it
 
-    # Forked tongue reaching for the food
-    px(16, 12, 18, 13, FOOD)
-    px(18, 11, 19, 12, FOOD)
-    px(18, 13, 19, 14, FOOD)
+	Args:
+		tool (str): Path to the snake_icon executable
 
-    cx, cy, r = ox + 21.6 * u, oy + 12.5 * u, 1.8 * u
-    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=FOOD)
-    return img.resize((SIZE, SIZE), Image.LANCZOS)
+	Returns:
+		Image.Image: The icon, SIZE x SIZE, RGBA with transparent corners
+	"""
+	img = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
+	img.paste(Image.new("RGBA", (SIZE, SIZE), BACKGROUND + (255,)), (0, 0), rounded_mask((0, 0, 1, 1), 0.225))
+	img.paste(render_artwork(tool).convert("RGBA"), (0, 0), rounded_mask((0.03, 0.03, 0.97, 0.97), 0.2))
+	return img
 
 
 def write_source(img, path):
-    """Writes the icon, shrunk to ICON_SIZE, as a C++ array of RGBA bytes."""
-    small = img.resize((ICON_SIZE, ICON_SIZE), Image.LANCZOS).convert("RGBA")
-    data = small.tobytes()
-    lines = [
-        "/**",
-        " * icon_data.cpp",
-        " * Author: Miguel Mochizuki Silva",
-        " * Description: The window icon as raw RGBA pixels. Generated by tools/make_icon.py, do not edit by hand.",
-        " */",
-        '#include "snake_game/gui/app_icon.hpp"',
-        "",
-        "const unsigned char ICON_RGBA[ICON_SIZE * ICON_SIZE * 4] = {",
-    ]
-    for i in range(0, len(data), 32):
-        lines.append("\t" + ",".join(str(b) for b in data[i:i + 32]) + ",")
-    lines.append("};")
-    with open(path, "w") as f:
-        f.write("\n".join(lines) + "\n")
+	"""
+	Writes the icon, shrunk to ICON_SIZE, as a C++ array of RGBA bytes
+
+	Args:
+		img (Image.Image): The icon
+		path (str): Output .cpp file
+	"""
+	small = img.resize((ICON_SIZE, ICON_SIZE), Image.LANCZOS).convert("RGBA")
+	data = small.tobytes()
+	lines = [
+		"/**",
+		" * icon_data.cpp",
+		" * Author: Miguel Mochizuki Silva",
+		" * Description: The window icon as raw RGBA pixels. Generated by tools/make_icon.py, do not edit by hand.",
+		" */",
+		'#include "snake_game/gui/app_icon.hpp"',
+		"",
+		"const unsigned char ICON_RGBA[ICON_SIZE * ICON_SIZE * 4] = {",
+	]
+	for i in range(0, len(data), 32):
+		lines.append("\t" + ",".join(str(b) for b in data[i:i + 32]) + ",")
+	lines.append("};")
+	with open(path, "w") as f:
+		f.write("\n".join(lines) + "\n")
 
 
 def main():
-    """Parses the options and writes the icon files and the embedded pixel data."""
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "..", "assets"))
-    ap.add_argument("--source", default=os.path.join(os.path.dirname(__file__), "..", "src", "gui", "icon_data.cpp"))
-    args = ap.parse_args()
-    out = args.out
-    os.makedirs(out, exist_ok=True)
-    img = draw_icon()
-    img.save(os.path.join(out, "icon.png"))
-    img.resize((512, 512), Image.LANCZOS).save(os.path.join(out, "icon-512.png"))  # for the Linux icon theme
-    img.save(os.path.join(out, "icon.ico"), sizes=[(n, n) for n in (16, 32, 48, 64, 128, 256)])
-    img.save(os.path.join(out, "icon.icns"))
-    write_source(img, args.source)
+	"""
+	Parses the options and writes the icon files and the embedded pixel data
+	"""
+	ap = argparse.ArgumentParser()
+	ap.add_argument("--tool", default=os.path.join(os.path.dirname(__file__), "..", "build-icon", "bin", "snake_icon"))
+	ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "..", "assets"))
+	ap.add_argument("--source", default=os.path.join(os.path.dirname(__file__), "..", "src", "gui", "icon_data.cpp"))
+	args = ap.parse_args()
+	out = args.out
+	os.makedirs(out, exist_ok=True)
+	img = draw_icon(args.tool)
+	img.save(os.path.join(out, "icon.png"))
+	img.resize((512, 512), Image.LANCZOS).save(os.path.join(out, "icon-512.png"))  # for the Linux icon theme
+	img.save(os.path.join(out, "icon.ico"), sizes=[(n, n) for n in (16, 32, 48, 64, 128, 256)])
+	img.save(os.path.join(out, "icon.icns"))
+	write_source(img, args.source)
 
 
 if __name__ == "__main__":
-    main()
+	main()

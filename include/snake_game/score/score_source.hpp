@@ -56,9 +56,12 @@ public:
 	virtual std::vector<int> topScores(Level level, std::size_t n) const = 0;
 
 	/**
-	 * Deletes every saved game of every level
+	 * Deletes every saved game of one level, leaving the others
+	 *
+	 * Parameters:
+	 * Level level: The level to clear
 	 */
-	virtual void clear() = 0;
+	virtual void clear(Level level) = 0;
 };
 
 /**

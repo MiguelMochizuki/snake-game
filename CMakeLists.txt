@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(snake_game VERSION 2.3.3 LANGUAGES C CXX) # C is needed by SDL3 (GUI build); every C++ toolchain ships a C compiler
+project(snake_game VERSION 2.4.0 LANGUAGES C CXX) # C is needed by SDL3 (GUI build); every C++ toolchain ships a C compiler
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,6 +14,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 option(SNAKE_GAME_BUILD_APPS "Build the game executable" ON)
 option(SNAKE_GAME_BUILD_TESTS "Build unit and end-to-end tests" ON)
 option(SNAKE_GAME_BUILD_GUI "Build snake-gui, the SDL3 front-end (fetched at configure time; implies audio)" OFF)
+option(SNAKE_GAME_BUILD_ICON "Build snake_icon, the tool that draws the app icon artwork (needs no SDL; used by make icon)" OFF)
 option(SNAKE_GAME_BUILD_AUDIO "Build with music and sound output through miniaudio (fetched at configure time)" OFF)
 
 # Compiler warnings, shared by all targets (including tests)
@@ -56,6 +57,21 @@ if(UNIX)
 	target_link_libraries(snake_core PUBLIC pthread)
 endif()
 
+# Drawing code that needs no SDL: the in-memory surface and the PPM writer and the sprites
+add_library(snake_draw STATIC
+	src/gui/pixel_surface.cpp
+	src/gui/ppm.cpp
+	src/gui/sprites.cpp
+)
+target_include_directories(snake_draw PUBLIC include)
+snake_game_set_warnings(snake_draw)
+
+if(SNAKE_GAME_BUILD_ICON)
+	add_executable(snake_icon tools/icon_main.cpp)
+	target_link_libraries(snake_icon PRIVATE snake_draw)
+	snake_game_set_warnings(snake_icon)
+endif()
+
 if(SNAKE_GAME_BUILD_GUI)
 	set(SNAKE_GAME_BUILD_AUDIO ON CACHE BOOL "" FORCE)
 endif()
@@ -93,7 +109,6 @@ if(SNAKE_GAME_BUILD_GUI)
 		src/gui/user_data_dir.cpp
 		src/gui/icon_data.cpp
 		src/gui/canvas.cpp
-		src/gui/ppm.cpp
 		src/gui/bitmap_font.cpp
 		src/gui/sdl_app.cpp
 		src/gui/sdl_key_source.cpp
@@ -102,7 +117,7 @@ if(SNAKE_GAME_BUILD_GUI)
 		src/gui/demo_pilot.cpp
 	)
 	target_include_directories(snake_gui_core PUBLIC include)
-	target_link_libraries(snake_gui_core PUBLIC snake_core SDL3::SDL3)
+	target_link_libraries(snake_gui_core PUBLIC snake_core snake_draw SDL3::SDL3)
 	snake_game_set_warnings(snake_gui_core)
 endif()
 

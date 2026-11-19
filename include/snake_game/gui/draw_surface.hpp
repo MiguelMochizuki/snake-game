@@ -47,14 +47,22 @@ public:
 	virtual void fillRect(int x, int y, int w, int h, Color color) = 0;
 
 	/**
-	 * Fills a circle
+	 * Fills a circle with one horizontal span per row; a surface may override it with something faster
 	 *
 	 * Parameters:
 	 * int cx, int cy: Centre
 	 * int radius: Radius in pixels
 	 * Color color: Fill colour
 	 */
-	virtual void fillCircle(int cx, int cy, int radius, Color color) = 0;
+	virtual void fillCircle(int cx, int cy, int radius, Color color) {
+		for (int dy = -radius; dy <= radius; ++dy) {
+			int dx = 0;
+			while ((dx + 1) * (dx + 1) + dy * dy <= radius * radius) {
+				++dx;
+			}
+			fillRect(cx - dx, cy + dy, 2 * dx + 1, 1, color);
+		}
+	}
 
 	/**
 	 * Shows what was drawn; does nothing on a surface that is not displayed

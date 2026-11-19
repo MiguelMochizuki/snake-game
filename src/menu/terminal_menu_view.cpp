@@ -221,14 +221,17 @@ void TerminalMenuView::showHelp() {
 }
 
 /**
- * Draws the question asked before every saved score is deleted
+ * Draws the question asked before the saved scores of a level are deleted
+ *
+ * Parameters:
+ * Level level: The level that would be cleared
  */
-void TerminalMenuView::showConfirmClear() {
+void TerminalMenuView::showConfirmClear(Level level) {
 	std::ostringstream buf;
 	Painter p(buf, color_);
 	const std::string rule(INNER + 2, '#');
 	const std::vector<std::string> text = {
-		"", "Delete every saved", "score of every", "level?", "", "This cannot be", "undone.",
+		"", "Delete every saved", "score of " + std::string(levelName(level)) + "?", "", "This cannot be", "undone.",
 	};
 
 	buf << "\033[2J\033[H";

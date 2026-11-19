@@ -4,6 +4,7 @@
 build/
 build-audio/
 build-sdl/
+build-icon/
 .docker-build-cache
 
 # ==============================

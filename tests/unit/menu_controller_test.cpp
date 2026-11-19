@@ -85,6 +85,7 @@ public:
 	std::vector<LeaderboardSnapshot> boards;
 	int helpShown = 0;
 	int confirmShown = 0;
+	std::vector<Level> confirmLevels;
 	std::vector<std::string>* log;
 
 	/**
@@ -127,8 +128,9 @@ public:
 	/**
 	 * Records the confirmation question
 	 */
-	void showConfirmClear() override {
+	void showConfirmClear(Level level) override {
 		++confirmShown;
+		confirmLevels.push_back(level);
 		log->push_back("confirm");
 	}
 };
@@ -139,12 +141,14 @@ public:
 class FakeScores : public IScoreSource {
 public:
 	int clears = 0;
+	std::vector<Level> cleared;
 
 	/**
 	 * Counts the call
 	 */
-	void clear() override {
+	void clear(Level level) override {
 		++clears;
+		cleared.push_back(level);
 	}
 
 	/**
@@ -370,12 +374,31 @@ TEST_F(MenuControllerTest, CAsksOnTheLeaderboardThenDeletesOnEnter) {
 	EXPECT_EQ(view.boards.size(), 2u);  // the board is drawn again once cleared
 }
 
+TEST_F(MenuControllerTest, CClearsOnlyTheLevelShown) {
+	RecordingView view(&log);
+	std::vector<Key> script = openLeaderboard();
+	script.insert(script.end(), {specialKey(KeyKind::Right), charKey('c'), enter(), charKey('q')});  // Normal -> Hard, ask, yes, back
+	run(script, view);
+	EXPECT_EQ(view.confirmLevels, (std::vector<Level>{Level::Hard}));
+	EXPECT_EQ(scores.cleared, (std::vector<Level>{Level::Hard}));
+}
+
+TEST_F(MenuControllerTest, LeaderboardStaysOnTheSameLevelAfterClear) {
+	RecordingView view(&log);
+	std::vector<Key> script = openLeaderboard();
+	script.insert(script.end(), {specialKey(KeyKind::Right), charKey('c'), enter(), charKey('q')});
+	run(script, view);
+	ASSERT_EQ(view.boards.size(), 3u);  // opened on Normal, switched to Hard, shown again once cleared
+	EXPECT_EQ(view.boards.back().level, Level::Hard);
+}
+
 TEST_F(MenuControllerTest, CKeepsEverythingOnQ) {
 	RecordingView view(&log);
 	std::vector<Key> script = openLeaderboard();
 	script.insert(script.end(), {charKey('c'), charKey('q')});
 	run(script, view);
 	EXPECT_EQ(view.confirmShown, 1);
+	EXPECT_EQ(view.confirmLevels, (std::vector<Level>{Level::Normal}));
 	EXPECT_EQ(scores.clears, 0);
 }
 

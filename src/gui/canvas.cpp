@@ -138,24 +138,6 @@ void Canvas::fillRect(int x, int y, int w, int h, Color color) {
 }
 
 /**
- * Fills a circle with one horizontal span per row
- *
- * Parameters:
- * int cx, int cy: Centre
- * int radius: Radius in pixels
- * Color color: Fill colour
- */
-void Canvas::fillCircle(int cx, int cy, int radius, Color color) {
-	for (int dy = -radius; dy <= radius; ++dy) {
-		int dx = 0;
-		while ((dx + 1) * (dx + 1) + dy * dy <= radius * radius) {
-			++dx;
-		}
-		fillRect(cx - dx, cy + dy, 2 * dx + 1, 1, color);
-	}
-}
-
-/**
  * Shows what was drawn; does nothing on an off-screen canvas
  */
 void Canvas::present() {

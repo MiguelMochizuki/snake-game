@@ -5,6 +5,7 @@
  */
 #include "snake_game/gui/sdl_renderer.hpp"
 #include "snake_game/gui/bitmap_font.hpp"
+#include "snake_game/gui/sprites.hpp"
 #include "snake_game/gui/theme.hpp"
 #include <algorithm>
 #include <iomanip>
@@ -67,18 +68,6 @@ int hudHeightFor(int canvasH) {
 }
 
 /**
- * Side of the square drawn for one cell, leaving a gap between cells when they are big enough
- *
- * Parameters:
- * int cell: Cell side
- *
- * Returns int: Square side
- */
-int squareFor(int cell) {
-	return cell > 3 ? cell - std::max(1, cell / 16) : cell;
-}
-
-/**
  * Formats a number with a fixed number of decimals
  *
  * Parameters:
@@ -118,7 +107,6 @@ void SdlRenderer::drawBoard(const GameState& state) {
 	const int cols = state.getCols();
 	const int rows = state.getRows();
 	const Layout l = layoutFor(canvas_.width(), canvas_.height(), cols, rows);
-	const int sq = squareFor(l.cell);
 	const int u = unitFor(canvas_.height());
 	auto cellX = [&](int x) { return l.originX + (x + 1) * l.cell; };
 	auto cellY = [&](int y) { return l.originY + (y + 1) * l.cell; };
@@ -130,25 +118,19 @@ void SdlRenderer::drawBoard(const GameState& state) {
 	canvas_.fillRect(fx, fy, fw, fh, tone(theme::WALL));
 	canvas_.fillRect(fx + line, fy + line, fw - 2 * line, fh - 2 * line, tone(theme::SURFACE));
 
-	const auto& grid = state.getOccupied();
+	// The apple goes first, so a snake that covers it (a full board) ends up on top
+	const SpritePalette palette{tone(theme::BODY), tone(theme::HEAD), tone(theme::SCALE), tone(theme::GOLD), tone(theme::BACKGROUND),
+		tone(theme::FOOD), tone(theme::FOOD), tone(theme::STEM), tone(theme::LEAF), tone(theme::SURFACE)};
 	const int foodX = state.getFood().getX();
 	const int foodY = state.getFood().getY();
-	const SnakeSegment* head = state.getSnake().getHead();
-	for (int y = 0; y < rows; ++y) {
-		for (int x = 0; x < cols; ++x) {
-			if (!grid[y * cols + x]) {
-				continue;
-			}
-			if (head && x == head->getX() && y == head->getY()) {
-				// Checked before the food: on a full board the old food cell is under the head
-				canvas_.fillRect(cellX(x), cellY(y), sq, sq, tone(theme::HEAD));
-			} else if (x == foodX && y == foodY) {
-				canvas_.fillCircle(cellX(x) + l.cell / 2, cellY(y) + l.cell / 2, std::max(1, l.cell / 2 - std::max(1, l.cell / 8)), tone(theme::FOOD));
-			} else {
-				canvas_.fillRect(cellX(x), cellY(y), sq, sq, tone(theme::BODY));
-			}
-		}
+	if (!state.getSnake().hasPosition(foodX, foodY)) {
+		drawApple(canvas_, SpriteCell{cellX(foodX), cellY(foodY)}, l.cell, palette);
 	}
+	std::vector<SpriteCell> cells;
+	for (const SnakeSegment& segment : state.getSnake().getSegments()) {
+		cells.push_back(SpriteCell{cellX(segment.getX()), cellY(segment.getY())});
+	}
+	drawSnake(canvas_, cells, l.cell, palette);
 
 	// Score and best on one line above the board, the hint below it, all on the frame's edges
 	const int scale = textScaleFor(canvas_.height());
@@ -214,20 +196,16 @@ void SdlRenderer::render(const GameState& state) {
  * const ScoreStats& stats: Best, games played and average of that level
  */
 void SdlRenderer::printGameOver(Level level, int finalScore, const ScoreStats& stats) {
+	fadeBoard();
 	showPanel("GAME OVER", theme::FOOD, level, finalScore, stats);
 }
 
 /**
- * Draws the victory panel over the last board and shows it
- *
- * Parameters:
- * Level level: The level that was played
- * int finalScore: The final score
- * const ScoreStats& stats: Best, games played and average of that level
+ * Fades the last board to the dark backdrop the end-of-game panels sit on
  */
-void SdlRenderer::printVictory(Level level, int finalScore, const ScoreStats& stats) {
-	// The board fades to a dark backdrop for the panel; pump keeps the window responsive and notices a close request.
-	// Off-screen nobody watches the fade, so it is skipped rather than waited out
+void SdlRenderer::fadeBoard() {
+	// Pump keeps the window responsive and notices a close request. Off-screen nobody watches the fade,
+	// so it is skipped rather than waited out
 	if (last_ && app_.interactive()) {
 		for (int i = 1; i <= FADE_STEPS && !app_.closeRequested(); ++i) {
 			dim_ = 1.0f - (1.0f - FADE_FLOOR) * static_cast<float>(i) / static_cast<float>(FADE_STEPS);
@@ -238,6 +216,18 @@ void SdlRenderer::printVictory(Level level, int finalScore, const ScoreStats& st
 		}
 	}
 	dim_ = FADE_FLOOR;
+}
+
+/**
+ * Draws the victory panel over the faded last board and shows it
+ *
+ * Parameters:
+ * Level level: The level that was played
+ * int finalScore: The final score
+ * const ScoreStats& stats: Best, games played and average of that level
+ */
+void SdlRenderer::printVictory(Level level, int finalScore, const ScoreStats& stats) {
+	fadeBoard();
 	showPanel("YOU WIN", theme::GOLD, level, finalScore, stats);
 }
 

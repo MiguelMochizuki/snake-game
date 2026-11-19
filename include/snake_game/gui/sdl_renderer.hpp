@@ -74,6 +74,11 @@ class SdlRenderer : public IRenderer {
 	void drawBoard(const GameState& state);
 
 	/**
+	 * Fades the last board to the dark backdrop the end-of-game panels sit on; skipped off-screen and cut short when the window is closed
+	 */
+	void fadeBoard();
+
+	/**
 	 * Clears and redraws the last board and the game over panel if one is showing
 	 */
 	void redrawAll();

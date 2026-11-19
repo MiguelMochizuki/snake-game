@@ -302,10 +302,15 @@ std::vector<int> ScoreManager::topScores(Level level, std::size_t n) const {
 }
 
 /**
- * Deletes every saved game of every level, in memory and on disk, and signs the empty file
+ * Deletes every saved game of one level, in memory and on disk, and signs the file again
+ *
+ * Parameters:
+ * Level level: The level to clear
  */
-void ScoreManager::clear() {
-	records_.clear();
+void ScoreManager::clear(Level level) {
+	records_.erase(std::remove_if(records_.begin(), records_.end(), [level](const std::pair<Level, int>& record) {
+		return record.first == level;
+	}), records_.end());
 	writeRecords();
 	writeChecksum();
 }

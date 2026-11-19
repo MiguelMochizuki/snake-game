@@ -34,7 +34,7 @@ public:
 	void show(const MenuSnapshot& snapshot) override;
 	void showLeaderboard(const LeaderboardSnapshot& snapshot) override;
 	void showHelp() override;
-	void showConfirmClear() override;
+	void showConfirmClear(Level level) override;
 };
 
 #endif
