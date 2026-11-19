@@ -215,6 +215,79 @@ TEST(SdlRenderer, RedrawAfterVictoryKeepsTheBoardDark) {
 	EXPECT_EQ(shown, canvas->pixelsRgb());
 }
 
+TEST(SdlRenderer, GameOverDarkensTheBoard) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	ASSERT_FALSE(state.getFood().getX() == 0 && state.getFood().getY() == 0);
+	const Layout l = layoutFor(640, 720, 20, 20);
+	const int px = l.originX + l.cell + l.cell / 2;
+	const int py = l.originY + l.cell + l.cell / 2;
+	renderer.clear();
+	renderer.render(state);
+	const Color before = pixelAt(canvas->pixelsRgb(), 640, px, py);
+	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	const Color after = pixelAt(canvas->pixelsRgb(), 640, px, py);
+	EXPECT_LT(after.r, before.r);
+	EXPECT_LT(after.g, before.g);
+	EXPECT_LT(after.b, before.b);
+}
+
+TEST(SdlRenderer, GameOverDoesNotWaitOffScreen) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	renderer.clear();
+	renderer.render(state);
+	const auto start = std::chrono::steady_clock::now();
+	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::milliseconds(200));
+}
+
+TEST(SdlRenderer, ClosingTheWindowDuringTheGameOverFadeStillDrawsThePanel) {
+	// The reference picture: the same loss with no fade to interrupt
+	std::unique_ptr<Canvas> plain = Canvas::offscreen(640, 720);
+	SdlApp plainApp(*plain, false);
+	SdlRenderer plainRenderer(*plain, plainApp);
+	GameState state(20, 20, 0, 42);
+	plainRenderer.clear();
+	plainRenderer.render(state);
+	plainRenderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, true);
+	SdlRenderer renderer(*canvas, app);
+	renderer.clear();
+	renderer.render(state);
+	app.pump(0);
+	SDL_Event close;
+	SDL_zero(close);
+	close.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
+	SDL_PushEvent(&close);
+	const auto start = std::chrono::steady_clock::now();
+	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	const auto took = std::chrono::steady_clock::now() - start;
+
+	EXPECT_TRUE(app.closeRequested());
+	EXPECT_LT(took, std::chrono::milliseconds(300));
+	EXPECT_EQ(canvas->pixelsRgb(), plain->pixelsRgb());
+}
+
+TEST(SdlRenderer, RedrawAfterGameOverKeepsTheBoardDark) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	renderer.clear();
+	renderer.render(state);
+	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	const std::vector<unsigned char> shown = canvas->pixelsRgb();
+	app.redraw();
+	EXPECT_EQ(shown, canvas->pixelsRgb());
+}
+
 TEST(SdlRenderer, ResetRestoresFullBrightness) {
 	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
 	SdlApp app(*canvas, false);
@@ -242,16 +315,22 @@ TEST(SdlRenderer, TinyCanvasDoesNotCrash) {
 }
 
 TEST(SdlRenderer, GameOverPanelRedrawsTheBoardInsteadOfTrustingTheBackBuffer) {
+	GameState state(20, 20, 0, 42);
+	// The reference: the same loss drawn on a canvas that never held anything else
+	std::unique_ptr<Canvas> clean = Canvas::offscreen(640, 720);
+	SdlApp cleanApp(*clean, false);
+	SdlRenderer cleanRenderer(*clean, cleanApp);
+	cleanRenderer.clear();
+	cleanRenderer.render(state);
+	cleanRenderer.printGameOver(Level::Normal, 0, ScoreStats{});
+
 	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
 	SdlApp app(*canvas, false);
 	SdlRenderer renderer(*canvas, app);
-	GameState state(20, 20, 0, 42);
 	renderer.clear();
 	renderer.render(state);
 	// On a real window the buffer behind present() may hold an older frame: the game over panel must not depend on it
 	canvas->clear(Color{200, 0, 200});
 	renderer.printGameOver(Level::Normal, 0, ScoreStats{});
-	std::vector<unsigned char> px = canvas->pixelsRgb();
-	// The panel hides the head, so check that the stale pixels outside it are gone
-	EXPECT_TRUE(same(pixelAt(px, 640, 0, 0), theme::BACKGROUND));
+	EXPECT_EQ(canvas->pixelsRgb(), clean->pixelsRgb());
 }

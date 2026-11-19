@@ -214,20 +214,16 @@ void SdlRenderer::render(const GameState& state) {
  * const ScoreStats& stats: Best, games played and average of that level
  */
 void SdlRenderer::printGameOver(Level level, int finalScore, const ScoreStats& stats) {
+	fadeBoard();
 	showPanel("GAME OVER", theme::FOOD, level, finalScore, stats);
 }
 
 /**
- * Draws the victory panel over the last board and shows it
- *
- * Parameters:
- * Level level: The level that was played
- * int finalScore: The final score
- * const ScoreStats& stats: Best, games played and average of that level
+ * Fades the last board to the dark backdrop the end-of-game panels sit on
  */
-void SdlRenderer::printVictory(Level level, int finalScore, const ScoreStats& stats) {
-	// The board fades to a dark backdrop for the panel; pump keeps the window responsive and notices a close request.
-	// Off-screen nobody watches the fade, so it is skipped rather than waited out
+void SdlRenderer::fadeBoard() {
+	// Pump keeps the window responsive and notices a close request. Off-screen nobody watches the fade,
+	// so it is skipped rather than waited out
 	if (last_ && app_.interactive()) {
 		for (int i = 1; i <= FADE_STEPS && !app_.closeRequested(); ++i) {
 			dim_ = 1.0f - (1.0f - FADE_FLOOR) * static_cast<float>(i) / static_cast<float>(FADE_STEPS);
@@ -238,6 +234,18 @@ void SdlRenderer::printVictory(Level level, int finalScore, const ScoreStats& st
 		}
 	}
 	dim_ = FADE_FLOOR;
+}
+
+/**
+ * Draws the victory panel over the faded last board and shows it
+ *
+ * Parameters:
+ * Level level: The level that was played
+ * int finalScore: The final score
+ * const ScoreStats& stats: Best, games played and average of that level
+ */
+void SdlRenderer::printVictory(Level level, int finalScore, const ScoreStats& stats) {
+	fadeBoard();
 	showPanel("YOU WIN", theme::GOLD, level, finalScore, stats);
 }
 
