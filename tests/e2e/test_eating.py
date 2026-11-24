@@ -20,9 +20,9 @@ def snake_cells(frame):
 		frame (list[str]): Board rows
 
 	Returns:
-		set: (x, y) of every 'O'
+		set: (x, y) of every 'O' or '@'
 	"""
-	return {(x, y) for y, row in enumerate(frame) for x, ch in enumerate(row) if ch == "O"}
+	return {(x, y) for y, row in enumerate(frame) for x, ch in enumerate(row) if ch in "O@"}
 
 
 def choose(head, d, food):

@@ -97,7 +97,7 @@ TEST(TerminalRendererColor, ColorStripsToPlain) {
 
 TEST(TerminalRendererColor, HeadDistinct) {
 	const std::string board = coloredBoard();
-	const std::string head = "\033[1;92mO";
+	const std::string head = "\033[1;92m@";
 	size_t first = board.find(head);
 	ASSERT_NE(first, std::string::npos);
 	EXPECT_EQ(board.find(head, first + 1), std::string::npos);

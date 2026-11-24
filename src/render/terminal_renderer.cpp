@@ -87,7 +87,7 @@ void TerminalRenderer::render(const GameState& state) {
 				p.put(PLAIN, " ");
 			} else if (x == headX && y == headY) {
 				// Checked before the food: on a full board the old food cell is under the head
-				p.put(HEAD, "O");
+				p.put(HEAD, "@");
 			} else if (x == foodX && y == foodY) {
 				p.put(FOOD, "*");
 			} else {

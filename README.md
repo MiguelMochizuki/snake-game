@@ -169,7 +169,7 @@ While the game is paused the board is hidden, so you cannot plan your next moves
 
 After a game ends, you see the level, your final score and that level's statistics. Press **R** to play again straight away, **M** to go back to the menu (for example to change the level; your choice is kept) or **Q** to quit.
 
-Set `NO_COLOR` to any non-empty value to turn colors off, for example `NO_COLOR=1 ./snake`. An empty value keeps them on, as [no-color.org](https://no-color.org) describes.
+Set `NO_COLOR` to any non-empty value to turn colors off, for example `NO_COLOR=1 ./snake`. An empty value keeps them on, as [no-color.org](https://no-color.org) describes. The snake's head is drawn as `@` and its body as `O`, so you can tell them apart without colors.
 
 ### Sound
 
