@@ -5,6 +5,7 @@
  */
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <sstream>
 
 #include "snake_game/game/game_state.hpp"
@@ -71,6 +72,33 @@ TEST(TerminalRenderer, HeadIsDrawnDifferentlyFromTheBodyWithoutColor) {
 	const size_t first = board.find('@');
 	ASSERT_NE(first, std::string::npos);
 	EXPECT_EQ(board.find('@', first + 1), std::string::npos);
+}
+
+TEST(TerminalRenderer, TheBoardScreenFitsA24LineTerminal) {
+	GameState state(20, 20, 0, 42);
+	std::ostringstream out;
+	TerminalRenderer renderer(out, false);
+	renderer.render(state);
+	const std::string board = out.str();
+	// 22 lines of board and frame plus one status line; the last newline ends the 23rd
+	EXPECT_EQ(std::count(board.begin(), board.end(), '\n'), 23);
+}
+
+TEST(TerminalRenderer, EndPanelsAreDrawnOverTheBoardAndLeaveTheCursorBelowIt) {
+	for (bool win : {false, true}) {
+		std::ostringstream out;
+		TerminalRenderer renderer(out, false);
+		if (win) {
+			renderer.printVictory(Level::Normal, 5, ScoreStats{5, 1});
+		} else {
+			renderer.printGameOver(Level::Normal, 5, ScoreStats{5, 1, "/no/such"});
+		}
+		const std::string text = out.str();
+		EXPECT_EQ(text.rfind("\033[6;1H", 0), 0u);
+		EXPECT_EQ(text.compare(text.size() - 7, 7, "\033[24;1H"), 0);
+		// The tallest panel (with the "not saved" line) still ends above the status line, which is line 23
+		EXPECT_LE(6 + std::count(text.begin(), text.end(), '\n'), 22);
+	}
 }
 
 TEST(TerminalRenderer, ClearEscapes) {

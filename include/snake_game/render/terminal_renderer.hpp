@@ -68,7 +68,7 @@ public:
 	void render(const GameState& state) override;
 
 	/**
-	 * Prints the end of game panel: a centered title, the statistics and the key hints
+	 * Prints the end of game panel over the board, from line 6: a centered title, the statistics and the key hints
 	 *
 	 * Parameters:
 	 * const std::string& title: Panel title; whatever does not fit in the 30 columns after leftPad is cut off

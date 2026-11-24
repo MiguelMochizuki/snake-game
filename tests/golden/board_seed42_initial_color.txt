@@ -20,6 +20,4 @@
 [36m#[0m                    [36m#[0m
 [36m#[0m                    [36m#[0m
 [36m######################[0m
-[1mScore:[0m [1;33m0[0m
-[1mBest:[0m [1;33m0[0m
-[2mControls: WASD to move, P pause, Q end game[0m
+[1mScore:[0m [1;33m0[0m  [1mBest:[0m [1;33m0[0m  [2mP pause, Q end game[0m

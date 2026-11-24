@@ -77,7 +77,7 @@ with tempfile.TemporaryDirectory() as tmp, Game(sys.argv[1], cwd=tmp, frame_ms=1
 			key = choose(head, d, food)
 			if KEYS[key] != d:
 				game.send(key)
-	game.wait_for(r"Score: 1\n")
+	game.wait_for(r"Score: 1  ")
 	panel = end_game(game)
 	assert re.search(r"Final Score:\s+1\n", panel), panel
 	assert re.search(r"Best Score:\s+1\n", panel), panel

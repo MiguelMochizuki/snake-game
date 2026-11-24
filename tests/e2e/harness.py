@@ -14,7 +14,7 @@ import termios
 import time
 
 ANSI_RE = re.compile(r"\033\[[0-9;]*[A-Za-z]")
-FRAME_END = "Controls: WASD to move, P pause, Q end game"
+FRAME_END = "P pause, Q end game"
 
 # Keys with no effect in any state: function/navigation keys, modified keys, control bytes, UTF-8, other characters
 UNREGISTERED_KEYS = [
@@ -67,7 +67,7 @@ class Game:
 	int pos: Offset in the stripped output where the next wait_for starts
 	"""
 
-	def __init__(self, binary, cwd=None, env=None, frame_ms=30, seed=1):
+	def __init__(self, binary, cwd=None, env=None, frame_ms=30, seed=1, size=None):
 		"""
 		Spawns the game
 
@@ -77,11 +77,14 @@ class Game:
 			env (dict): Extra environment variables, applied after the SNAKE_* defaults (SNAKE_SKIP_MENU defaults to "1"; pass "" to see the menu)
 			frame_ms (int): Frame time in ms; SNAKE_FRAME_MS gets frame_ms * scale() so slow hosts slow the game too
 			seed (int): Value for SNAKE_SEED
+			size (tuple): (rows, cols) to give the pty; by default it is unsized (0x0)
 		"""
 		full_env = dict(os.environ, SNAKE_FRAME_MS=str(int(frame_ms * scale())), SNAKE_SEED=str(seed), SNAKE_SKIP_MENU="1",
 			SNAKE_DATA_DIR=os.path.join(cwd or os.getcwd(), "data"))
 		full_env.update(env or {})
 		self.master, self.slave = os.openpty()
+		if size:
+			fcntl.ioctl(self.slave, termios.TIOCSWINSZ, struct.pack("HHHH", size[0], size[1], 0, 0))
 		self.out = ""
 		self.pos = 0
 		self.proc = subprocess.Popen([binary], cwd=cwd, env=full_env, stdin=self.slave,
