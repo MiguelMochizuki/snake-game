@@ -98,7 +98,7 @@ public:
 	 * IKeySource& keys: Source of key presses
 	 * const IInputHandler& handler: Maps keys to actions
 	 *
-	 * Returns TickInput: quit if any key mapped to Quit, and every move in order; pause is set by Pause and AutoPause; Restart, Menu and Confirm are ignored
+	 * Returns TickInput: quit if any key mapped to Quit, and every move in order; pause is set by Pause, AutoPause and Back; Restart, Menu and Confirm are ignored
 	 */
 	static TickInput readTick(IKeySource& keys, const IInputHandler& handler);
 
@@ -110,7 +110,7 @@ public:
 	 * const IInputHandler& handler: Maps keys to actions
 	 * const std::function<void()>& showPanel: Draws the game over panel, called before the flush
 	 *
-	 * Returns GameEnd: Restart or Menu on those keys; Quit on Quit or EOF. Moves and unmapped keys are ignored
+	 * Returns GameEnd: Restart or Menu on those keys (Back goes to the menu); Quit on Quit or EOF. Moves and unmapped keys are ignored
 	 */
 	static GameEnd awaitChoice(IKeySource& keys, const IInputHandler& handler,
 		const std::function<void()>& showPanel);
@@ -123,7 +123,7 @@ public:
 	 * const IInputHandler& handler: Maps keys to actions
 	 * const std::function<void()>& showPanel: Draws the pause panel, called before the flush
 	 *
-	 * Returns bool: true on Pause (resume, with the keys typed while paused discarded); false on Quit or EOF. Moves, AutoPause and unmapped keys are ignored
+	 * Returns bool: true on Pause or Back (resume, with the keys typed while paused discarded); false on Quit or EOF. Moves, AutoPause and unmapped keys are ignored
 	 */
 	static bool awaitResume(IKeySource& keys, const IInputHandler& handler,
 		const std::function<void()>& showPanel);

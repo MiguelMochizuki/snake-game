@@ -19,7 +19,7 @@
  * Parameters:
  * SDL_Keycode code: The SDL key
  *
- * Returns std::optional<Key>: Arrows to Up/Down/Left/Right, Return and keypad Enter to Enter, letters to the lower-case char; nullopt for any other key
+ * Returns std::optional<Key>: Arrows to Up/Down/Left/Right, Return and keypad Enter to Enter, Escape to Escape, letters to the lower-case char; nullopt for any other key
  */
 std::optional<Key> keyFromSdl(SDL_Keycode code);
 

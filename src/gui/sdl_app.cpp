@@ -23,6 +23,7 @@ std::optional<Key> keyFromSdl(SDL_Keycode code) {
 		case SDLK_RIGHT: return specialKey(KeyKind::Right);
 		case SDLK_RETURN:
 		case SDLK_KP_ENTER: return specialKey(KeyKind::Enter);
+		case SDLK_ESCAPE: return specialKey(KeyKind::Escape);
 		default: break;
 	}
 	if (code >= SDLK_A && code <= SDLK_Z) {
@@ -49,8 +50,8 @@ void SdlApp::handle(const void* event) {
 	switch (e.type) {
 		case SDL_EVENT_KEY_DOWN:
 			if (std::optional<Key> key = keyFromSdl(e.key.key)) {
-				// Only steering and menu navigation repeat while held; a held Enter or Q must not skip through screens
-				const bool repeatable = key->kind != KeyKind::Enter && !(key->kind == KeyKind::Char && std::string("wasd").find(key->ch) == std::string::npos);
+				// Only steering and menu navigation repeat while held; a held Enter, Esc or Q must not skip through screens
+				const bool repeatable = key->kind != KeyKind::Enter && key->kind != KeyKind::Escape && !(key->kind == KeyKind::Char && std::string("wasd").find(key->ch) == std::string::npos);
 				if (!e.key.repeat || repeatable) {
 					keys_.push_back(*key);
 				}

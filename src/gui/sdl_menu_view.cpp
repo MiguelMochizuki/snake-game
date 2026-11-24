@@ -317,7 +317,7 @@ void SdlMenuView::showLeaderboard(const LeaderboardSnapshot& snapshot) {
 			}
 			p.rule();
 			p.line("A/D level  C clear", theme::DIM);
-			p.line("Enter back", theme::DIM);
+			p.line("Enter/Esc back", theme::DIM);
 		});
 	};
 	draw();
@@ -334,7 +334,7 @@ void SdlMenuView::showHelp() {
 			p.gap(2);
 			p.rule();
 			const std::vector<std::vector<std::string>> paragraphs = {
-				{"Steer: WASD or", "the arrow keys.", "P pauses, Q ends", "the game."},
+				{"Steer: WASD or", "the arrow keys.", "P or Esc pauses;", "Q ends the game."},
 				{"Eat the red dot", "to grow and", "score points."},
 				{"Hitting a wall", "or yourself", "ends the game."},
 				{"After a game:", "R again, M menu", "Q quit"},
@@ -348,7 +348,7 @@ void SdlMenuView::showHelp() {
 				}
 			}
 			p.rule();
-			p.line("Enter back", theme::DIM);
+			p.line("Enter/Esc back", theme::DIM);
 		});
 	};
 	draw();
@@ -374,7 +374,7 @@ void SdlMenuView::showConfirmClear(Level level) {
 			p.line("This cannot be undone.", theme::FOOD);
 			p.rule();
 			p.line("Enter delete", theme::DIM);
-			p.line("Q keep", theme::DIM);
+			p.line("Q/Esc keep", theme::DIM);
 		});
 	};
 	draw();

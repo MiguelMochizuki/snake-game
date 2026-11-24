@@ -59,6 +59,10 @@ TEST(SdlKeys, EnterAndKeypadEnterMapToEnter) {
 	EXPECT_EQ(keyFromSdl(SDLK_KP_ENTER), specialKey(KeyKind::Enter));
 }
 
+TEST(SdlKeys, EscapeMapsToEscape) {
+	EXPECT_EQ(keyFromSdl(SDLK_ESCAPE), specialKey(KeyKind::Escape));
+}
+
 TEST(SdlKeys, UnmappedKeyIsNullopt) {
 	EXPECT_FALSE(keyFromSdl(SDLK_F1).has_value());
 	EXPECT_FALSE(keyFromSdl(SDLK_LSHIFT).has_value());
@@ -170,6 +174,15 @@ TEST(SdlKeys, HeldEnterDoesNotRepeat) {
 	app.keys().clear();
 	pushRepeat(SDLK_RETURN);
 	pushRepeat(SDLK_Q);
+	app.pump(0);
+	EXPECT_TRUE(app.keys().empty());
+}
+
+TEST(SdlKeys, HeldEscapeDoesNotRepeat) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(32, 32);
+	SdlApp app(*canvas, true);
+	app.keys().clear();
+	pushRepeat(SDLK_ESCAPE);
 	app.pump(0);
 	EXPECT_TRUE(app.keys().empty());
 }

@@ -52,6 +52,20 @@ TEST(AwaitResume, PResumes) {
 	EXPECT_TRUE(keys.waits.empty());
 }
 
+TEST(AwaitResume, EscResumesToo) {
+	ScriptedKeys keys;
+	CompositeInputHandler input = makeInput();
+	keys.waits = {charKey('x'), specialKey(KeyKind::Escape)};
+	EXPECT_TRUE(GameEngine::awaitResume(keys, input, [] {}));
+}
+
+TEST(AwaitChoice, EscGoesToTheMenu) {
+	ScriptedKeys keys;
+	CompositeInputHandler input = makeInput();
+	keys.waits = {charKey('x'), specialKey(KeyKind::Escape)};
+	EXPECT_EQ(GameEngine::awaitChoice(keys, input, [] {}), GameEnd::Menu);
+}
+
 TEST(AwaitResume, QuitAndEofDoNotResume) {
 	CompositeInputHandler input = makeInput();
 	ScriptedKeys quit;
@@ -74,7 +88,8 @@ TEST(AwaitResume, MovesAndRestartsWhilePausedAreIgnored) {
 TEST(ReadTick, PauseAndLostFocusAskForAPause) {
 	CompositeInputHandler input = makeInput();
 	ScriptedPolls keys;
-	keys.polls = {{charKey('p')}, {specialKey(KeyKind::FocusLost)}, {charKey('d')}};
+	keys.polls = {{charKey('p')}, {specialKey(KeyKind::FocusLost)}, {specialKey(KeyKind::Escape)}, {charKey('d')}};
+	EXPECT_TRUE(GameEngine::readTick(keys, input).pause);
 	EXPECT_TRUE(GameEngine::readTick(keys, input).pause);
 	EXPECT_TRUE(GameEngine::readTick(keys, input).pause);
 	EXPECT_FALSE(GameEngine::readTick(keys, input).pause);

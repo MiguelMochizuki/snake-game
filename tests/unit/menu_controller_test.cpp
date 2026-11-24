@@ -427,6 +427,34 @@ TEST_F(MenuControllerTest, ConfirmationIgnoresOtherKeysAndEofKeepsEverything) {
 	EXPECT_EQ(scores.clears, 0);
 }
 
+TEST_F(MenuControllerTest, EscGoesBackFromTheLeaderboardAndHelp) {
+	RecordingView view(&log);
+	const Key esc = specialKey(KeyKind::Escape);
+	std::vector<Key> script = openLeaderboard();
+	script.insert(script.end(), {esc, specialKey(KeyKind::Up), specialKey(KeyKind::Up), specialKey(KeyKind::Down), specialKey(KeyKind::Down),
+		specialKey(KeyKind::Down), enter(), esc, specialKey(KeyKind::Up), specialKey(KeyKind::Up), specialKey(KeyKind::Up), enter()});
+	MenuResult r = run(script, view);
+	EXPECT_EQ(view.boards.size(), 1u);
+	EXPECT_EQ(view.helpShown, 1);
+	EXPECT_TRUE(r.start);
+}
+
+TEST_F(MenuControllerTest, EscCancelsTheClearConfirmation) {
+	RecordingView view(&log);
+	std::vector<Key> script = openLeaderboard();
+	script.insert(script.end(), {charKey('c'), specialKey(KeyKind::Escape), charKey('q')});
+	run(script, view);
+	EXPECT_EQ(view.confirmShown, 1);
+	EXPECT_EQ(scores.clears, 0);
+}
+
+TEST_F(MenuControllerTest, EscDoesNothingOnTheMainMenu) {
+	RecordingView view(&log);
+	MenuResult r = run({specialKey(KeyKind::Escape), specialKey(KeyKind::Escape), enter()}, view);
+	EXPECT_TRUE(r.start);
+	EXPECT_EQ(view.shown.size(), 3u);
+}
+
 TEST_F(MenuControllerTest, CDoesNothingOnTheMenuItself) {
 	RecordingView view(&log);
 	run({charKey('c'), enter()}, view);

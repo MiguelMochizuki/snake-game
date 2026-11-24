@@ -46,7 +46,7 @@ bool runConfirmClear(IKeySource& keys, const IInputHandler& input, IMenuView& vi
 			scores.clear(level);
 			return true;
 		}
-		if (action == Action::Quit) {
+		if (action == Action::Quit || action == Action::Back) {
 			return true;
 		}
 	}
@@ -81,7 +81,7 @@ bool runLeaderboard(IKeySource& keys, const IInputHandler& input, IMenuView& vie
 			if (!runConfirmClear(keys, input, view, scores, level)) {
 				return false;
 			}
-		} else if (action == Action::Confirm || action == Action::Quit) {
+		} else if (action == Action::Confirm || action == Action::Quit || action == Action::Back) {
 			return true;
 		}
 	}
@@ -105,7 +105,7 @@ bool runHelp(IKeySource& keys, const IInputHandler& input, IMenuView& view) {
 			return false;
 		}
 		std::optional<Action> action = input.handle(*key);
-		if (action == Action::Confirm || action == Action::Quit) {
+		if (action == Action::Confirm || action == Action::Quit || action == Action::Back) {
 			return true;
 		}
 	}

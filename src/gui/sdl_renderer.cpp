@@ -337,7 +337,7 @@ void SdlRenderer::printPaused() {
 		canvas_.fillRect(left, ty, w - 2 * pad, border, theme::WALL);
 		ty += border + u;
 		int px = left;
-		for (const auto& key : {std::make_pair("P", "resume"), std::make_pair("Q", "end game")}) {
+		for (const auto& key : {std::make_pair("P/Esc", "resume"), std::make_pair("Q", "end game")}) {
 			textAt(px, key.first, theme::HEAD);
 			px += font::textWidth(std::string(key.first) + " ", scale);
 			textAt(px, key.second, theme::LABEL);
