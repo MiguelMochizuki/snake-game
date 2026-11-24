@@ -6,16 +6,18 @@
 #include "snake_game/audio/synth.hpp"
 #include "snake_game/audio/score.hpp"
 #include <algorithm>
+#include <cctype>
 #include <cmath>
+#include <cstdlib>
+#include <string>
 
 namespace {
 
-const float ARPEGGIO_GAIN = 0.15f;
+// With several accompaniment notes at once each one gets 1/sqrt(n) of the gain, so a full chord is not much louder
+const float ACCOMPANIMENT_GAIN = 0.15f;
 const float MELODY_GAIN = 0.10f;
-const float CHORD_GAIN = 0.04f;  // per note of the final chord
-const int CHORD_STEPS = 16;      // the final chord rings for one bar
-const double MELODY_ATTACK = 0.008;   // seconds
-const double MELODY_RELEASE = 0.03;   // seconds, so repeated notes do not click
+const double NOTE_ATTACK = 0.008;   // seconds
+const double NOTE_RELEASE = 0.03;   // seconds, so repeated notes do not click
 
 struct BlipSpec {
 	double hz;
@@ -23,8 +25,8 @@ struct BlipSpec {
 	float gain;
 };
 
-// Music commands posted by startMusic and stopMusic
-const int CMD_NONE = 0, CMD_START = 1, CMD_STOP = 2;
+// Music commands posted by startMusic, startRandomPiece and stopMusic
+const int CMD_NONE = 0, CMD_START = 1, CMD_STOP = 2, CMD_NEW_PIECE = 3;
 
 // Indexed by Blip: Eat, GameOver, MenuMove, MenuSelect, Win
 const BlipSpec BLIPS[5] = {{1046.5, 0.08, 0.3f}, {196.0, 0.25, 0.3f}, {523.25, 0.04, 0.25f}, {1174.66, 0.06, 0.25f}, {1318.5, 0.35, 0.3f}};
@@ -67,14 +69,37 @@ float triangle(double phase) {
  * Parameters:
  * int sampleRate: Sample rate in Hz
  */
-Synth::Synth(int sampleRate) : rate_(sampleRate) {
+Synth::Synth(int sampleRate, unsigned seed) : rate_(sampleRate), rng_(seed) {
+	// SNAKE_PIECE=<number from 1 or part of the title> plays that piece in every game, to listen to a piece on demand
+	const char* wanted = std::getenv("SNAKE_PIECE");
+	if (wanted == nullptr || *wanted == '\0') {
+		return;
+	}
+	std::string text(wanted);
+	std::transform(text.begin(), text.end(), text.begin(), [](unsigned char c) { return std::tolower(c); });
+	const bool number = std::all_of(text.begin(), text.end(), [](unsigned char c) { return std::isdigit(c) != 0; });
+	for (int i = 0; i < PIECE_COUNT; ++i) {
+		std::string title(PIECES[i].title);
+		std::transform(title.begin(), title.end(), title.begin(), [](unsigned char c) { return std::tolower(c); });
+		if (number ? std::atoi(text.c_str()) == i + 1 : title.find(text) != std::string::npos) {
+			forced_ = piece_ = i;
+			return;
+		}
+	}
 }
 
 /**
- * Starts the music from the beginning
+ * Starts the music, where it stopped (from the first piece when it never played)
  */
 void Synth::startMusic() {
 	command_ = CMD_START;
+}
+
+/**
+ * Starts the music with a piece chosen at random, other than the last one, from its beginning
+ */
+void Synth::startRandomPiece() {
+	command_ = CMD_NEW_PIECE;
 }
 
 /**
@@ -95,6 +120,72 @@ void Synth::trigger(Blip blip) {
 }
 
 /**
+ * Moves to another piece (the one SNAKE_PIECE names, if any), chosen at random and never the one that was playing, and starts it from the beginning.
+ * Each easter egg has 1% of the chance and the other pieces share the rest equally
+ */
+void Synth::chooseOtherPiece() {
+	if (forced_ >= 0) {
+		piece_ = forced_;
+	} else if (PIECE_COUNT > 1) {
+		int rare = 0;
+		for (int i = 0; i < PIECE_COUNT; ++i) {
+			rare += PIECES[i].rare ? 1 : 0;
+		}
+		const double common = rare < PIECE_COUNT ? (100.0 - rare) / (PIECE_COUNT - rare) : 1.0;
+		double total = 0.0;
+		for (int i = 0; i < PIECE_COUNT; ++i) {
+			total += i == piece_ ? 0.0 : (PIECES[i].rare ? 1.0 : common);
+		}
+		double pick = static_cast<double>(rng_() % 1000000u) / 1000000.0 * total;
+		int chosen = piece_;
+		for (int i = 0; i < PIECE_COUNT; ++i) {
+			if (i == piece_) {
+				continue;
+			}
+			chosen = i;
+			pick -= PIECES[i].rare ? 1.0 : common;
+			if (pick < 0.0) {
+				break;
+			}
+		}
+		piece_ = chosen;
+	}
+	pos_ = 0;
+	next_ = 0;
+	for (Voice& v : voices_) {
+		v.age = v.length = 0;
+	}
+}
+
+/**
+ * Starts a note, taking the place of the oldest voice when all are busy
+ *
+ * Parameters:
+ * const ScoreNote& note: The note to start
+ */
+void Synth::startNote(const ScoreNote& note) {
+	Voice* slot = &voices_[0];
+	for (Voice& v : voices_) {
+		if (v.age >= v.length) {
+			slot = &v;
+			break;
+		}
+		if (v.age > slot->age) {
+			slot = &v;
+		}
+	}
+	slot->hz = midiFrequency(note.pitch);
+	slot->age = 0;
+	slot->length = std::max(1, static_cast<int>(static_cast<long long>(note.length) * rate_ / 1000));
+	slot->melody = note.melody != 0;
+	slot->gain = static_cast<float>(note.velocity) / 100.0f;
+}
+
+int Synth::piece() const {
+	return piece_;
+}
+
+/**
  * Fills a buffer with mono samples in [-1, 1]
  *
  * Parameters:
@@ -104,13 +195,14 @@ void Synth::trigger(Blip blip) {
 void Synth::render(float* out, int frames) {
 	switch (command_.exchange(CMD_NONE)) {
 	case CMD_START:
-		step_ = 0;
-		stepPos_ = 0;
-		melodyIdx_ = 0;
 		playing_ = true;
 		break;
 	case CMD_STOP:
 		playing_ = false;
+		break;
+	case CMD_NEW_PIECE:
+		chooseOtherPiece();
+		playing_ = true;
 		break;
 	default:
 		break;
@@ -123,47 +215,46 @@ void Synth::render(float* out, int frames) {
 		blipTotal_ = blipLeft_ = static_cast<int>(b.seconds * rate_);
 		blipPos_ = 0;
 	}
-	// 10022 samples per sixteenth at 44100 Hz and 66 BPM
-	const int stepLen = static_cast<int>(rate_ * 60.0 / TEMPO_BPM / 4.0);
-	const int attack = static_cast<int>(MELODY_ATTACK * rate_);
-	const int release = static_cast<int>(MELODY_RELEASE * rate_);
+	const int attack = static_cast<int>(NOTE_ATTACK * rate_);
+	const int release = static_cast<int>(NOTE_RELEASE * rate_);
 	for (int i = 0; i < frames; ++i) {
 		float sample = 0.0f;
 		if (playing_) {
-			// Every note restarts its phase, so the whole piece repeats exactly
-			if (step_ < ARPEGGIO_STEPS) {
-				const double phase = std::fmod(midiFrequency(ARPEGGIO_DATA[step_]) * stepPos_ / rate_, 1.0);
-				const float fade = 1.0f - 0.55f * static_cast<float>(stepPos_) / static_cast<float>(stepLen);
-				sample += ARPEGGIO_GAIN * fade * triangle(phase);
-			} else if (step_ < ARPEGGIO_STEPS + CHORD_STEPS) {
-				const int t = (step_ - ARPEGGIO_STEPS) * stepLen + stepPos_;
-				const float fade = 1.0f - static_cast<float>(t) / static_cast<float>(CHORD_STEPS * stepLen);
-				for (int note : FINAL_CHORD) {
-					sample += CHORD_GAIN * fade * triangle(std::fmod(midiFrequency(note) * t / rate_, 1.0));
+			const Piece& piece = PIECES[piece_];
+			while (next_ < piece.count && static_cast<long long>(piece.notes[next_].start) * rate_ / 1000 <= pos_) {
+				startNote(piece.notes[next_++]);
+			}
+			int accompaniment = 0;
+			for (const Voice& v : voices_) {
+				if (v.age < v.length && !v.melody) {
+					++accompaniment;
 				}
 			}
-			while (melodyIdx_ < MELODY_COUNT && MELODY[melodyIdx_].start + MELODY[melodyIdx_].length <= step_) {
-				++melodyIdx_;
-			}
-			if (melodyIdx_ < MELODY_COUNT && MELODY[melodyIdx_].start <= step_) {
-				const MelodyNote& m = MELODY[melodyIdx_];
-				const int t = (step_ - m.start) * stepLen + stepPos_;
-				const int left = m.length * stepLen - t;
+			const float share = accompaniment > 0 ? ACCOMPANIMENT_GAIN / std::sqrt(static_cast<float>(accompaniment)) : 0.0f;
+			for (Voice& v : voices_) {
+				if (v.age >= v.length) {
+					continue;
+				}
+				const double phase = std::fmod(v.hz * v.age / rate_, 1.0);
 				float env = 1.0f;
-				if (t < attack) {
-					env = static_cast<float>(t) / static_cast<float>(attack);
+				if (v.age < attack) {
+					env = static_cast<float>(v.age) / static_cast<float>(attack);
 				}
+				const int left = v.length - v.age;
 				if (left < release) {
 					env = std::min(env, static_cast<float>(left) / static_cast<float>(release));
 				}
-				sample += MELODY_GAIN * env * square(std::fmod(midiFrequency(m.pitch) * t / rate_, 1.0));
-			}
-			if (++stepPos_ >= stepLen) {
-				stepPos_ = 0;
-				if (++step_ >= SCORE_STEPS) {
-					step_ = 0;
-					melodyIdx_ = 0;
+				if (v.melody) {
+					sample += MELODY_GAIN * v.gain * env * square(phase);
+				} else {
+					// A plucked note: it fades while it rings
+					const float fade = 1.0f - 0.55f * static_cast<float>(v.age) / static_cast<float>(v.length);
+					sample += share * v.gain * env * fade * triangle(phase);
 				}
+				++v.age;
+			}
+			if (++pos_ >= static_cast<long long>(piece.endMs + REST_BETWEEN_PIECES_MS) * rate_ / 1000) {
+				chooseOtherPiece();
 			}
 		}
 		if (blipLeft_ > 0) {

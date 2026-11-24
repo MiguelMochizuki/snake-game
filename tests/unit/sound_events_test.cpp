@@ -34,6 +34,7 @@ public:
 	void eat() override { events.push_back("eat"); }
 	void gameOver() override { events.push_back("gameOver"); }
 	void musicStart() override { events.push_back("musicStart"); }
+	void musicResume() override { events.push_back("musicResume"); }
 	void musicStop() override { events.push_back("musicStop"); }
 	void win() override { events.push_back("win"); }
 	void menuMove() override { events.push_back("menuMove"); }
@@ -156,7 +157,7 @@ TEST(SoundEvents, NullSoundAndBellIgnoreNewMethods) {
 }
 
 TEST(SoundEvents, SynthSoundForwardsToSynth) {
-	Synth synth(44100);
+	Synth synth(44100, 1);
 	SynthSound sound(synth);
 	std::vector<float> out(2000);
 	sound.menuSelect();

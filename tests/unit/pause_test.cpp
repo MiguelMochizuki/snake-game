@@ -6,6 +6,8 @@
 #include <gtest/gtest.h>
 
 #include <deque>
+#include <string>
+#include <vector>
 
 #include "engine_fakes.hpp"
 #include "snake_game/game/game_engine.hpp"
@@ -38,6 +40,23 @@ public:
 		polls.pop_front();
 		return batch;
 	}
+};
+
+/**
+ * Sound that records which music calls the engine makes
+ *
+ * Attributes:
+ * std::vector<std::string> events: The calls, in order
+ */
+class MusicLog : public ISound {
+public:
+	std::vector<std::string> events;
+
+	void eat() override {}
+	void gameOver() override {}
+	void musicStart() override { events.push_back("start"); }
+	void musicResume() override { events.push_back("resume"); }
+	void musicStop() override { events.push_back("stop"); }
 };
 
 }  // namespace
@@ -144,4 +163,21 @@ TEST(Pause, TheBoardIsDrawnAgainFromScratchOnResume) {
 	engine.run();
 
 	EXPECT_GE(renderer.resets, 1);
+}
+
+TEST(Pause, TheMusicStopsWhilePausedAndGoesOnFromWhereItWasInsteadOfPickingAnotherPiece) {
+	TempDir dir;
+	ScriptedPolls keys;
+	keys.polls = {{charKey('p')}};
+	keys.waits = {charKey('p')};
+	CompositeInputHandler input = makeInput();
+	RecordingRenderer renderer;
+	MusicLog sound;
+	ScoreManager store(dir.path.string());
+	GameEngine engine(keys, input, renderer, store, 20, 20, 0, 42);
+	engine.setSound(&sound);
+
+	engine.run();
+
+	EXPECT_EQ(sound.events, (std::vector<std::string>{"start", "stop", "resume", "stop"}));
 }
