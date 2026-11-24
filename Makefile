@@ -166,6 +166,16 @@ else ifeq ($(OS_NAME),Linux)
 	@bash tools/install_desktop.sh uninstall $(GUI_EXECUTABLE)
 	@echo "$(YELLOW)Removed the Snake binary, entry and icon$(NC)"
 endif
+	@echo "Your scores were kept; make clean-user-data removes them."
+
+# Removes the scores both versions keep for you (not the ./data of this checkout: make clean-data does that)
+.PHONY: clean-user-data
+clean-user-data:
+ifeq ($(filter Darwin Linux,$(OS_NAME)),)
+	@echo "$(YELLOW)On Windows, delete %APPDATA%\\snake-game and %APPDATA%\\snake-game-terminal$(NC)"
+else
+	@bash tools/clean_user_data.sh
+endif
 
 # Draws the icon with the game's own sprites (a small tool that needs no SDL), then packs it with Python 3 and
 # Pillow (pip install pillow)
@@ -250,6 +260,7 @@ help:
 	@echo "$(BLUE)Clean:$(NC)"
 	@echo "  make clean          - Remove all build directories"
 	@echo "  make clean-data     - Remove local score data"
+	@echo "  make clean-user-data - Remove the scores kept for your user (Linux, macOS)"
 	@echo "  make rebuild        - Clean and rebuild the terminal game"
 	@echo ""
 	@echo "$(BLUE)Tools:$(NC)"

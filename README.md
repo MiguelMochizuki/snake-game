@@ -299,6 +299,17 @@ Two windows of the same version can run at once: each save re-reads the file fir
 
 Files from v1.x (`best_score.txt`, `score_history.txt`, `score_checksum.txt`) are imported once as Normal scores if their checksum is valid. They are never changed or deleted. Version 1 was terminal-only and always saved to `data/` in the directory it was started from, so the terminal game imports them when you start it from that same directory (it keeps using that `data/` folder) or when `SNAKE_DATA_DIR` points to it. The graphical version came later and has nothing to import.
 
+### Removing your scores
+
+Uninstalling leaves the scores in place, so a reinstall finds them. To remove them too, uninstall first and then delete the two folders described above (`snake-game` for the graphical version, `snake-game-terminal` for the terminal one), plus any `data/` folder you started the terminal game from:
+
+- **Linux and macOS, from a source checkout:** `make uninstall-gui`, then `make clean-user-data`. `make clean-data` is the one that removes the `data/` folder of the checkout.
+- **Linux:** `rm -rf ~/.local/share/snake-game ~/.local/share/snake-game-terminal` (under `$XDG_DATA_HOME` if you set it).
+- **macOS:** `rm -rf ~/Library/Application\ Support/snake-game ~/Library/Application\ Support/snake-game-terminal`.
+- **Windows:** delete `%APPDATA%\snake-game` and `%APPDATA%\snake-game-terminal` in Explorer.
+
+Inside the game, **C** on the leaderboard clears one level at a time.
+
 ### Demo frames
 
 `snake-gui --demo --frames DIR` writes `frame-NNNNN.ppm` files, which `docs/snake-gui.gif` is built from (see [Graphical version](#graphical-version)). The GIF is a static sample checked into the repository.
