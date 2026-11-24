@@ -189,7 +189,7 @@ TEST_F(ScoreManagerTest, PersistsAcrossInstances) {
 	EXPECT_DOUBLE_EQ(m2.averageScore(Level::Normal), 7.5);
 }
 
-TEST_F(ScoreManagerTest, MissingChecksumWipesHistory) {
+TEST_F(ScoreManagerTest, MissingChecksumZeroesScoresKeepsRecordsAndBacksUp) {
 	{
 		ScoreManager m(dir());
 		m.saveScore(Level::Normal, 5);
@@ -197,9 +197,11 @@ TEST_F(ScoreManagerTest, MissingChecksumWipesHistory) {
 	}
 	fs::remove(dir_ / "scores_v2.checksum");
 	ScoreManager m2(dir());
-	EXPECT_EQ(m2.totalGames(Level::Normal), 0u);
-	EXPECT_EQ(m2.totalGames(Level::Easy), 0u);
-	EXPECT_EQ(read("scores_v2.txt"), "");
+	EXPECT_EQ(m2.totalGames(Level::Normal), 1u);
+	EXPECT_EQ(m2.totalGames(Level::Easy), 1u);
+	EXPECT_EQ(m2.bestScore(Level::Normal), 0);
+	EXPECT_EQ(m2.bestScore(Level::Easy), 0);
+	EXPECT_EQ(read("scores_v2.txt.bak"), "N 5\nE 7\n");
 	EXPECT_TRUE(fs::exists(dir_ / "scores_v2.checksum"));
 }
 
@@ -212,6 +214,7 @@ TEST_F(ScoreManagerTest, EditedScoreZeroesScoresKeepsRecords) {
 	write("scores_v2.txt", "N 50\nE 7\n");
 	{
 		ScoreManager m2(dir());
+		EXPECT_EQ(read("scores_v2.txt.bak"), "N 50\nE 7\n");
 		EXPECT_EQ(m2.totalGames(Level::Normal), 1u);
 		EXPECT_EQ(m2.totalGames(Level::Easy), 1u);
 		EXPECT_EQ(m2.bestScore(Level::Normal), 0);
@@ -327,4 +330,50 @@ TEST_F(ScoreManagerTest, ClearAnEmptyLevelIsHarmless) {
 	ScoreManager reloaded(dir_.string());
 	EXPECT_EQ(reloaded.bestScore(Level::Easy), 5);
 	EXPECT_EQ(reloaded.totalGames(Level::Hard), 0u);
+}
+
+TEST_F(ScoreManagerTest, TwoInstancesKeepEachOthersGames) {
+	ScoreManager a(dir());
+	ScoreManager b(dir());
+	a.saveScore(Level::Normal, 10);
+	b.saveScore(Level::Normal, 20);
+	a.saveScore(Level::Easy, 5);
+	ScoreManager reloaded(dir());
+	EXPECT_EQ(reloaded.totalGames(Level::Normal), 2u);
+	EXPECT_EQ(reloaded.bestScore(Level::Normal), 20);
+	EXPECT_EQ(reloaded.bestScore(Level::Easy), 5);
+	EXPECT_FALSE(fs::exists(dir_ / "scores_v2.txt.bak"));
+}
+
+TEST_F(ScoreManagerTest, FileEditedWhileOpenIsZeroedOnNextSave) {
+	ScoreManager m(dir());
+	m.saveScore(Level::Normal, 5);
+	write("scores_v2.txt", "N 999\n");
+	m.saveScore(Level::Normal, 3);
+	EXPECT_EQ(m.totalGames(Level::Normal), 2u);
+	EXPECT_EQ(m.bestScore(Level::Normal), 3);
+	EXPECT_EQ(read("scores_v2.txt.bak"), "N 999\n");
+}
+
+TEST_F(ScoreManagerTest, SecondBackupReplacesTheFirst) {
+	{
+		ScoreManager m(dir());
+		m.saveScore(Level::Normal, 5);
+	}
+	write("scores_v2.txt", "N 11\n");
+	{ ScoreManager m(dir()); }
+	write("scores_v2.txt", "N 22\n");
+	{ ScoreManager m(dir()); }
+	EXPECT_EQ(read("scores_v2.txt.bak"), "N 22\n");
+}
+
+TEST_F(ScoreManagerTest, GamesThatCannotBeWrittenStayInMemory) {
+	ScoreManager m(dir());
+	// A plain file where the directory was: every read and write now fails
+	fs::remove_all(dir_);
+	write("", "");
+	m.saveScore(Level::Normal, 5);
+	m.saveScore(Level::Normal, 7);
+	EXPECT_EQ(m.totalGames(Level::Normal), 2u);
+	EXPECT_EQ(m.bestScore(Level::Normal), 7);
 }
