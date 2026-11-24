@@ -297,7 +297,7 @@ Two things override that for the terminal game. A `data/` folder in the director
 
 Two windows of the same version can run at once: each save re-reads the file first, so neither one loses the other's games.
 
-Files from v1.x (`best_score.txt`, `score_history.txt`, `score_checksum.txt`) are imported once as Normal scores if their checksum is valid. They are never changed or deleted.
+Files from v1.x (`best_score.txt`, `score_history.txt`, `score_checksum.txt`) are imported once as Normal scores if their checksum is valid. They are never changed or deleted. Version 1 was terminal-only and always saved to `data/` in the directory it was started from, so the terminal game imports them when you start it from that same directory (it keeps using that `data/` folder) or when `SNAKE_DATA_DIR` points to it. The graphical version came later and has nothing to import.
 
 ### Demo frames
 
