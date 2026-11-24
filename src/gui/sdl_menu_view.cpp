@@ -284,6 +284,9 @@ void SdlMenuView::show(const MenuSnapshot& snapshot) {
 			if (snapshot.scoresReset) {
 				p.line("Scores reset: score file was edited or damaged", theme::FOOD);
 			}
+			if (!snapshot.stats.unsavedDir.empty()) {
+				p.line("Scores cannot be saved: " + snapshot.stats.unsavedDir, theme::FOOD);
+			}
 			p.line("W/S pick  A/D change", theme::DIM);
 			p.line("Enter go  Q quit", theme::DIM);
 		});

@@ -182,6 +182,12 @@ void TerminalRenderer::printPanel(const std::string& title, Style titleStyle, si
 	p.endl();
 	p.put(PLAIN, std::string(30, ' '));
 	p.endl();
+	if (!stats.unsavedDir.empty()) {
+		p.put(PLAIN, "  ");
+		p.put(FOOD, "Scores not saved");
+		p.put(PLAIN, std::string(12, ' '));
+		p.endl();
+	}
 	p.put(PLAIN, "  ");
 	p.put(RESTART, "[R]");
 	p.put(PLAIN, " Restart  ");

@@ -209,7 +209,7 @@ docker pull miguelmochizuki/snake-game
 docker run --rm -it -v $(pwd)/data:/app/data miguelmochizuki/snake-game
 ```
 
-The image is published for linux/amd64 and linux/arm64. Without the `-v` option, scores are lost when the container exits.
+The image is published for linux/amd64 and linux/arm64. Without the `-v` option, scores are lost when the container exits. The image sets `SNAKE_DATA_DIR=/app/data`.
 
 To build the image yourself (Docker 20.10 or newer):
 
@@ -252,6 +252,7 @@ git diff tests/golden/
 Normal play needs none of these. The tests use them to make the game predictable.
 
 - `SNAKE_FRAME_MS` (0 to 10000) sets the time per step. When valid, it overrides the level picked in the menu. Without the menu it defaults to 200.
+- `SNAKE_DATA_DIR` (a folder) is where the terminal game keeps its scores; it wins over everything else. The Docker image sets it to `/app/data`, which is why the volume is mounted there.
 - `SNAKE_SEED` (unsigned integer) sets the random seed for food placement.
 - `SNAKE_SKIP_MENU` (any non-empty value) starts the game without the menu. The end-to-end harness sets it to `1` by default.
 - `SNAKE_E2E_TIMEOUT_SCALE` (integer, default 1) multiplies the end-to-end timeouts and the step time. Raise it on slow machines. The Docker build uses 10.
@@ -287,7 +288,9 @@ sudo usermod -aG docker $USER
 
 ### Scores
 
-The terminal game saves scores in a `data/` directory next to where you start it. `snake-gui` uses your OS's app-data folder instead, so it behaves the same however it is launched: `~/.local/share/snake-game/` on Linux (or under `$XDG_DATA_HOME`), `~/Library/Application Support/snake-game/` on macOS and `%APPDATA%\snake-game\` on Windows. The two do not share scores. Uninstalling leaves them in place. The files are:
+Both versions save scores in your OS's app-data folder, so they behave the same however they are launched. The terminal game uses `~/.local/share/snake-game-terminal/` on Linux (or under `$XDG_DATA_HOME`), `~/Library/Application Support/snake-game-terminal/` on macOS and `%APPDATA%\snake-game-terminal\` on Windows; `snake-gui` uses the same places with the name `snake-game`. The two do not share scores. Uninstalling leaves them in place.
+
+Two things override that for the terminal game. A `data/` folder in the directory you start it from keeps being used if it already holds scores (that is where earlier versions saved them, v1 files included), and `SNAKE_DATA_DIR` picks the folder directly (see [Environment variables](#environment-variables)). If the folder cannot be written, the menu shows "Scores cannot be saved" with its path and the game over panel says "Scores not saved". The files are:
 
 - `scores_v2.txt` holds the level and score of every game.
 - `scores_v2.checksum` detects edited files. If the checksum does not match or is missing, every score is set to zero (the game count stays) and the file as it was is copied to `scores_v2.txt.bak`.

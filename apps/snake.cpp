@@ -8,6 +8,7 @@
 #include "snake_game/input/composite_input_handler.hpp"
 #include "snake_game/game/game_engine.hpp"
 #include "snake_game/menu/menu_controller.hpp"
+#include "snake_game/score/data_dir.hpp"
 #include "snake_game/score/score_manager.hpp"
 #include "snake_game/render/sound.hpp"
 #ifdef SNAKE_HAVE_AUDIO
@@ -71,7 +72,7 @@ int main() {
 	input.add(std::make_unique<CommandInputHandler>());
 	const bool color = TerminalRenderer::colorEnabledFromEnv();
 	TerminalRenderer renderer(std::cout, color);
-	ScoreManager scores;
+	ScoreManager scores(defaultDataDir());
 	GameEngine engine(keys, input, renderer, scores, 20, 20, 200, readSeed());
 	TerminalBell bell(std::cout);
 	const bool canBeep = soundCapable();

@@ -13,15 +13,10 @@
 #include <thread>
 
 #ifdef _WIN32
-	#include <direct.h>
-	#include <io.h>
 	#include <process.h>
-	#define MKDIR(dir) _mkdir(dir)
 	#define SNAKE_GETPID _getpid
 #else
-	#include <sys/stat.h>
 	#include <unistd.h>
-	#define MKDIR(dir) mkdir(dir, 0755)
 	#define SNAKE_GETPID getpid
 #endif
 
@@ -96,19 +91,11 @@ ScoreManager::ScoreManager(const std::string& dataDir) : checksum_(0) {
 }
 
 /**
- * Creates the data directory if it does not exist
+ * Creates the data directory, and the folders above it, if they do not exist
  */
 void ScoreManager::createDataDirectory() {
-#ifdef _WIN32
-	if (_access(dataDir_.c_str(), 0) == -1) {
-		MKDIR(dataDir_.c_str());
-	}
-#else
-	struct stat st;
-	if (stat(dataDir_.c_str(), &st) == -1) {
-		MKDIR(dataDir_.c_str());
-	}
-#endif
+	std::error_code ec;
+	std::filesystem::create_directories(dataDir_, ec);
 }
 
 /**
@@ -233,7 +220,8 @@ bool ScoreManager::persist() {
 	for (const auto& record : records_) {
 		text << levelCode(record.first) << " " << record.second << "\n";
 	}
-	return writeAtomic(scoresFile_, text.str()) && writeAtomic(checksumFile_, std::to_string(checksum_) + "\n");
+	saveFailed_ = !(writeAtomic(scoresFile_, text.str()) && writeAtomic(checksumFile_, std::to_string(checksum_) + "\n"));
+	return !saveFailed_;
 }
 
 /**
@@ -312,7 +300,7 @@ void ScoreManager::saveScore(Level level, int score) {
  * Returns ScoreStats: Best, games played and average of the last games
  */
 ScoreStats ScoreManager::stats(Level level) const {
-	return ScoreStats{bestScore(level), totalGames(level), averageScore(level)};
+	return ScoreStats{bestScore(level), totalGames(level), averageScore(level), saveFailed_ ? dataDir_ : ""};
 }
 
 /**

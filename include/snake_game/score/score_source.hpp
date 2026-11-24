@@ -8,6 +8,7 @@
 
 #include "snake_game/game/level.hpp"
 #include <cstddef>
+#include <string>
 #include <vector>
 
 /**
@@ -17,11 +18,13 @@
  * int best: Best score
  * std::size_t games: Games played
  * double average: Average score over the last games
+ * std::string unsavedDir: The score folder when the last save failed, empty when saving works
  */
 struct ScoreStats {
 	int best;
 	std::size_t games;
 	double average;
+	std::string unsavedDir = "";
 };
 
 /**

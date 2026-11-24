@@ -78,7 +78,8 @@ class Game:
 			frame_ms (int): Frame time in ms; SNAKE_FRAME_MS gets frame_ms * scale() so slow hosts slow the game too
 			seed (int): Value for SNAKE_SEED
 		"""
-		full_env = dict(os.environ, SNAKE_FRAME_MS=str(int(frame_ms * scale())), SNAKE_SEED=str(seed), SNAKE_SKIP_MENU="1")
+		full_env = dict(os.environ, SNAKE_FRAME_MS=str(int(frame_ms * scale())), SNAKE_SEED=str(seed), SNAKE_SKIP_MENU="1",
+			SNAKE_DATA_DIR=os.path.join(cwd or os.getcwd(), "data"))
 		full_env.update(env or {})
 		self.master, self.slave = os.openpty()
 		self.out = ""

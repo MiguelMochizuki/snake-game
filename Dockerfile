@@ -76,7 +76,8 @@ COPY --from=test /tests-passed /tmp/tests-passed
 # Create data directory for scores
 RUN mkdir -p /app/data && chown -R snakeuser:snakeuser /app
 
-# Declare volume for persistence
+# Declare volume for persistence; the game would otherwise use the home of snakeuser
+ENV SNAKE_DATA_DIR=/app/data
 VOLUME ["/app/data"]
 
 # Switch to non-root user

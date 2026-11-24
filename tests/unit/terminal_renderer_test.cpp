@@ -37,6 +37,13 @@ TEST(TerminalRendererGolden, GameOverPanel) {
 	expectGolden("game_over_panel.txt", out.str());
 }
 
+TEST(TerminalRendererGolden, GameOverPanelWhenScoresCannotBeSaved) {
+	std::ostringstream out;
+	TerminalRenderer renderer(out);
+	renderer.printGameOver(Level::Hard, 3, {12, 7, 4.2857, "/no/such"});
+	expectGolden("game_over_panel_unsaved.txt", out.str());
+}
+
 TEST(TerminalRendererGolden, VictoryPanel) {
 	std::ostringstream out;
 	TerminalRenderer renderer(out);

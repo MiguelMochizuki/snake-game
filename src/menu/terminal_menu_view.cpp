@@ -142,6 +142,10 @@ void TerminalMenuView::show(const MenuSnapshot& snapshot) {
 		p.put(FOOD, RESET_NOTICE);
 		p.endl();
 	}
+	if (!snapshot.stats.unsavedDir.empty()) {
+		p.put(FOOD, "Scores cannot be saved: " + snapshot.stats.unsavedDir);
+		p.endl();
+	}
 	p.put(DIM, "W/S pick, A/D change");
 	p.endl();
 	p.put(DIM, "Enter go, Q quit");

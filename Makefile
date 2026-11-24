@@ -91,11 +91,11 @@ $(GUI_BUILD_DIR)/.built: $(SOURCES) $(TEST_FILES) CMakeLists.txt
 .PHONY: run run-local run-audio run-gui
 run run-local: all
 	@echo "$(GREEN)Running Snake Game...$(NC)"
-	@$(EXECUTABLE)
+	@SNAKE_DATA_DIR=$(DATA_DIR) $(EXECUTABLE)
 
 run-audio: audio
 	@echo "$(GREEN)Running Snake Game with music...$(NC)"
-	@$(AUDIO_EXECUTABLE)
+	@SNAKE_DATA_DIR=$(DATA_DIR) $(AUDIO_EXECUTABLE)
 
 run-gui: gui
 	@echo "$(GREEN)Running Snake Game (graphical)...$(NC)"
