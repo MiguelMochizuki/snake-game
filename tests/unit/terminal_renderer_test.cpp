@@ -62,6 +62,17 @@ TEST(TerminalRenderer, TheWinningFrameShowsNoFoodOnTheHead) {
 	EXPECT_EQ(out.str().find('*'), std::string::npos);
 }
 
+TEST(TerminalRenderer, HeadIsDrawnDifferentlyFromTheBodyWithoutColor) {
+	GameState state(10, 10, 0, 42);
+	std::ostringstream out;
+	TerminalRenderer renderer(out, false);
+	renderer.render(state);
+	const std::string board = out.str();
+	const size_t first = board.find('@');
+	ASSERT_NE(first, std::string::npos);
+	EXPECT_EQ(board.find('@', first + 1), std::string::npos);
+}
+
 TEST(TerminalRenderer, ClearEscapes) {
 	std::ostringstream out;
 	TerminalRenderer renderer(out);
