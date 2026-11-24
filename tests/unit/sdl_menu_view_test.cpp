@@ -80,6 +80,14 @@ TEST(SdlMenuView, PracticeSwitchChangesThePicture) {
 	EXPECT_NE(off, f.canvas->pixelsRgb());
 }
 
+TEST(SdlMenuView, ResetNoticeChangesThePicture) {
+	Fixture f;
+	f.view.show(MenuSnapshot{MenuItem::Start, Level::Normal, ScoreStats{0, 0, 0.0}, true, false, false});
+	std::vector<unsigned char> normal = f.canvas->pixelsRgb();
+	f.view.show(MenuSnapshot{MenuItem::Start, Level::Normal, ScoreStats{0, 0, 0.0}, true, false, true});
+	EXPECT_NE(normal, f.canvas->pixelsRgb());
+}
+
 TEST(SdlMenuView, ConfirmClearIsNotBlank) {
 	Fixture f;
 	std::vector<unsigned char> empty = f.blank();

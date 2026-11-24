@@ -20,6 +20,7 @@
  * ScoreStats stats: Score figures of the chosen level
  * bool sound: Whether sound is on
  * bool practice: Whether practice mode (scores not saved) is on
+ * bool scoresReset: Whether the scores were reset because the score file failed its check
  */
 struct MenuSnapshot {
 	MenuItem selected;
@@ -27,6 +28,7 @@ struct MenuSnapshot {
 	ScoreStats stats;
 	bool sound;
 	bool practice = false;
+	bool scoresReset = false;
 };
 
 /**

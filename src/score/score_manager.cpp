@@ -220,6 +220,7 @@ void ScoreManager::reload() {
 			for (auto& record : records_) {
 				record.second = 0;
 			}
+			reset_ = true;
 			persist();
 		}
 	}
@@ -351,4 +352,13 @@ void ScoreManager::clear(Level level) {
 	if (persist()) {
 		unsaved_.clear();
 	}
+}
+
+/**
+ * Tells whether this session reset the scores after a failed check
+ *
+ * Returns bool: true if it did
+ */
+bool ScoreManager::wasReset() const {
+	return reset_;
 }

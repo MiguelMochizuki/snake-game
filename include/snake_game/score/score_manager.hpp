@@ -24,6 +24,7 @@
  * std::vector<std::pair<Level, int>> records_: Every game, oldest first
  * std::vector<std::pair<Level, int>> unsaved_: Games that could not be written yet, kept so this session stays coherent
  * uint64_t checksum_: Checksum read from the file
+ * bool reset_: Whether this session reset the scores after a failed check
  */
 class ScoreManager : public IScoreStore {
 public:
@@ -36,6 +37,7 @@ private:
 	std::vector<std::pair<Level, int>> records_;
 	std::vector<std::pair<Level, int>> unsaved_;
 	uint64_t checksum_;
+	bool reset_ = false;
 
 	/**
 	 * Creates the data directory if it does not exist
@@ -144,6 +146,7 @@ public:
 	ScoreStats stats(Level level) const override;
 	std::vector<int> topScores(Level level, std::size_t n) const override;
 	void clear(Level level) override;
+	bool wasReset() const override;
 };
 
 #endif

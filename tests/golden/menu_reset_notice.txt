@@ -1,0 +1,24 @@
+[2J[H######################
+#                    #
+#   ##############   #
+#   # SNAKE GAME #   #
+#   ##############   #
+#                    #
+#   OOOOOOO   *      #
+#                    #
+#   > Start          #
+#     Level <Normal> #
+#     Leaderboard    #
+#     How to play    #
+#     Sound <On>     #
+#     Practice <Off> #
+#     Quit           #
+#                    #
+#   Best:     42     #
+#   Games:     7     #
+#   Avg:     4.3     #
+#                    #
+######################
+Scores reset: score file was edited or damaged
+W/S pick, A/D change
+Enter go, Q quit

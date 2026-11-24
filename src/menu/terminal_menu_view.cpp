@@ -16,6 +16,7 @@ using namespace terminal;
 namespace {
 
 const std::size_t INNER = 20;
+const char* const RESET_NOTICE = "Scores reset: score file was edited or damaged";
 
 using Segment = std::pair<Style, std::string>;
 
@@ -137,6 +138,10 @@ void TerminalMenuView::show(const MenuSnapshot& snapshot) {
 	frameRow(p, {});
 	p.put(WALL, rule);
 	p.endl();
+	if (snapshot.scoresReset) {
+		p.put(FOOD, RESET_NOTICE);
+		p.endl();
+	}
 	p.put(DIM, "W/S pick, A/D change");
 	p.endl();
 	p.put(DIM, "Enter go, Q quit");

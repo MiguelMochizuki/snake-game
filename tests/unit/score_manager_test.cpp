@@ -355,6 +355,23 @@ TEST_F(ScoreManagerTest, FileEditedWhileOpenIsZeroedOnNextSave) {
 	EXPECT_EQ(read("scores_v2.txt.bak"), "N 999\n");
 }
 
+TEST_F(ScoreManagerTest, WasResetOnlyAfterAFailedCheck) {
+	{
+		ScoreManager m(dir());
+		m.saveScore(Level::Normal, 5);
+		EXPECT_FALSE(m.wasReset());
+	}
+	{
+		ScoreManager m(dir());
+		EXPECT_FALSE(m.wasReset());
+	}
+	write("scores_v2.txt", "N 50\n");
+	ScoreManager m(dir());
+	EXPECT_TRUE(m.wasReset());
+	m.saveScore(Level::Normal, 1);
+	EXPECT_TRUE(m.wasReset());
+}
+
 TEST_F(ScoreManagerTest, SecondBackupReplacesTheFirst) {
 	{
 		ScoreManager m(dir());

@@ -281,6 +281,9 @@ void SdlMenuView::show(const MenuSnapshot& snapshot) {
 			p.stat("Games", std::to_string(snapshot.stats.games));
 			p.stat("Average", fixed(snapshot.stats.average, 1));
 			p.rule();
+			if (snapshot.scoresReset) {
+				p.line("Scores reset: score file was edited or damaged", theme::FOOD);
+			}
 			p.line("W/S pick  A/D change", theme::DIM);
 			p.line("Enter go  Q quit", theme::DIM);
 		});

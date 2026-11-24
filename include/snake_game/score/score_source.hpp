@@ -62,6 +62,15 @@ public:
 	 * Level level: The level to clear
 	 */
 	virtual void clear(Level level) = 0;
+
+	/**
+	 * Tells whether the scores were reset in this session because the score file failed its check
+	 *
+	 * Returns bool: true if they were
+	 */
+	virtual bool wasReset() const {
+		return false;
+	}
 };
 
 /**

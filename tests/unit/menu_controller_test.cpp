@@ -141,7 +141,15 @@ public:
 class FakeScores : public IScoreSource {
 public:
 	int clears = 0;
+	bool reset = false;
 	std::vector<Level> cleared;
+
+	/**
+	 * Reports the canned reset flag
+	 */
+	bool wasReset() const override {
+		return reset;
+	}
 
 	/**
 	 * Counts the call
@@ -238,6 +246,15 @@ TEST_F(MenuControllerTest, LevelChosenWithKeysSetsSpeed) {
 	MenuResult r = run({specialKey(KeyKind::Down), specialKey(KeyKind::Right), specialKey(KeyKind::Up), enter()}, view);
 	EXPECT_TRUE(r.start);
 	EXPECT_EQ(r.speedMs, 100);
+}
+
+TEST_F(MenuControllerTest, ResetFlagReachesTheSnapshot) {
+	RecordingView view(&log);
+	run({enter()}, view);
+	EXPECT_FALSE(view.shown.back().scoresReset);
+	scores.reset = true;
+	run({enter()}, view);
+	EXPECT_TRUE(view.shown.back().scoresReset);
 }
 
 TEST_F(MenuControllerTest, WasdKeysWorkToo) {

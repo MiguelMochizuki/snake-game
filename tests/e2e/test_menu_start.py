@@ -25,6 +25,7 @@ with tempfile.TemporaryDirectory() as tmp:
 	with Game(sys.argv[1], cwd=tmp, env=MENU) as game:
 		game.wait_for(r"Best:\s+0 ")
 		game.wait_for(r"Games:\s+1 ")
+		game.wait_for(r"Scores reset: score file was edited or damaged")
 		game.send_now("\r")
 		game.wait_for(r"Score: 0")
 		quit_game(game)
