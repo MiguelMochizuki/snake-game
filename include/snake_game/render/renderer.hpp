@@ -41,7 +41,7 @@ public:
 	 * Parameters:
 	 * Level level: The level that was played
 	 * int finalScore: The final score
-	 * const ScoreStats& stats: Best, games played and average of that level
+	 * const ScoreStats& stats: Best and games played of that level
 	 */
 	virtual void printGameOver(Level level, int finalScore, const ScoreStats& stats) = 0;
 
@@ -51,7 +51,7 @@ public:
 	 * Parameters:
 	 * Level level: The level that was played
 	 * int finalScore: The final score
-	 * const ScoreStats& stats: Best, games played and average of that level
+	 * const ScoreStats& stats: Best and games played of that level
 	 */
 	virtual void printVictory(Level level, int finalScore, const ScoreStats& stats) = 0;
 

@@ -138,7 +138,7 @@ void expectFits(const std::string& raw) {
 	EXPECT_LE(ls.size(), 24u);
 }
 
-const MenuSnapshot DEFAULT_SNAPSHOT{MenuItem::Start, Level::Normal, ScoreStats{42, 7, 4.3}, true};
+const MenuSnapshot DEFAULT_SNAPSHOT{MenuItem::Start, Level::Normal, ScoreStats{42, 7}, true};
 
 }  // namespace
 
@@ -175,7 +175,7 @@ TEST(TerminalMenuView, ColorStripsToPlain) {
 TEST(TerminalMenuView, FrameRowsAreExactly22ColumnsAndFitTheBoard) {
 	for (MenuItem item : {MenuItem::Start, MenuItem::Level, MenuItem::Quit}) {
 		for (Level level : {Level::Easy, Level::Normal, Level::Hard}) {
-			std::vector<std::string> ls = lines(plain(render({item, level, {123456, 99999, 1234.5}, true}, false)));
+			std::vector<std::string> ls = lines(plain(render({item, level, {123456, 99999}, true}, false)));
 			int framed = 0;
 			for (const std::string& l : ls) {
 				EXPECT_LE(l.size(), 22u) << l;
@@ -192,20 +192,20 @@ TEST(TerminalMenuView, FrameRowsAreExactly22ColumnsAndFitTheBoard) {
 }
 
 TEST(TerminalMenuView, MarkerFollowsSelectionWithoutColor) {
-	std::vector<std::string> start = lines(plain(render({MenuItem::Start, Level::Normal, {0, 0, 0}, true}, false)));
+	std::vector<std::string> start = lines(plain(render({MenuItem::Start, Level::Normal, {0, 0}, true}, false)));
 	EXPECT_NE(lineWith(start, "> Start"), "");
 	EXPECT_EQ(lineWith(start, "> Level"), "");
-	std::vector<std::string> level = lines(plain(render({MenuItem::Level, Level::Normal, {0, 0, 0}, true}, false)));
+	std::vector<std::string> level = lines(plain(render({MenuItem::Level, Level::Normal, {0, 0}, true}, false)));
 	EXPECT_NE(lineWith(level, "> Level"), "");
 	EXPECT_EQ(lineWith(level, "> Start"), "");
-	std::vector<std::string> quit = lines(plain(render({MenuItem::Quit, Level::Normal, {0, 0, 0}, true}, false)));
+	std::vector<std::string> quit = lines(plain(render({MenuItem::Quit, Level::Normal, {0, 0}, true}, false)));
 	EXPECT_NE(lineWith(quit, "> Quit"), "");
 }
 
 TEST(TerminalMenuView, ShowsEachLevelBetweenBrackets) {
-	EXPECT_NE(plain(render({MenuItem::Level, Level::Easy, {0, 0, 0}, true}, false)).find("<Easy>"), std::string::npos);
-	EXPECT_NE(plain(render({MenuItem::Level, Level::Normal, {0, 0, 0}, true}, false)).find("<Normal>"), std::string::npos);
-	EXPECT_NE(plain(render({MenuItem::Level, Level::Hard, {0, 0, 0}, true}, false)).find("<Hard>"), std::string::npos);
+	EXPECT_NE(plain(render({MenuItem::Level, Level::Easy, {0, 0}, true}, false)).find("<Easy>"), std::string::npos);
+	EXPECT_NE(plain(render({MenuItem::Level, Level::Normal, {0, 0}, true}, false)).find("<Normal>"), std::string::npos);
+	EXPECT_NE(plain(render({MenuItem::Level, Level::Hard, {0, 0}, true}, false)).find("<Hard>"), std::string::npos);
 }
 
 TEST(TerminalMenuView, BannerIsBoxedAndCentered) {
@@ -217,7 +217,7 @@ TEST(TerminalMenuView, BannerIsBoxedAndCentered) {
 
 TEST(TerminalMenuView, ContentAlignsWithTheBannerLeftEdge) {
 	std::vector<std::string> ls = lines(plain(render(DEFAULT_SNAPSHOT, false)));
-	for (const char* needle : {"OOOOOOO", "> Start", "Best:", "Games:", "Avg:"}) {
+	for (const char* needle : {"OOOOOOO", "> Start", "Best:", "Games:"}) {
 		EXPECT_EQ(lineWith(ls, needle).find_first_not_of("# "), 4u) << needle;
 	}
 }
@@ -226,7 +226,7 @@ TEST(TerminalMenuView, StatsLines) {
 	std::vector<std::string> ls = lines(plain(render(DEFAULT_SNAPSHOT, false)));
 	EXPECT_NE(lineWith(ls, "Best:").find("42"), std::string::npos);
 	EXPECT_NE(lineWith(ls, "Games:").find("7"), std::string::npos);
-	EXPECT_NE(lineWith(ls, "Avg:").find("4.3"), std::string::npos);
+	EXPECT_EQ(lineWith(ls, "Avg"), "");
 }
 
 TEST(TerminalMenuView, PlainOutputHasNoEscapeBesidesTheClear) {
@@ -245,8 +245,8 @@ TEST(TerminalMenuView, ColorOutputUsesTheGamePalette) {
 }
 
 TEST(TerminalMenuView, SoundRowShowsOnAndOff) {
-	std::string on = plain(render({MenuItem::Sound, Level::Normal, {0, 0, 0}, true}, false));
-	std::string off = plain(render({MenuItem::Sound, Level::Normal, {0, 0, 0}, false}, false));
+	std::string on = plain(render({MenuItem::Sound, Level::Normal, {0, 0}, true}, false));
+	std::string off = plain(render({MenuItem::Sound, Level::Normal, {0, 0}, false}, false));
 	EXPECT_NE(on.find("Sound <On>"), std::string::npos);
 	EXPECT_NE(off.find("Sound <Off>"), std::string::npos);
 }
@@ -255,7 +255,7 @@ TEST(TerminalMenuView, MarkerReachesTheNewRows) {
 	for (const char* label : {"> Leaderboard", "> How to play", "> Sound"}) {
 		MenuItem item = std::string(label) == "> Leaderboard" ? MenuItem::Leaderboard
 			: std::string(label) == "> How to play" ? MenuItem::Help : MenuItem::Sound;
-		std::vector<std::string> ls = lines(plain(render({item, Level::Normal, {0, 0, 0}, true}, false)));
+		std::vector<std::string> ls = lines(plain(render({item, Level::Normal, {0, 0}, true}, false)));
 		EXPECT_NE(lineWith(ls, label), "") << label;
 		EXPECT_EQ(lineWith(ls, "> Start"), "") << label;
 	}
@@ -277,8 +277,8 @@ TEST(TerminalMenuView, EmptyLeaderboardSaysNoGamesYet) {
 
 TEST(TerminalMenuView, LeaderboardFitsWithTenAndHugeScores) {
 	expectFits(renderBoard({Level::Easy, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}}, false));
-	expectFits(renderBoard({Level::Normal, {2147483647, 123456, 9}}, false));
-	expectFits(renderBoard({Level::Normal, {2147483647, 123456, 9}}, true));
+	expectFits(renderBoard({Level::Normal, {2147483647, 123456}}, false));
+	expectFits(renderBoard({Level::Normal, {2147483647, 123456}}, true));
 	expectFits(renderBoard({Level::Hard, {}}, false));
 }
 

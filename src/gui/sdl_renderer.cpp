@@ -67,21 +67,6 @@ int hudHeightFor(int canvasH) {
 	return 2 * lineHeightFor(canvasH);
 }
 
-/**
- * Formats a number with a fixed number of decimals
- *
- * Parameters:
- * double value: The number
- * int decimals: Digits after the point
- *
- * Returns std::string: The text
- */
-std::string fixed(double value, int decimals) {
-	std::ostringstream os;
-	os << std::fixed << std::setprecision(decimals) << value;
-	return os.str();
-}
-
 }  // namespace
 
 int cellSizeFor(int canvasW, int canvasH, int cols, int rows, int hudHeight) {
@@ -195,7 +180,7 @@ void SdlRenderer::render(const GameState& state) {
  * Parameters:
  * Level level: The level that was played
  * int finalScore: The final score
- * const ScoreStats& stats: Best, games played and average of that level
+ * const ScoreStats& stats: Best and games played of that level
  */
 void SdlRenderer::printGameOver(Level level, int finalScore, const ScoreStats& stats) {
 	fadeBoard();
@@ -226,7 +211,7 @@ void SdlRenderer::fadeBoard() {
  * Parameters:
  * Level level: The level that was played
  * int finalScore: The final score
- * const ScoreStats& stats: Best, games played and average of that level
+ * const ScoreStats& stats: Best and games played of that level
  */
 void SdlRenderer::printVictory(Level level, int finalScore, const ScoreStats& stats) {
 	fadeBoard();
@@ -275,7 +260,6 @@ void SdlRenderer::showPanel(const std::string& title, Color titleColor, Level le
 		row("Score", std::to_string(finalScore), theme::HEAD);
 		row("Best", std::to_string(stats.best), theme::NUMBER);
 		row("Games", std::to_string(stats.games), theme::NUMBER);
-		row("Average", fixed(stats.average, 1), theme::NUMBER);
 		if (!stats.unsavedDir.empty()) {
 			textAt(left, "Scores not saved", theme::FOOD);
 			ty += rowH;

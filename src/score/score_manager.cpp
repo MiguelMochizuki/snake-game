@@ -256,26 +256,6 @@ std::size_t ScoreManager::totalGames(Level level) const {
 }
 
 /**
- * Gets the average of the last AVERAGE_WINDOW games of a level
- *
- * Parameters:
- * Level level: The level
- *
- * Returns double: The average, 0.0 if the level has no games
- */
-double ScoreManager::averageScore(Level level) const {
-	long long sum = 0;
-	std::size_t count = 0;
-	for (auto it = records_.rbegin(); it != records_.rend() && count < AVERAGE_WINDOW; ++it) {
-		if (it->first == level) {
-			sum += it->second;
-			++count;
-		}
-	}
-	return count == 0 ? 0.0 : static_cast<double>(sum) / static_cast<double>(count);
-}
-
-/**
  * Saves the score of a finished game
  *
  * Parameters:
@@ -297,10 +277,10 @@ void ScoreManager::saveScore(Level level, int score) {
  * Parameters:
  * Level level: The level
  *
- * Returns ScoreStats: Best, games played and average of the last games
+ * Returns ScoreStats: Best and games played
  */
 ScoreStats ScoreManager::stats(Level level) const {
-	return ScoreStats{bestScore(level), totalGames(level), averageScore(level), saveFailed_ ? dataDir_ : ""};
+	return ScoreStats{bestScore(level), totalGames(level), saveFailed_ ? dataDir_ : ""};
 }
 
 /**

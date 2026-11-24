@@ -28,9 +28,6 @@
  * bool saveFailed_: Whether the last write to the score folder failed
  */
 class ScoreManager : public IScoreStore {
-public:
-	static constexpr std::size_t AVERAGE_WINDOW = 10;
-
 private:
 	std::string dataDir_;
 	std::string scoresFile_;
@@ -125,16 +122,6 @@ public:
 	 * Returns std::size_t: The number of games
 	 */
 	std::size_t totalGames(Level level) const;
-
-	/**
-	 * Gets the average of the last AVERAGE_WINDOW games of a level
-	 *
-	 * Parameters:
-	 * Level level: The level
-	 *
-	 * Returns double: The average, 0.0 if the level has no games
-	 */
-	double averageScore(Level level) const;
 
 	/**
 	 * Saves the score of a finished game

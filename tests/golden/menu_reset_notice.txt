@@ -16,7 +16,6 @@
 #                    #
 #   Best:     42     #
 #   Games:     7     #
-#   Avg:     4.3     #
 #                    #
 ######################
 Scores reset: score file was edited or damaged

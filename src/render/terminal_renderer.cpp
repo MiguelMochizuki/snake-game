@@ -121,7 +121,7 @@ void TerminalRenderer::render(const GameState& state) {
  * Parameters:
  * Level level: The level that was played
  * int finalScore: The final score
- * const ScoreStats& stats: Best, games played and average of that level
+ * const ScoreStats& stats: Best and games played of that level
  */
 void TerminalRenderer::printGameOver(Level level, int finalScore, const ScoreStats& stats) {
 	printPanel("GAME OVER!", FOOD, 9, level, finalScore, stats);
@@ -133,7 +133,7 @@ void TerminalRenderer::printGameOver(Level level, int finalScore, const ScoreSta
  * Parameters:
  * Level level: The level that was played
  * int finalScore: The final score
- * const ScoreStats& stats: Best, games played and average of that level
+ * const ScoreStats& stats: Best and games played of that level
  */
 void TerminalRenderer::printVictory(Level level, int finalScore, const ScoreStats& stats) {
 	printPanel("YOU WIN!", GOLD, 11, level, finalScore, stats);
@@ -175,10 +175,6 @@ void TerminalRenderer::printPanel(const std::string& title, Style titleStyle, si
 	p.put(LABEL, "Games Played:");
 	p.put(PLAIN, " ");
 	p.put(NUMBER, padded(stats.games, 5));
-	p.endl();
-	p.put(PLAIN, "  ");
-	p.put(LABEL, "Average Score:");
-	p.put(NUMBER, padded(stats.average, 6, 1));
 	p.endl();
 	p.put(PLAIN, std::string(30, ' '));
 	p.endl();

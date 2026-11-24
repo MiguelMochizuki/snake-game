@@ -17,13 +17,11 @@
  * Attributes:
  * int best: Best score
  * std::size_t games: Games played
- * double average: Average score over the last games
  * std::string unsavedDir: The score folder when the last save failed, empty when saving works
  */
 struct ScoreStats {
 	int best;
 	std::size_t games;
-	double average;
 	std::string unsavedDir = "";
 };
 
@@ -43,7 +41,7 @@ public:
 	 * Parameters:
 	 * Level level: The level
 	 *
-	 * Returns ScoreStats: Best, games played and average of the last games
+	 * Returns ScoreStats: Best and games played
 	 */
 	virtual ScoreStats stats(Level level) const = 0;
 

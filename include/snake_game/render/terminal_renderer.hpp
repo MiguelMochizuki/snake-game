@@ -76,7 +76,7 @@ public:
 	 * size_t leftPad: Spaces before the title (at most 30); the rest of the 30 columns is padded after it
 	 * Level level: The level that was played
 	 * int finalScore: The final score
-	 * const ScoreStats& stats: Best, games played and average of that level
+	 * const ScoreStats& stats: Best and games played of that level
 	 */
 	void printPanel(const std::string& title, terminal::Style titleStyle, size_t leftPad, Level level, int finalScore, const ScoreStats& stats);
 
@@ -86,7 +86,7 @@ public:
 	 * Parameters:
 	 * Level level: The level that was played
 	 * int finalScore: The final score
-	 * const ScoreStats& stats: Best, games played and average of that level
+	 * const ScoreStats& stats: Best and games played of that level
 	 */
 	void printGameOver(Level level, int finalScore, const ScoreStats& stats) override;
 
@@ -96,7 +96,7 @@ public:
 	 * Parameters:
 	 * Level level: The level that was played
 	 * int finalScore: The final score
-	 * const ScoreStats& stats: Best, games played and average of that level
+	 * const ScoreStats& stats: Best and games played of that level
 	 */
 	void printVictory(Level level, int finalScore, const ScoreStats& stats) override;
 
