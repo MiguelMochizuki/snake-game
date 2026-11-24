@@ -161,7 +161,7 @@ The game opens on a menu. Pick a level, then start.
 | Enter | Choose the selected row | Nothing |
 | Q / Ctrl+C | Quit | End the game (it is not saved) |
 
-The menu rows are Start, Level, Leaderboard, How to play, Sound, Practice and Quit. The levels set the time per step: Easy 300 ms, Normal 200 ms, Hard 100 ms. The menu shows the best score, games played and average over the last 10 games of the selected level. The Leaderboard lists the top 10 scores of a level (A/D switch level, Enter goes back, C offers to clear the scores of the level shown: Enter deletes that level's history with no way back and the other levels are untouched, Q keeps it). Sound is on at each launch and only beeps in a terminal. Practice is off at each launch; while it is on, finished games are not saved. Any other key does nothing.
+The menu rows are Start, Level, Leaderboard, How to play, Sound, Practice and Quit. The levels set the time per step: Easy 300 ms, Normal 200 ms, Hard 100 ms. The menu shows the best score, games played and average over the last 10 games of the selected level. The Leaderboard lists the top 10 scores of a level (A/D switch level, Enter goes back, C offers to clear the scores of the level shown: Enter deletes that level's history with no way back and the other levels are untouched, Q keeps it). The level and the sound switch are remembered between runs (each version keeps its own, in `settings.txt` next to its scores). Sound only beeps in a terminal. Practice is off at each launch, on purpose, so that a forgotten switch never keeps your games out of the leaderboard; while it is on, finished games are not saved. Any other key does nothing.
 
 After a game ends, you see the level, your final score and that level's statistics. Press **R** to play again straight away, **M** to go back to the menu (for example to change the level; your choice is kept) or **Q** to quit.
 
@@ -292,6 +292,7 @@ Both versions save scores in your OS's app-data folder, so they behave the same 
 
 Two things override that for the terminal game. A `data/` folder in the directory you start it from keeps being used if it already holds scores (that is where earlier versions saved them, v1 files included), and `SNAKE_DATA_DIR` picks the folder directly (see [Environment variables](#environment-variables)). If the folder cannot be written, the menu shows "Scores cannot be saved" with its path and the game over panel says "Scores not saved". The files are:
 
+- `settings.txt` holds the level and the sound switch the menu starts with. Delete it to go back to Normal with sound on.
 - `scores_v2.txt` holds the level and score of every game.
 - `scores_v2.checksum` detects edited files. If the checksum does not match or is missing, every score is set to zero (the game count stays) and the file as it was is copied to `scores_v2.txt.bak`.
 
