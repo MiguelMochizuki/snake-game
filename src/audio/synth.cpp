@@ -22,8 +22,8 @@ struct BlipSpec {
 	float gain;
 };
 
-// Music commands posted by startMusic and stopMusic
-const int CMD_NONE = 0, CMD_START = 1, CMD_STOP = 2;
+// Music commands posted by startMusic, startRandomPiece and stopMusic
+const int CMD_NONE = 0, CMD_START = 1, CMD_STOP = 2, CMD_NEW_PIECE = 3;
 
 // Indexed by Blip: Eat, GameOver, MenuMove, MenuSelect, Win
 const BlipSpec BLIPS[5] = {{1046.5, 0.08, 0.3f}, {196.0, 0.25, 0.3f}, {523.25, 0.04, 0.25f}, {1174.66, 0.06, 0.25f}, {1318.5, 0.35, 0.3f}};
@@ -66,7 +66,7 @@ float triangle(double phase) {
  * Parameters:
  * int sampleRate: Sample rate in Hz
  */
-Synth::Synth(int sampleRate) : rate_(sampleRate) {
+Synth::Synth(int sampleRate, unsigned seed) : rate_(sampleRate), rng_(seed) {
 }
 
 /**
@@ -74,6 +74,13 @@ Synth::Synth(int sampleRate) : rate_(sampleRate) {
  */
 void Synth::startMusic() {
 	command_ = CMD_START;
+}
+
+/**
+ * Starts the music with a piece chosen at random, other than the last one, from its beginning
+ */
+void Synth::startRandomPiece() {
+	command_ = CMD_NEW_PIECE;
 }
 
 /**
@@ -91,6 +98,21 @@ void Synth::stopMusic() {
  */
 void Synth::trigger(Blip blip) {
 	blipRequest_ = static_cast<int>(blip) + 1;
+}
+
+/**
+ * Moves to another piece, chosen at random and never the one that was playing, and starts it from the beginning
+ */
+void Synth::chooseOtherPiece() {
+	if (PIECE_COUNT > 1) {
+		const int pick = static_cast<int>(rng_() % static_cast<unsigned>(PIECE_COUNT - 1));
+		piece_ = pick >= piece_ ? pick + 1 : pick;
+	}
+	pos_ = 0;
+	next_ = 0;
+	for (Voice& v : voices_) {
+		v.age = v.length = 0;
+	}
 }
 
 /**
@@ -116,6 +138,10 @@ void Synth::startNote(const ScoreNote& note) {
 	slot->melody = note.melody != 0;
 }
 
+int Synth::piece() const {
+	return piece_;
+}
+
 /**
  * Fills a buffer with mono samples in [-1, 1]
  *
@@ -130,6 +156,10 @@ void Synth::render(float* out, int frames) {
 		break;
 	case CMD_STOP:
 		playing_ = false;
+		break;
+	case CMD_NEW_PIECE:
+		chooseOtherPiece();
+		playing_ = true;
 		break;
 	default:
 		break;
@@ -181,12 +211,7 @@ void Synth::render(float* out, int frames) {
 				++v.age;
 			}
 			if (++pos_ >= static_cast<long long>(piece.endMs + REST_BETWEEN_PIECES_MS) * rate_ / 1000) {
-				piece_ = (piece_ + 1) % PIECE_COUNT;
-				pos_ = 0;
-				next_ = 0;
-				for (Voice& v : voices_) {
-					v.age = v.length = 0;
-				}
+				chooseOtherPiece();
 			}
 		}
 		if (blipLeft_ > 0) {

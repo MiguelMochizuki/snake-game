@@ -29,7 +29,8 @@ public:
 
 	void eat() override { synth_.trigger(Blip::Eat); }
 	void gameOver() override { synth_.trigger(Blip::GameOver); }
-	void musicStart() override { synth_.startMusic(); }
+	void musicStart() override { synth_.startRandomPiece(); }
+	void musicResume() override { synth_.startMusic(); }
 	void musicStop() override { synth_.stopMusic(); }
 	void win() override { synth_.trigger(Blip::Win); }
 	void menuMove() override { synth_.trigger(Blip::MenuMove); }

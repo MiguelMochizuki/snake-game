@@ -225,7 +225,7 @@ GameEnd GameEngine::run() {
 					break;
 				}
 				if (sound_) {
-					sound_->musicStart();
+					sound_->musicResume();
 				}
 				// The pause panel took the whole screen, so the board is drawn again from scratch
 				pending_.clear();

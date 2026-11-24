@@ -29,9 +29,14 @@ public:
 	virtual void gameOver() = 0;
 
 	/**
-	 * Starts the background music, which goes on where it was last stopped; does nothing by default
+	 * Starts the background music of a new game, with a piece chosen at random; does nothing by default
 	 */
 	virtual void musicStart() {}
+
+	/**
+	 * Goes on with the music where musicStop left it (after a pause); does nothing by default
+	 */
+	virtual void musicResume() {}
 
 	/**
 	 * Stops the background music; does nothing by default

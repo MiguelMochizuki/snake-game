@@ -115,26 +115,59 @@ TEST(Score, AveMariaOpensLikeBachAndTheMelodyWaitsFourBars) {
 	EXPECT_NEAR(piece.notes[firstMelody].start, 64 * 60000 / 66 / 4, 20);  // after four bars at 66 BPM
 }
 
-TEST(Synth, MusicGoesOnToTheNextPieceAfterABreathAndLoopsAfterTheLast) {
-	Synth s(LOW_RATE);
+TEST(Synth, WhenAPieceEndsAfterABreathAnotherOneStartsAtRandom) {
+	Synth s(LOW_RATE, 7);
 	s.startMusic();
+	ASSERT_EQ(s.piece(), 0);
 	std::vector<float> first = renderFrames(s, framesOf(LOW_RATE, PIECES[0].endMs + REST_BETWEEN_PIECES_MS));
 	EXPECT_FALSE(allZero(first));
 	// The rest after the piece is silent
 	EXPECT_TRUE(allZero(first, static_cast<size_t>(framesOf(LOW_RATE, PIECES[0].endMs + 200))));
-	// The next piece follows at once
+	// Another piece follows at once, never the same one
+	EXPECT_NE(s.piece(), 0);
 	EXPECT_FALSE(allZero(renderFrames(s, framesOf(LOW_RATE, 30000))));
+}
 
-	// After every piece the first one starts again, exactly as it did the first time
-	Synth loop(LOW_RATE), reference(LOW_RATE);
-	loop.startMusic();
-	reference.startMusic();
-	long long total = 0;
-	for (int i = 0; i < PIECE_COUNT; ++i) {
-		total += framesOf(LOW_RATE, PIECES[i].endMs + REST_BETWEEN_PIECES_MS);
+TEST(Synth, ARandomPieceNeverRepeatsTheLastOneAndEveryPieceCanCome) {
+	Synth s(LOW_RATE, 1);
+	std::vector<bool> seen(PIECE_COUNT, false);
+	int last = s.piece();
+	for (int i = 0; i < 300; ++i) {
+		s.startRandomPiece();
+		renderFrames(s, 1);
+		EXPECT_NE(s.piece(), last);
+		last = s.piece();
+		seen[last] = true;
 	}
-	renderFrames(loop, static_cast<int>(total));
-	EXPECT_EQ(renderFrames(loop, 20000), renderFrames(reference, 20000));
+	EXPECT_EQ(std::count(seen.begin(), seen.end(), true), PIECE_COUNT);
+}
+
+TEST(Synth, TheSameSeedChoosesTheSamePiecesAndANewPieceStartsFromItsBeginning) {
+	Synth a(LOW_RATE, 5), b(LOW_RATE, 5);
+	for (int i = 0; i < 20; ++i) {
+		a.startRandomPiece();
+		b.startRandomPiece();
+		EXPECT_EQ(renderFrames(a, 500), renderFrames(b, 500));
+		EXPECT_EQ(a.piece(), b.piece());
+		renderFrames(a, 20000);  // far into the piece: the next choice must still start over
+		renderFrames(b, 20000);
+	}
+	Synth fresh(LOW_RATE, 5);
+	fresh.startRandomPiece();
+	Synth late(LOW_RATE, 5);
+	late.startRandomPiece();
+	renderFrames(late, 30000);
+	late.stopMusic();
+	renderFrames(late, 1);
+	// Choosing again after having played moves on to a different piece and starts it from its beginning
+	late.startRandomPiece();
+	renderFrames(late, 1);
+	Synth reference(LOW_RATE, 5);
+	reference.startRandomPiece();
+	renderFrames(reference, 1);
+	reference.startRandomPiece();
+	renderFrames(reference, 1);
+	EXPECT_EQ(late.piece(), reference.piece());
 }
 
 TEST(Synth, StoppingKeepsThePlaceAndStartingGoesOnFromIt) {
