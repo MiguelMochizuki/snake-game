@@ -13,9 +13,11 @@
 #include "snake_game/render/sound.hpp"
 #include "snake_game/render/renderer.hpp"
 #include "snake_game/score/score_source.hpp"
+#include <deque>
 #include <functional>
 #include <optional>
 #include <string>
+#include <vector>
 
 /**
  * What the player asked for during one tick
@@ -23,12 +25,12 @@
  * Attributes:
  * bool quit: true if the player asked to end the round
  * bool pause: true if the player pressed pause or the window lost focus
- * std::optional<Direction> move: Direction of the last move key, if any
+ * std::vector<Direction> moves: Direction of every move key, in the order they were pressed
  */
 struct TickInput {
 	bool quit = false;
 	bool pause = false;
-	std::optional<Direction> move;
+	std::vector<Direction> moves;
 };
 
 /**
@@ -46,6 +48,7 @@ enum class GameEnd { Restart, Menu, Quit };
  * const IInputHandler& input_: Maps keys to actions
  * IRenderer& renderer_: Renderer for displaying the game
  * Direction direction_: Current direction
+ * std::deque<Direction> pending_: Turns pressed but not made yet, one is made per step
  * bool running_: Flag indicating if the game is running
  * int speedMs_: Game speed in milliseconds per frame
  * Level level_: Level that tags saved scores
@@ -60,6 +63,7 @@ private:
 	const IInputHandler& input_;
 	IRenderer& renderer_;
 	Direction direction_;
+	std::deque<Direction> pending_;
 	bool running_;
 	int speedMs_;
 	Level level_ = Level::Normal;
@@ -94,7 +98,7 @@ public:
 	 * IKeySource& keys: Source of key presses
 	 * const IInputHandler& handler: Maps keys to actions
 	 *
-	 * Returns TickInput: quit if any key mapped to Quit, else the last move; pause is set by Pause and AutoPause; Restart, Menu and Confirm are ignored
+	 * Returns TickInput: quit if any key mapped to Quit, and every move in order; pause is set by Pause and AutoPause; Restart, Menu and Confirm are ignored
 	 */
 	static TickInput readTick(IKeySource& keys, const IInputHandler& handler);
 
@@ -123,6 +127,23 @@ public:
 	 */
 	static bool awaitResume(IKeySource& keys, const IInputHandler& handler,
 		const std::function<void()>& showPanel);
+
+	/**
+	 * Most turns kept waiting at once; a turn pressed with the queue full is ignored
+	 */
+	static constexpr std::size_t MAX_PENDING_TURNS = 2;
+
+	/**
+	 * Adds the turns of one tick to the queue of turns still to be made. A turn is kept only if it differs from, and is
+	 * not the opposite of, the last turn in the queue (the current direction when the queue is empty), and only while
+	 * the queue has room
+	 *
+	 * Parameters:
+	 * std::deque<Direction>& pending: The queue, oldest turn first
+	 * Direction current: The direction the snake is moving
+	 * const std::vector<Direction>& moves: The turns pressed during the tick, in order
+	 */
+	static void queueTurns(std::deque<Direction>& pending, Direction current, const std::vector<Direction>& moves);
 
 	/**
 	 * Tells whether two directions are opposite
