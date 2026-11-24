@@ -7,6 +7,15 @@
 
 #include "snake_game/menu/menu_model.hpp"
 
+TEST(MenuModel, RestoreSetsLevelAndSoundButNotPractice) {
+	MenuModel m;
+	m.restore(MenuSettings{Level::Hard, false});
+	EXPECT_EQ(m.level(), Level::Hard);
+	EXPECT_FALSE(m.sound());
+	EXPECT_FALSE(m.practice());
+	EXPECT_EQ(m.speedMs(), 100);
+}
+
 TEST(MenuModel, StartsOnStartWithNormalLevel) {
 	MenuModel m;
 	EXPECT_EQ(m.selected(), MenuItem::Start);

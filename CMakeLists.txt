@@ -43,6 +43,7 @@ add_library(snake_core STATIC
 	src/input/terminal_key_source.cpp
 	src/menu/menu_model.cpp
 	src/menu/menu_controller.cpp
+	src/menu/menu_settings.cpp
 	src/menu/terminal_menu_view.cpp
 	src/render/terminal_renderer.cpp
 	src/audio/score.cpp

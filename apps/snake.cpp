@@ -8,6 +8,7 @@
 #include "snake_game/input/composite_input_handler.hpp"
 #include "snake_game/game/game_engine.hpp"
 #include "snake_game/menu/menu_controller.hpp"
+#include "snake_game/menu/menu_settings.hpp"
 #include "snake_game/score/data_dir.hpp"
 #include "snake_game/score/score_manager.hpp"
 #include "snake_game/render/sound.hpp"
@@ -72,7 +73,8 @@ int main() {
 	input.add(std::make_unique<CommandInputHandler>());
 	const bool color = TerminalRenderer::colorEnabledFromEnv();
 	TerminalRenderer renderer(std::cout, color);
-	ScoreManager scores(defaultDataDir());
+	const std::string dataDir = defaultDataDir();
+	ScoreManager scores(dataDir);
 	GameEngine engine(keys, input, renderer, scores, 20, 20, 200, readSeed());
 	TerminalBell bell(std::cout);
 	const bool canBeep = soundCapable();
@@ -88,6 +90,9 @@ int main() {
 #endif
 	MenuModel menu;
 	bool showMenu = !skipMenu();
+	if (showMenu) {
+		menu.restore(loadMenuSettings(dataDir));
+	}
 	do {
 		Level level = Level::Normal;
 		int speedMs = levelSpeedMs(level);
@@ -96,6 +101,7 @@ int main() {
 		if (showMenu) {
 			TerminalMenuView view(std::cout, color);
 			MenuResult choice = runMenu(keys, input, view, menu, scores, cues);
+			saveMenuSettings(dataDir, MenuSettings{menu.level(), menu.sound()});
 			if (!choice.start) {
 				return 0;
 			}

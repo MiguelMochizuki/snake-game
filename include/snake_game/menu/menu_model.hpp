@@ -8,6 +8,7 @@
 
 #include "snake_game/input/input_handler.hpp"
 #include "snake_game/game/level.hpp"
+#include "snake_game/menu/menu_settings.hpp"
 
 /**
  * Row of the start menu
@@ -82,6 +83,14 @@ public:
 	 * Returns MenuOutcome: Start or Quit when the menu is done, OpenLeaderboard or OpenHelp to show a screen, otherwise None
 	 */
 	MenuOutcome apply(Action action);
+
+	/**
+	 * Sets the options the menu starts with (the ones remembered from the last run)
+	 *
+	 * Parameters:
+	 * const MenuSettings& settings: The level and sound to start with
+	 */
+	void restore(const MenuSettings& settings);
 };
 
 #endif

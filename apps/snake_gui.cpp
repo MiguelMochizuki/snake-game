@@ -21,6 +21,7 @@
 #include "snake_game/input/composite_input_handler.hpp"
 #include "snake_game/input/wasd_input_handler.hpp"
 #include "snake_game/menu/menu_controller.hpp"
+#include "snake_game/menu/menu_settings.hpp"
 #include "snake_game/score/score_manager.hpp"
 #include <SDL3/SDL.h>
 #include <algorithm>
@@ -160,10 +161,14 @@ int main(int argc, char** argv) {
 	ISound* cues = audio ? &synthSound : nullptr;
 
 	// Scores live in the OS app-data folder, so the game behaves the same wherever it was started from
-	ScoreManager scores(userDataDir());
+	const std::string dataDir = userDataDir();
+	ScoreManager scores(dataDir);
 	GameEngine engine(keys, input, renderer, scores, 20, 20, 200, readSeed());
 	MenuModel menu;
 	bool showMenu = !skipMenu();
+	if (showMenu) {
+		menu.restore(loadMenuSettings(dataDir));
+	}
 	do {
 		Level level = Level::Normal;
 		int speedMs = levelSpeedMs(level);
@@ -171,6 +176,7 @@ int main(int argc, char** argv) {
 		bool practice = false;
 		if (showMenu) {
 			MenuResult choice = runMenu(keys, input, menuView, menu, scores, cues);
+			saveMenuSettings(dataDir, MenuSettings{menu.level(), menu.sound()});
 			if (!choice.start) {
 				return 0;
 			}

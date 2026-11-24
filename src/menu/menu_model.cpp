@@ -120,3 +120,8 @@ MenuOutcome MenuModel::apply(Action action) {
 	}
 	return MenuOutcome::None;
 }
+
+void MenuModel::restore(const MenuSettings& settings) {
+	level_ = settings.level;
+	sound_ = settings.sound;
+}
