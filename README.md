@@ -37,7 +37,7 @@ Snake Game has two front-ends on one engine: the graphical game (`snake-gui`, dr
 
 ### Download
 
-Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v2.4.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.4.0), which makes C on the leaderboard clear only the level you are looking at, draws the snake and the food in the graphical version with sprites (and redraws the app icon with them), and fades the board under the game over panel. Earlier releases added a practice mode that keeps games out of the leaderboard (v2.3.2) and the victory screen for filling the whole board (v2.3.0).
+Binaries for each release are on the [Releases](https://github.com/miguelmochizuki/snake-game/releases) page. The latest is [v2.5.0](https://github.com/miguelmochizuki/snake-game/releases/tag/v2.5.0), which adds a pause (P) and Esc to go back, remembers the level and sound between runs, shows practice mode on the status line and the end panel, adds the keypad and full screen to the graphical version, and plays classical music (eight pieces and two easter eggs, a random one each game) in the builds with audio. It also fixes lost or reset scores, abandoned games being saved, and the terminal game on an 80x24 terminal. v2.4.0 made C on the leaderboard clear only the level you are looking at and drew the snake and the food in the graphical version with sprites. Earlier releases also added a practice mode that keeps games out of the leaderboard (v2.3.2) and the victory screen for filling the whole board (v2.3.0).
 
 | Platform | Architecture | Binary |
 |----------|-------------|--------|
