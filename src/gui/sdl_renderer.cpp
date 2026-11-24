@@ -244,7 +244,7 @@ void SdlRenderer::showPanel(const std::string& title, Color titleColor, Level le
 		const int pad = 3 * u;
 		const int w = std::min(canvas_.width(), font::textWidth(std::string(columns, ' '), scale) + 2 * pad);
 		const int rules = 2 * (u + std::max(1, scale / 2) + u);
-		const int h = 2 * pad + rowH + 5 * rowH + rowH + rules;
+		const int h = 2 * pad + rowH + 5 * rowH + rowH + rules + (stats.unsavedDir.empty() ? 0 : rowH);
 		const int x = std::max(0, (canvas_.width() - w) / 2);
 		const int y = std::max(0, (canvas_.height() - h) / 2);
 		const int border = std::max(1, scale / 2);
@@ -274,6 +274,10 @@ void SdlRenderer::showPanel(const std::string& title, Color titleColor, Level le
 		row("Best", std::to_string(stats.best), theme::NUMBER);
 		row("Games", std::to_string(stats.games), theme::NUMBER);
 		row("Average", fixed(stats.average, 1), theme::NUMBER);
+		if (!stats.unsavedDir.empty()) {
+			textAt(left, "Scores not saved", theme::FOOD);
+			ty += rowH;
+		}
 		rule();
 		int px = left;
 		for (const auto& key : {std::make_pair("R", "again"), std::make_pair("M", "menu"), std::make_pair("Q", "quit")}) {

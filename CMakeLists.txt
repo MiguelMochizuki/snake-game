@@ -50,6 +50,7 @@ add_library(snake_core STATIC
 	src/audio/synth.cpp
 	src/render/sound.cpp
 	src/score/score_manager.cpp
+	src/score/data_dir.cpp
 )
 target_include_directories(snake_core PUBLIC include)
 snake_game_set_warnings(snake_core)

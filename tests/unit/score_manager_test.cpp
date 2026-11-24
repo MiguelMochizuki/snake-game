@@ -372,6 +372,25 @@ TEST_F(ScoreManagerTest, WasResetOnlyAfterAFailedCheck) {
 	EXPECT_TRUE(m.wasReset());
 }
 
+TEST_F(ScoreManagerTest, StatsNameTheFolderOnlyWhenSavingFails) {
+	ScoreManager m(dir());
+	m.saveScore(Level::Normal, 5);
+	EXPECT_EQ(m.stats(Level::Normal).unsavedDir, "");
+	// A plain file where the folder was: every write now fails
+	fs::remove_all(dir_);
+	write("", "");
+	m.saveScore(Level::Normal, 7);
+	EXPECT_EQ(m.stats(Level::Normal).unsavedDir, dir());
+}
+
+TEST_F(ScoreManagerTest, CreatesMissingParentFolders) {
+	const fs::path nested = dir_ / "a" / "b";
+	ScoreManager m(nested.string());
+	m.saveScore(Level::Normal, 5);
+	EXPECT_TRUE(fs::exists(nested / "scores_v2.txt"));
+	EXPECT_EQ(m.stats(Level::Normal).unsavedDir, "");
+}
+
 TEST_F(ScoreManagerTest, SecondBackupReplacesTheFirst) {
 	{
 		ScoreManager m(dir());

@@ -25,6 +25,7 @@
  * std::vector<std::pair<Level, int>> unsaved_: Games that could not be written yet, kept so this session stays coherent
  * uint64_t checksum_: Checksum read from the file
  * bool reset_: Whether this session reset the scores after a failed check
+ * bool saveFailed_: Whether the last write to the score folder failed
  */
 class ScoreManager : public IScoreStore {
 public:
@@ -38,9 +39,10 @@ private:
 	std::vector<std::pair<Level, int>> unsaved_;
 	uint64_t checksum_;
 	bool reset_ = false;
+	bool saveFailed_ = false;
 
 	/**
-	 * Creates the data directory if it does not exist
+	 * Creates the data directory, and the folders above it, if they do not exist
 	 */
 	void createDataDirectory();
 

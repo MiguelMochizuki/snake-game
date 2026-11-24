@@ -161,6 +161,13 @@ TEST(TerminalMenuView, NoNoticeUnlessScoresWereReset) {
 	EXPECT_EQ(plain(render(DEFAULT_SNAPSHOT, false)).find("Scores reset"), std::string::npos);
 }
 
+TEST(TerminalMenuView, SaveFailureNamesTheFolder) {
+	MenuSnapshot snap = DEFAULT_SNAPSHOT;
+	snap.stats.unsavedDir = "/no/such";
+	EXPECT_NE(plain(render(snap, false)).find("Scores cannot be saved: /no/such"), std::string::npos);
+	EXPECT_EQ(plain(render(DEFAULT_SNAPSHOT, false)).find("cannot be saved"), std::string::npos);
+}
+
 TEST(TerminalMenuView, ColorStripsToPlain) {
 	EXPECT_EQ(plain(render(DEFAULT_SNAPSHOT, true)), plain(render(DEFAULT_SNAPSHOT, false)));
 }
