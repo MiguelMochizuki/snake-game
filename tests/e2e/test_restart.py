@@ -7,11 +7,11 @@ import re
 import sys
 import tempfile
 
-from harness import Game, quit_game
+from harness import Game, end_game
 
 with tempfile.TemporaryDirectory() as tmp, Game(sys.argv[1], cwd=tmp) as game:
 	game.wait_for(r"GAME OVER!")
 	game.send("r")
 	game.wait_for(r"Score: 0")
-	panel = quit_game(game)
+	panel = end_game(game)
 	assert re.search(r"Games Played:\s+2\n", panel), panel

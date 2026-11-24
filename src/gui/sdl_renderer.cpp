@@ -143,7 +143,7 @@ void SdlRenderer::drawBoard(const GameState& state) {
 	font::drawText(canvas_, fx + font::textWidth("SCORE ", scale), topY, score, scale, tone(theme::NUMBER));
 	font::drawText(canvas_, fx + fw - font::textWidth(best, scale), topY, best, scale, tone(theme::NUMBER));
 	font::drawText(canvas_, fx + fw - font::textWidth(best + " BEST ", scale), topY, "BEST", scale, tone(theme::DIM));
-	font::drawText(canvas_, fx, fy + fh + (lineH - textH) / 2 + u / 2, "WASD or arrows to steer, Q to quit", scale, tone(theme::DIM));
+	font::drawText(canvas_, fx, fy + fh + (lineH - textH) / 2 + u / 2, "WASD or arrows to steer, Q to end game", scale, tone(theme::DIM));
 }
 
 Color SdlRenderer::tone(Color color) const {

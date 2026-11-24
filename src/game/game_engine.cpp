@@ -160,9 +160,12 @@ GameEnd GameEngine::run() {
 			sound_->musicStart();
 		}
 
+		// A game the player walks away from (Q, Ctrl+C, closing the window) is not a finished game
+		bool abandoned = false;
 		while (running_) {
 			TickInput tick = readTick(keys_, input_);
 			if (tick.quit) {
+				abandoned = true;
 				running_ = false;
 				break;
 			}
@@ -194,7 +197,7 @@ GameEnd GameEngine::run() {
 		}
 
 		int finalScore = state_.getFinalScore();
-		if (!practice_) {
+		if (!practice_ && !abandoned) {
 			scores_.saveScore(level_, finalScore);
 		}
 

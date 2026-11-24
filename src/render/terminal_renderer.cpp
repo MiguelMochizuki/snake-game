@@ -109,7 +109,7 @@ void TerminalRenderer::render(const GameState& state) {
 	p.put(PLAIN, " ");
 	p.put(NUMBER, std::to_string(state.getBestScore()));
 	p.endl();
-	p.put(DIM, "Controls: WASD to move, Q to quit");
+	p.put(DIM, "Controls: WASD to move, Q to end game");
 	p.endl();
 
 	out_ << buf.str();

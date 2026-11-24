@@ -8,7 +8,7 @@ import re
 import sys
 import tempfile
 
-from harness import Game, quit_game
+from harness import Game, end_game
 
 MASK = (1 << 64) - 1
 SEED = 0x9E3779B97F4A7C15
@@ -44,7 +44,7 @@ with tempfile.TemporaryDirectory() as tmp:
 			f.write(text)
 	with Game(sys.argv[1], cwd=tmp) as game:
 		game.wait_for(r"Score: 0")
-		panel = quit_game(game)
+		panel = end_game(game)
 	assert re.search(r"Level:\s+Normal\n", panel), panel
 	assert re.search(r"Best Score:\s+8\n", panel), panel
 	assert re.search(r"Games Played:\s+3\n", panel), panel

@@ -14,7 +14,7 @@ import termios
 import time
 
 ANSI_RE = re.compile(r"\033\[[0-9;]*[A-Za-z]")
-FRAME_END = "Controls: WASD to move, Q to quit"
+FRAME_END = "Controls: WASD to move, Q to end game"
 
 # Keys with no effect in any state: function/navigation keys, modified keys, control bytes, UTF-8, other characters
 UNREGISTERED_KEYS = [
@@ -285,7 +285,7 @@ class Game:
 
 def quit_game(game):
 	"""
-	Quits a running game from the board: q, wait for the panel, q, expect exit 0
+	Quits a running game from the board: q, wait for the panel, q, expect exit 0. The game is abandoned, so it is not saved
 
 	Args:
 		game (Game): The running game
@@ -302,9 +302,27 @@ def quit_game(game):
 	return strip_ansi(game.out)[start:]
 
 
+def end_game(game):
+	"""
+	Lets the running game end on its own (the snake hits a wall), then quits from the panel. Unlike quit_game, the game is saved
+
+	Args:
+		game (Game): The running game
+
+	Returns:
+		str: Stripped output from the game-over panel on Throws AssertionError: If the panel never shows or the exit status is not 0
+	"""
+	game.wait_for("GAME OVER!")
+	start = game.pos
+	game.send("q")
+	code = game.exit_code()
+	assert code == 0, "exit code %d" % code
+	return strip_ansi(game.out)[start:]
+
+
 def play_once(binary, cwd):
 	"""
-	Plays one game that quits right away with score 0
+	Plays one game that ends against the right wall with score 0, so it is saved (a game ended with Q is not)
 
 	Args:
 		binary (str): Path to the snake executable
@@ -314,5 +332,4 @@ def play_once(binary, cwd):
 		str: Stripped game-over panel text
 	"""
 	with Game(binary, cwd=cwd) as game:
-		game.wait_for(r"Score: 0")
-		return quit_game(game)
+		return end_game(game)
