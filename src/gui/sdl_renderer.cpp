@@ -128,6 +128,9 @@ void SdlRenderer::drawBoard(const GameState& state) {
 	font::drawText(canvas_, fx + font::textWidth("SCORE ", scale), topY, score, scale, tone(theme::NUMBER));
 	font::drawText(canvas_, fx + fw - font::textWidth(best, scale), topY, best, scale, tone(theme::NUMBER));
 	font::drawText(canvas_, fx + fw - font::textWidth(best + " BEST ", scale), topY, "BEST", scale, tone(theme::DIM));
+	if (practice_) {
+		font::drawText(canvas_, fx + (fw - font::textWidth("PRACTICE", scale)) / 2, topY, "PRACTICE", scale, tone(theme::GOLD));
+	}
 	font::drawText(canvas_, fx, fy + fh + (lineH - textH) / 2 + u / 2, "WASD or arrows to steer, P pause, Q end game", scale, tone(theme::DIM));
 }
 
@@ -145,6 +148,10 @@ void SdlRenderer::redrawAll() {
 		panel_();
 	}
 	canvas_.present();
+}
+
+void SdlRenderer::setPractice(bool practice) {
+	practice_ = practice;
 }
 
 void SdlRenderer::reset() {
@@ -220,7 +227,8 @@ void SdlRenderer::printVictory(Level level, int finalScore, const ScoreStats& st
 
 void SdlRenderer::showPanel(const std::string& title, Color titleColor, Level level, int finalScore, const ScoreStats& stats) {
 	const std::string levelText = levelName(level);
-	panel_ = [this, title, titleColor, levelText, finalScore, stats] {
+	const bool practice = practice_;
+	panel_ = [this, title, titleColor, levelText, finalScore, stats, practice] {
 		int scale = textScaleFor(canvas_.height());
 		const int columns = 26;
 		if (font::textWidth(std::string(columns + 4, ' '), scale) > canvas_.width()) {
@@ -258,8 +266,15 @@ void SdlRenderer::showPanel(const std::string& title, Color titleColor, Level le
 		};
 		row("Level", levelText, theme::NUMBER);
 		row("Score", std::to_string(finalScore), theme::HEAD);
-		row("Best", std::to_string(stats.best), theme::NUMBER);
-		row("Games", std::to_string(stats.games), theme::NUMBER);
+		if (practice) {
+			// The best is this practice session's own, and nothing is saved, so there is no games count
+			row("Session best", std::to_string(stats.best), theme::NUMBER);
+			textAt(left, "PRACTICE - not saved", theme::GOLD);
+			ty += rowH;
+		} else {
+			row("Best", std::to_string(stats.best), theme::NUMBER);
+			row("Games", std::to_string(stats.games), theme::NUMBER);
+		}
 		if (!stats.unsavedDir.empty()) {
 			textAt(left, "Scores not saved", theme::FOOD);
 			ty += rowH;

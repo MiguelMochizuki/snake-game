@@ -68,6 +68,15 @@ public:
 	 * The caller draws the board again afterwards; a front-end without a pause screen can ignore the call
 	 */
 	virtual void printPaused() {}
+
+	/**
+	 * Tells the renderer whether the games that follow are practice games, so it can say so on the status line and on
+	 * the end panels; a front-end that does not mark practice can ignore the call
+	 *
+	 * Parameters:
+	 * bool practice: true while finished games are not saved
+	 */
+	virtual void setPractice(bool practice) { (void)practice; }
 };
 
 #endif

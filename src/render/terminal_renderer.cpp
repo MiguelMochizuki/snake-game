@@ -38,6 +38,16 @@ bool TerminalRenderer::colorEnabledFromEnv() {
 }
 
 /**
+ * Marks the status line and the end panels as practice
+ *
+ * Parameters:
+ * bool practice: true while finished games are not saved
+ */
+void TerminalRenderer::setPractice(bool practice) {
+	practice_ = practice;
+}
+
+/**
  * Resets the renderer state (for game restart)
  */
 void TerminalRenderer::reset() {
@@ -110,6 +120,10 @@ void TerminalRenderer::render(const GameState& state) {
 	p.put(PLAIN, " ");
 	p.put(NUMBER, std::to_string(state.getBestScore()));
 	p.put(PLAIN, "  ");
+	if (practice_) {
+		p.put(GOLD, "PRACTICE");
+		p.put(PLAIN, "  ");
+	}
 	p.put(DIM, "P pause, Q end game");
 	p.endl();
 
@@ -169,15 +183,27 @@ void TerminalRenderer::printPanel(const std::string& title, Style titleStyle, si
 	p.put(NUMBER, padded(finalScore, 5));
 	p.endl();
 	p.put(PLAIN, "  ");
-	p.put(LABEL, "Best Score:");
-	p.put(PLAIN, "   ");
-	p.put(NUMBER, padded(stats.best, 5));
-	p.endl();
-	p.put(PLAIN, "  ");
-	p.put(LABEL, "Games Played:");
-	p.put(PLAIN, " ");
-	p.put(NUMBER, padded(stats.games, 5));
-	p.endl();
+	if (practice_) {
+		// The best is this practice session's own, and nothing is saved, so there is no games count
+		p.put(LABEL, "Session Best:");
+		p.put(PLAIN, " ");
+		p.put(NUMBER, padded(stats.best, 5));
+		p.endl();
+		p.put(PLAIN, "  ");
+		p.put(GOLD, "PRACTICE - not saved");
+		p.put(PLAIN, std::string(8, ' '));
+		p.endl();
+	} else {
+		p.put(LABEL, "Best Score:");
+		p.put(PLAIN, "   ");
+		p.put(NUMBER, padded(stats.best, 5));
+		p.endl();
+		p.put(PLAIN, "  ");
+		p.put(LABEL, "Games Played:");
+		p.put(PLAIN, " ");
+		p.put(NUMBER, padded(stats.games, 5));
+		p.endl();
+	}
 	p.put(PLAIN, std::string(30, ' '));
 	p.endl();
 	if (!stats.unsavedDir.empty()) {

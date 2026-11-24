@@ -70,6 +70,11 @@ private:
 	ISound* sound_ = nullptr;
 	bool practice_ = false;
 
+	/**
+	 * Sets the best score the status line starts from: the saved one, or 0 in practice (the session's own best)
+	 */
+	void applyBest();
+
 public:
 	/**
 	 * Constructor for the GameEngine class

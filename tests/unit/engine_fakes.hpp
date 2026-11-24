@@ -61,24 +61,31 @@ public:
 	int renders = 0, clears = 0, resets = 0, gameOvers = 0, victories = 0, pausedPanels = 0, lastScore = -1;
 	std::vector<int> pauses;
 	std::vector<std::pair<int, int>> heads;
+	std::vector<int> bests;
+	bool practice = false;
+	ScoreStats lastStats{0, 0};
 
 	void reset() override { ++resets; }
 	void clear() override { ++clears; }
 	void render(const GameState& state) override {
 		++renders;
+		bests.push_back(state.getBestScore());
 		const SnakeSegment* head = state.getSnake().getHead();
 		heads.push_back({head->getX(), head->getY()});
 	}
-	void printGameOver(Level, int finalScore, const ScoreStats&) override {
+	void printGameOver(Level, int finalScore, const ScoreStats& stats) override {
 		++gameOvers;
+		lastStats = stats;
 		lastScore = finalScore;
 	}
-	void printVictory(Level, int finalScore, const ScoreStats&) override {
+	void printVictory(Level, int finalScore, const ScoreStats& stats) override {
 		++victories;
+		lastStats = stats;
 		lastScore = finalScore;
 	}
 	void pause(int ms) override { pauses.push_back(ms); }
 	void printPaused() override { ++pausedPanels; }
+	void setPractice(bool value) override { practice = value; }
 };
 
 /**
