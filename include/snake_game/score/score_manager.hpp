@@ -22,6 +22,7 @@
  * std::string scoresFile_: scores_v2.txt, one "E|N|H score" line per game, oldest first
  * std::string checksumFile_: scores_v2.checksum
  * std::vector<std::pair<Level, int>> records_: Every game, oldest first
+ * std::vector<std::pair<Level, int>> unsaved_: Games that could not be written yet, kept so this session stays coherent
  * uint64_t checksum_: Checksum read from the file
  */
 class ScoreManager : public IScoreStore {
@@ -33,6 +34,7 @@ private:
 	std::string scoresFile_;
 	std::string checksumFile_;
 	std::vector<std::pair<Level, int>> records_;
+	std::vector<std::pair<Level, int>> unsaved_;
 	uint64_t checksum_;
 
 	/**
@@ -65,14 +67,26 @@ private:
 	bool loadChecksum();
 
 	/**
-	 * Computes and writes the checksum file
+	 * Reads the score file and its checksum into records_
+	 *
+	 * Returns bool: true if the checksum file exists and matches the records
 	 */
-	void writeChecksum();
+	bool loadVerified();
 
 	/**
-	 * Rewrites the whole score file from the records
+	 * Reloads records_ from disk so games saved by another running instance are kept. A file that fails
+	 * verification is checked once more after a short wait (the other instance may be between its two
+	 * writes); if it still fails, the original is copied to scores_v2.txt.bak and every score is set to
+	 * zero, keeping the game count
 	 */
-	void writeRecords() const;
+	void reload();
+
+	/**
+	 * Writes the score file and then the checksum file, each through a temporary file and a rename
+	 *
+	 * Returns bool: true if both files were written
+	 */
+	bool persist();
 
 public:
 	/**

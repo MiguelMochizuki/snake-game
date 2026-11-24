@@ -290,7 +290,9 @@ sudo usermod -aG docker $USER
 The terminal game saves scores in a `data/` directory next to where you start it. `snake-gui` uses your OS's app-data folder instead, so it behaves the same however it is launched: `~/.local/share/snake-game/` on Linux (or under `$XDG_DATA_HOME`), `~/Library/Application Support/snake-game/` on macOS and `%APPDATA%\snake-game\` on Windows. The two do not share scores. Uninstalling leaves them in place. The files are:
 
 - `scores_v2.txt` holds the level and score of every game.
-- `scores_v2.checksum` detects edited files.
+- `scores_v2.checksum` detects edited files. If the checksum does not match or is missing, every score is set to zero (the game count stays) and the file as it was is copied to `scores_v2.txt.bak`.
+
+Two windows of the same version can run at once: each save re-reads the file first, so neither one loses the other's games.
 
 Files from v1.x (`best_score.txt`, `score_history.txt`, `score_checksum.txt`) are imported once as Normal scores if their checksum is valid. They are never changed or deleted.
 

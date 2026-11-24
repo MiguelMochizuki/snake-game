@@ -5,18 +5,24 @@
  */
 #include "snake_game/score/score_manager.hpp"
 #include <algorithm>
+#include <chrono>
+#include <filesystem>
 #include <functional>
 #include <fstream>
 #include <sstream>
+#include <thread>
 
 #ifdef _WIN32
 	#include <direct.h>
 	#include <io.h>
+	#include <process.h>
 	#define MKDIR(dir) _mkdir(dir)
+	#define SNAKE_GETPID _getpid
 #else
 	#include <sys/stat.h>
 	#include <unistd.h>
 	#define MKDIR(dir) mkdir(dir, 0755)
+	#define SNAKE_GETPID getpid
 #endif
 
 namespace {
@@ -32,6 +38,37 @@ const uint64_t SEED = 0x9E3779B97F4A7C15ULL;
  */
 void mix(uint64_t& hash, uint64_t value) {
 	hash ^= value + SEED + (hash << 6) + (hash >> 2);
+}
+
+/**
+ * Writes a file through a temporary one, so a crash never leaves it half written
+ *
+ * Parameters:
+ * const std::string& path: Final path
+ * const std::string& content: Full content
+ *
+ * Returns bool: true if the file was replaced
+ */
+bool writeAtomic(const std::string& path, const std::string& content) {
+	// The process id keeps two running instances from sharing a temporary file
+	const std::string tmp = path + "." + std::to_string(SNAKE_GETPID()) + ".tmp";
+	{
+		std::ofstream file(tmp, std::ios::trunc);
+		file << content;
+		file.close();
+		if (!file) {
+			std::error_code ignored;
+			std::filesystem::remove(tmp, ignored);
+			return false;
+		}
+	}
+	std::error_code ec;
+	std::filesystem::rename(tmp, path, ec);
+	if (ec) {
+		std::filesystem::remove(tmp, ec);
+		return false;
+	}
+	return true;
 }
 
 }  // namespace
@@ -51,25 +88,11 @@ ScoreManager::ScoreManager(const std::string& dataDir) : checksum_(0) {
 	std::ifstream existing(scoresFile_);
 	if (!existing.is_open()) {
 		migrateOldFiles();
-		writeRecords();
-		writeChecksum();
+		persist();
 		return;
 	}
 	existing.close();
-
-	loadRecords();
-	uint64_t computed = computeChecksum();
-	if (!loadChecksum()) {
-		records_.clear();
-		writeRecords();
-		writeChecksum();
-	} else if (computed != checksum_) {
-		for (auto& record : records_) {
-			record.second = 0;
-		}
-		writeRecords();
-		writeChecksum();
-	}
+	reload();
 }
 
 /**
@@ -175,28 +198,41 @@ bool ScoreManager::loadChecksum() {
 	return false;
 }
 
-/**
- * Computes and writes the checksum file
- */
-void ScoreManager::writeChecksum() {
-	checksum_ = computeChecksum();
-	std::ofstream file(checksumFile_);
-	if (file.is_open()) {
-		file << checksum_ << "\n";
-	}
+bool ScoreManager::loadVerified() {
+	loadRecords();
+	return loadChecksum() && computeChecksum() == checksum_;
 }
 
-/**
- * Rewrites the whole score file from the records
- */
-void ScoreManager::writeRecords() const {
-	std::ofstream file(scoresFile_, std::ios::trunc);
-	if (!file.is_open()) {
+void ScoreManager::reload() {
+	std::ifstream existing(scoresFile_);
+	if (!existing.is_open()) {
+		records_ = unsaved_;
 		return;
 	}
-	for (const auto& record : records_) {
-		file << levelCode(record.first) << " " << record.second << "\n";
+	existing.close();
+
+	if (!loadVerified()) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		if (!loadVerified()) {
+			std::error_code ec;
+			std::filesystem::copy_file(scoresFile_, scoresFile_ + ".bak",
+				std::filesystem::copy_options::overwrite_existing, ec);
+			for (auto& record : records_) {
+				record.second = 0;
+			}
+			persist();
+		}
 	}
+	records_.insert(records_.end(), unsaved_.begin(), unsaved_.end());
+}
+
+bool ScoreManager::persist() {
+	checksum_ = computeChecksum();
+	std::ostringstream text;
+	for (const auto& record : records_) {
+		text << levelCode(record.first) << " " << record.second << "\n";
+	}
+	return writeAtomic(scoresFile_, text.str()) && writeAtomic(checksumFile_, std::to_string(checksum_) + "\n");
 }
 
 /**
@@ -258,12 +294,12 @@ double ScoreManager::averageScore(Level level) const {
  * int score: The final score
  */
 void ScoreManager::saveScore(Level level, int score) {
+	reload();
 	records_.push_back({level, score});
-	std::ofstream file(scoresFile_, std::ios::app);
-	if (file.is_open()) {
-		file << levelCode(level) << " " << score << "\n";
+	unsaved_.push_back({level, score});
+	if (persist()) {
+		unsaved_.clear();
 	}
-	writeChecksum();
 }
 
 /**
@@ -308,9 +344,11 @@ std::vector<int> ScoreManager::topScores(Level level, std::size_t n) const {
  * Level level: The level to clear
  */
 void ScoreManager::clear(Level level) {
-	records_.erase(std::remove_if(records_.begin(), records_.end(), [level](const std::pair<Level, int>& record) {
-		return record.first == level;
-	}), records_.end());
-	writeRecords();
-	writeChecksum();
+	reload();
+	auto ofLevel = [level](const std::pair<Level, int>& record) { return record.first == level; };
+	records_.erase(std::remove_if(records_.begin(), records_.end(), ofLevel), records_.end());
+	unsaved_.erase(std::remove_if(unsaved_.begin(), unsaved_.end(), ofLevel), unsaved_.end());
+	if (persist()) {
+		unsaved_.clear();
+	}
 }
