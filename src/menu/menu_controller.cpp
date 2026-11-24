@@ -130,7 +130,7 @@ MenuResult runMenu(IKeySource& keys, const IInputHandler& input, IMenuView& view
 		MenuModel& model, IScoreSource& scores, ISound* sound) {
 	keys.flush();
 	while (true) {
-		view.show(MenuSnapshot{model.selected(), model.level(), scores.stats(model.level()), model.sound(), model.practice()});
+		view.show(MenuSnapshot{model.selected(), model.level(), scores.stats(model.level()), model.sound(), model.practice(), scores.wasReset()});
 		std::optional<Key> key = keys.waitKey();
 		if (!key) {
 			return resultOf(model, false);

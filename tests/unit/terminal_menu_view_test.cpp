@@ -150,6 +150,17 @@ TEST(TerminalMenuView, ColorMatchesGolden) {
 	expectGolden("menu_default_color.txt", render(DEFAULT_SNAPSHOT, true));
 }
 
+TEST(TerminalMenuView, ResetNoticeMatchesGolden) {
+	MenuSnapshot snap = DEFAULT_SNAPSHOT;
+	snap.scoresReset = true;
+	expectGolden("menu_reset_notice.txt", render(snap, false));
+	expectGolden("menu_reset_notice_color.txt", render(snap, true));
+}
+
+TEST(TerminalMenuView, NoNoticeUnlessScoresWereReset) {
+	EXPECT_EQ(plain(render(DEFAULT_SNAPSHOT, false)).find("Scores reset"), std::string::npos);
+}
+
 TEST(TerminalMenuView, ColorStripsToPlain) {
 	EXPECT_EQ(plain(render(DEFAULT_SNAPSHOT, true)), plain(render(DEFAULT_SNAPSHOT, false)));
 }
