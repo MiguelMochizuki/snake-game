@@ -140,6 +140,15 @@ void Canvas::fillRect(int x, int y, int w, int h, Color color) {
 /**
  * Shows what was drawn; does nothing on an off-screen canvas
  */
+bool Canvas::toggleFullscreen() {
+	if (!impl_->window) {
+		return false;
+	}
+	const bool now = (SDL_GetWindowFlags(impl_->window) & SDL_WINDOW_FULLSCREEN) == 0;
+	SDL_SetWindowFullscreen(impl_->window, now);
+	return now;
+}
+
 void Canvas::present() {
 	if (impl_->window) {
 		SDL_RenderPresent(impl_->renderer);
