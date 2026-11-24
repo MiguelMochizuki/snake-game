@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cmath>
+#include <cstdlib>
 #include <string>
 #include <thread>
 #include <vector>
@@ -56,6 +57,19 @@ int signChanges(const std::vector<float>& v, size_t n) {
 		}
 	}
 	return count;
+}
+
+// Sets (or clears, with nullptr) an environment variable on both POSIX and Windows
+void setVar(const char* name, const char* value) {
+#ifdef _WIN32
+	_putenv_s(name, value != nullptr ? value : "");
+#elif defined(__unix__) || defined(__APPLE__)
+	if (value != nullptr) {
+		setenv(name, value, 1);
+	} else {
+		unsetenv(name);
+	}
+#endif
 }
 
 }  // namespace
@@ -146,11 +160,11 @@ TEST(Synth, ARandomPieceNeverRepeatsTheLastOneAndEveryPieceCanCome) {
 }
 
 TEST(Synth, SnakePieceForcesAPieceByNumberOrByTitle) {
-	setenv("SNAKE_PIECE", "marseillaise", 1);
+	setVar("SNAKE_PIECE", "marseillaise");
 	Synth byTitle(LOW_RATE, 1);
-	setenv("SNAKE_PIECE", "3", 1);
+	setVar("SNAKE_PIECE", "3");
 	Synth byNumber(LOW_RATE, 1);
-	unsetenv("SNAKE_PIECE");
+	setVar("SNAKE_PIECE", nullptr);
 	EXPECT_STREQ(PIECES[byTitle.piece()].title, "La Marseillaise");
 	EXPECT_EQ(byNumber.piece(), 2);
 	for (int i = 0; i < 5; ++i) {
