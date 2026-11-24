@@ -3,7 +3,9 @@
 #   HOW TO PLAY      #
 #                    #
 #   Steer: WASD or   #
-#   the arrow keys   #
+#   the arrow keys.  #
+#   P pauses; Q ends #
+#   the game.        #
 #                    #
 #   Eat the red *    #
 #   to grow and      #

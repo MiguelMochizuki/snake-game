@@ -56,13 +56,15 @@ Layout layoutFor(int canvasW, int canvasH, int cols, int rows);
  * IDrawSurface& canvas_: Where to draw
  * SdlApp& app_: Event pump used while waiting and for redraws on resize
  * std::optional<GameState> last_: The last state drawn
- * std::function<void()> panel_: Draws the game over panel, empty while a game runs
+ * std::function<void()> panel_: Draws the game over or pause panel, empty while a game runs
+ * bool boardHidden_: Whether the board is left out of redraws (while paused)
  */
 class SdlRenderer : public IRenderer {
 	IDrawSurface& canvas_;
 	SdlApp& app_;
 	std::optional<GameState> last_;
 	std::function<void()> panel_;
+	bool boardHidden_ = false;
 	float dim_ = 1.0f;
 
 	/**
@@ -121,6 +123,11 @@ public:
 	void printGameOver(Level level, int finalScore, const ScoreStats& stats) override;
 	void printVictory(Level level, int finalScore, const ScoreStats& stats) override;
 	void pause(int ms) override;
+
+	/**
+	 * Replaces the board with the pause panel
+	 */
+	void printPaused() override;
 
 	/**
 	 * Returns GameState: A copy of the last state drawn (a default board before any)

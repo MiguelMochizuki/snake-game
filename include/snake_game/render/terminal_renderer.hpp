@@ -107,6 +107,11 @@ public:
 	 * int ms: Time to sleep in milliseconds
 	 */
 	void pause(int ms) override;
+
+	/**
+	 * Clears the screen and prints the pause panel
+	 */
+	void printPaused() override;
 };
 
 #endif

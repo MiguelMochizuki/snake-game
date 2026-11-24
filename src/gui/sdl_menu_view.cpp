@@ -334,7 +334,7 @@ void SdlMenuView::showHelp() {
 			p.gap(2);
 			p.rule();
 			const std::vector<std::vector<std::string>> paragraphs = {
-				{"Steer: WASD or", "the arrow keys"},
+				{"Steer: WASD or", "the arrow keys.", "P pauses, Q ends", "the game."},
 				{"Eat the red dot", "to grow and", "score points."},
 				{"Hitting a wall", "or yourself", "ends the game."},
 				{"After a game:", "R again, M menu", "Q quit"},

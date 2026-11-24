@@ -109,7 +109,7 @@ void TerminalRenderer::render(const GameState& state) {
 	p.put(PLAIN, " ");
 	p.put(NUMBER, std::to_string(state.getBestScore()));
 	p.endl();
-	p.put(DIM, "Controls: WASD to move, Q to end game");
+	p.put(DIM, "Controls: WASD to move, P pause, Q end game");
 	p.endl();
 
 	out_ << buf.str();
@@ -211,4 +211,30 @@ void TerminalRenderer::printPanel(const std::string& title, Style titleStyle, si
  */
 void TerminalRenderer::pause(int ms) {
 	std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+}
+
+void TerminalRenderer::printPaused() {
+	std::ostringstream buf;
+	Painter p(buf, color_);
+	const std::string rule(30, '=');
+	buf << "\033[2J\033[H";
+	p.put(WALL, rule);
+	p.endl();
+	p.put(PLAIN, std::string(12, ' '));
+	p.put(GOLD, "PAUSED");
+	p.put(PLAIN, std::string(12, ' '));
+	p.endl();
+	p.put(PLAIN, std::string(30, ' '));
+	p.endl();
+	p.put(PLAIN, "  ");
+	p.put(RESTART, "[P]");
+	p.put(PLAIN, " Resume" + std::string(18, ' '));
+	p.endl();
+	p.put(PLAIN, "  ");
+	p.put(QUIT, "[Q]");
+	p.put(PLAIN, " End game" + std::string(16, ' '));
+	p.endl();
+	p.put(WALL, rule);
+	p.endl();
+	out_ << buf.str();
 }

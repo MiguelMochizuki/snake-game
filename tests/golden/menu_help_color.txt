@@ -3,7 +3,9 @@
 [36m#[0m   [1;92mHOW TO PLAY[0m      [36m#[0m
 [36m#[0m                    [36m#[0m
 [36m#[0m   Steer: WASD or   [36m#[0m
-[36m#[0m   the arrow keys   [36m#[0m
+[36m#[0m   the arrow keys.  [36m#[0m
+[36m#[0m   P pauses; Q ends [36m#[0m
+[36m#[0m   the game.        [36m#[0m
 [36m#[0m                    [36m#[0m
 [36m#[0m   Eat the red *    [36m#[0m
 [36m#[0m   to grow and      [36m#[0m

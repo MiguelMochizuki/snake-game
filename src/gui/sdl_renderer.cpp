@@ -143,7 +143,7 @@ void SdlRenderer::drawBoard(const GameState& state) {
 	font::drawText(canvas_, fx + font::textWidth("SCORE ", scale), topY, score, scale, tone(theme::NUMBER));
 	font::drawText(canvas_, fx + fw - font::textWidth(best, scale), topY, best, scale, tone(theme::NUMBER));
 	font::drawText(canvas_, fx + fw - font::textWidth(best + " BEST ", scale), topY, "BEST", scale, tone(theme::DIM));
-	font::drawText(canvas_, fx, fy + fh + (lineH - textH) / 2 + u / 2, "WASD or arrows to steer, Q to end game", scale, tone(theme::DIM));
+	font::drawText(canvas_, fx, fy + fh + (lineH - textH) / 2 + u / 2, "WASD or arrows to steer, P pause, Q end game", scale, tone(theme::DIM));
 }
 
 Color SdlRenderer::tone(Color color) const {
@@ -153,7 +153,7 @@ Color SdlRenderer::tone(Color color) const {
 
 void SdlRenderer::redrawAll() {
 	canvas_.clear(tone(theme::BACKGROUND));
-	if (last_) {
+	if (last_ && !boardHidden_) {
 		drawBoard(*last_);
 	}
 	if (panel_) {
@@ -165,6 +165,7 @@ void SdlRenderer::redrawAll() {
 void SdlRenderer::reset() {
 	last_.reset();
 	panel_ = nullptr;
+	boardHidden_ = false;
 	dim_ = 1.0f;
 }
 
@@ -181,6 +182,7 @@ void SdlRenderer::clear() {
 void SdlRenderer::render(const GameState& state) {
 	last_ = state;
 	panel_ = nullptr;
+	boardHidden_ = false;
 	dim_ = 1.0f;
 	drawBoard(state);
 	canvas_.present();
@@ -305,4 +307,43 @@ void SdlRenderer::pause(int ms) {
 
 GameState SdlRenderer::lastState() const {
 	return last_ ? *last_ : GameState(20, 20, 0, 0);
+}
+
+void SdlRenderer::printPaused() {
+	boardHidden_ = true;
+	panel_ = [this] {
+		int scale = textScaleFor(canvas_.height());
+		const int columns = 26;
+		if (font::textWidth(std::string(columns + 4, ' '), scale) > canvas_.width()) {
+			scale = 1;
+		}
+		const int u = 2 * scale;
+		const int rowH = font::textHeight(scale) + 3 * u;
+		const int pad = 3 * u;
+		const int w = std::min(canvas_.width(), font::textWidth(std::string(columns, ' '), scale) + 2 * pad);
+		const int border = std::max(1, scale / 2);
+		const int h = 2 * pad + 2 * rowH + u + border + u;
+		const int x = std::max(0, (canvas_.width() - w) / 2);
+		const int y = std::max(0, (canvas_.height() - h) / 2);
+		canvas_.fillRect(x, y, w, h, theme::WALL);
+		canvas_.fillRect(x + border, y + border, w - 2 * border, h - 2 * border, theme::SURFACE);
+		const int left = x + pad;
+		int ty = y + pad;
+		auto textAt = [&](int px, const std::string& text, Color color) {
+			font::drawText(canvas_, px, ty + (rowH - font::textHeight(scale)) / 2, text, scale, color);
+		};
+		textAt(left, "PAUSED", theme::GOLD);
+		ty += rowH + u;
+		canvas_.fillRect(left, ty, w - 2 * pad, border, theme::WALL);
+		ty += border + u;
+		int px = left;
+		for (const auto& key : {std::make_pair("P", "resume"), std::make_pair("Q", "end game")}) {
+			textAt(px, key.first, theme::HEAD);
+			px += font::textWidth(std::string(key.first) + " ", scale);
+			textAt(px, key.second, theme::LABEL);
+			px += font::textWidth(std::string(key.second) + "  ", scale);
+		}
+	};
+	redrawAll();
+	app_.setScene([this] { redrawAll(); });
 }
