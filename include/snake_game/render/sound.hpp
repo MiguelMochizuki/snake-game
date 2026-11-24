@@ -29,7 +29,7 @@ public:
 	virtual void gameOver() = 0;
 
 	/**
-	 * Starts the background music; does nothing by default
+	 * Starts the background music, which goes on where it was last stopped; does nothing by default
 	 */
 	virtual void musicStart() {}
 

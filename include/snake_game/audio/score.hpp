@@ -1,38 +1,50 @@
 /**
  * score.hpp
  * Author: Miguel Mochizuki Silva
- * Description: The soundtrack as data: Gounod's "Ave Maria" melody over Bach's C major Prelude
+ * Description: The soundtrack as data: the pieces the game plays, as lists of notes in milliseconds
  */
 #ifndef SCORE_HPP
 #define SCORE_HPP
 
 /**
- * One note of the melody
+ * One note of a piece
  *
  * Attributes:
- * int start: First sixteenth-note step of the note
- * int length: Duration in sixteenths
- * int pitch: MIDI note number
+ * int start: When the note begins, in milliseconds from the start of the piece
+ * int length: How long it lasts, in milliseconds
+ * unsigned char pitch: MIDI note number
+ * unsigned char melody: 1 if the note belongs to the melody, 0 for the accompaniment
  */
-struct MelodyNote {
+struct ScoreNote {
 	int start;
 	int length;
-	int pitch;
+	unsigned char pitch;
+	unsigned char melody;
 };
 
-// 66 BPM (Andante semplice, as marked in the score): a calm tempo that is easy to play over
-const double TEMPO_BPM = 66.0;
+/**
+ * One piece of music
+ *
+ * Attributes:
+ * const char* title: Name of the piece
+ * const char* composer: Who wrote it
+ * const ScoreNote* notes: The notes, sorted by start
+ * int count: Number of notes
+ * int endMs: When the piece ends, in milliseconds
+ */
+struct Piece {
+	const char* title;
+	const char* composer;
+	const ScoreNote* notes;
+	int count;
+	int endMs;
+};
 
-// Accompaniment: one note per sixteenth, then a final chord, then a rest before the piece restarts
-const int ARPEGGIO_STEPS = 1152;
-const int SCORE_STEPS = 1184;
-const int FINAL_CHORD_SIZE = 6;
+// Silence after each piece, before the next one starts
+const int REST_BETWEEN_PIECES_MS = 2000;
 
-const int MELODY_COUNT = 211;
-
-extern const unsigned char ARPEGGIO_DATA[ARPEGGIO_STEPS];
-extern const int FINAL_CHORD[FINAL_CHORD_SIZE];
-extern const MelodyNote MELODY[MELODY_COUNT];
+extern const Piece PIECES[];
+extern const int PIECE_COUNT;
 
 /**
  * Frequency of a MIDI note
@@ -43,25 +55,5 @@ extern const MelodyNote MELODY[MELODY_COUNT];
  * Returns double: Frequency in Hz
  */
 double midiFrequency(int note);
-
-/**
- * Accompaniment note at a sixteenth step
- *
- * Parameters:
- * int step: Sixteenth-note index, wraps modulo SCORE_STEPS
- *
- * Returns int: MIDI note, or -1 once the final chord has started
- */
-int arpeggioNote(int step);
-
-/**
- * Melody note sounding at a sixteenth step
- *
- * Parameters:
- * int step: Sixteenth-note index, wraps modulo SCORE_STEPS
- *
- * Returns int: MIDI note, or -1 during a rest
- */
-int melodyNote(int step);
 
 #endif

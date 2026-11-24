@@ -25,7 +25,7 @@ Snake Game has two front-ends on one engine: the graphical game (`snake-gui`, dr
 - Start menu with three levels (Easy, Normal, Hard), a leaderboard, a how-to-play screen, a sound switch and a practice mode that keeps your games out of the leaderboard; press M at game over to return to it
 - Arrow keys or WASD; turns pressed within one step are kept (up to two), so a quick Up then Left makes both
 - Best score, games played and top 10, kept separately for each level and saved between sessions
-- Terminal beep when you eat and when the game ends; in builds with audio (the release binaries), Gounod's "Ave Maria" over Bach's C major Prelude plays during the game (about four minutes, then it starts again), with short blips when you eat, when the game ends and when you move around the menu
+- Terminal beep when you eat and when the game ends; in builds with audio (the release binaries), ten pieces of classical music play during the game, one after the other and in a loop (about half an hour in all, and the music goes on where it stopped when you pause, restart or go back to the menu), with short blips when you eat, when the game ends and when you move around the menu
 - Filling the whole board is a win: the last food is scored and a victory screen replaces game over (a yellow panel in the terminal; in the window the board fades to dark under a gold one)
 - In the graphical version the snake and the food are drawn with sprites: a shaded, rounded snake with diamonds on its back, a head that faces where it goes with golden slit-pupil eyes and a forked tongue, and a red apple with a stem and a leaf. The app icon is drawn by the same code
 - In the graphical version the game over panel appears over a board that fades to dark, as the victory one does
@@ -177,7 +177,20 @@ Set `NO_COLOR` to any non-empty value to turn colors off, for example `NO_COLOR=
 
 The release binaries play music and blips through the system audio device. The sound switch in the menu turns all of it off. If no audio device can be opened, the game falls back to the terminal beep without any message. Set `SNAKE_AUDIO=off` to force the beep even when a device exists.
 
-The music is Charles Gounod's *Ave Maria* (1853) over Johann Sebastian Bach's Prelude in C major (BWV 846), both in the public domain, played at the score's calm 66 BPM. The notes come from the [Mutopia Project](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=2167) edition (typeset by Yann Leprince from the 1856 Heugel score, also public domain) through `tools/gen_score.py`, which writes `src/audio/score_data.cpp`.
+The music is ten public domain pieces, played one after the other and then again, with a short silence between them. It never restarts by itself: pausing, losing, restarting or going to the menu only stops it, and it goes on from there. The notes come from the [Mutopia Project](https://www.mutopiaproject.org) editions (through their MIDI files, with the melody told apart from the accompaniment by `tools/gen_score.py`, which writes `src/audio/score_data.cpp`):
+
+1. C. Gounod, *Ave Maria*, over J. S. Bach's Prelude in C major ([Mutopia 2167](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=2167), Heugel 1856)
+2. E. Satie, *Gymnopédie No. 1* ([37](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=37))
+3. L. van Beethoven, *Ode to Joy* ([528](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=528))
+4. L. van Beethoven, *Für Elise* ([931](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=931))
+5. C. Debussy, *Clair de lune* ([1778](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=1778))
+6. W. A. Mozart, *Rondo alla Turca* ([108](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=108))
+7. J. S. Bach, *Air on the G String* ([1534](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=1534))
+8. W. A. Mozart, *Eine kleine Nachtmusik*, 1st movement ([900](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=900))
+9. C. Debussy, *Première Arabesque* ([1777](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=1777))
+10. E. Grieg, *In the Hall of the Mountain King* ([1888](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=1888))
+
+All of them are marked public domain on Mutopia. The piano pieces are played by a synth with a soft triangle wave for the accompaniment and a square wave for the melody, so they sound like a chiptune, not like a piano. Tempos are the ones in the MIDI files, except *Rondo alla Turca*, whose file carries a placeholder.
 
 Audio is optional at build time: `cmake -S . -B build -DSNAKE_GAME_BUILD_AUDIO=ON` fetches [miniaudio](https://github.com/mackron/miniaudio) when configuring. The default build (`make`) and the Docker image have no audio and keep the terminal beep.
 

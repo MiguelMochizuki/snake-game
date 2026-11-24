@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cmath>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -17,8 +18,20 @@
 namespace {
 
 const int RATE = 44100;
-const int LOW_RATE = 2000;  // keeps whole-piece renders small: a sixteenth is 454 samples at 66 BPM
-const int LOW_STEP = 454;
+const int LOW_RATE = 2000;  // keeps whole-repertoire renders small
+
+/**
+ * Number of samples of a duration
+ *
+ * Parameters:
+ * int rate: Sample rate in Hz
+ * long long ms: Duration in milliseconds
+ *
+ * Returns int: The samples
+ */
+int framesOf(int rate, long long ms) {
+	return static_cast<int>(ms * rate / 1000);
+}
 
 std::vector<float> renderFrames(Synth& s, int frames) {
 	std::vector<float> out(frames);
@@ -47,91 +60,121 @@ int signChanges(const std::vector<float>& v, size_t n) {
 
 }  // namespace
 
-TEST(Score, PreludeOpensLikeBach) {
-	// Bar 1 of the C major prelude: C E G C E G C E, twice
+TEST(Score, TheRepertoireHasTenPiecesStartingWithTheAveMaria) {
+	EXPECT_EQ(PIECE_COUNT, 10);
+	EXPECT_STREQ(PIECES[0].title, "Ave Maria");
+	bool ode = false;
+	for (int i = 0; i < PIECE_COUNT; ++i) {
+		EXPECT_GT(std::string(PIECES[i].title).size(), 0u);
+		EXPECT_GT(std::string(PIECES[i].composer).size(), 0u);
+		ode = ode || std::string(PIECES[i].title) == "Ode to Joy";
+	}
+	EXPECT_TRUE(ode);
+}
+
+TEST(Score, EveryPieceIsConsistent) {
+	for (int i = 0; i < PIECE_COUNT; ++i) {
+		const Piece& piece = PIECES[i];
+		int last = 0, end = 0, melody = 0;
+		for (int n = 0; n < piece.count; ++n) {
+			const ScoreNote& note = piece.notes[n];
+			ASSERT_GE(note.start, last) << piece.title << " note " << n << " is out of order";
+			ASSERT_GT(note.length, 0) << piece.title << " note " << n;
+			ASSERT_GE(note.pitch, 21) << piece.title << " note " << n;
+			ASSERT_LE(note.pitch, 108) << piece.title << " note " << n;
+			last = note.start;
+			end = std::max(end, note.start + note.length);
+			melody += note.melody;
+		}
+		EXPECT_EQ(end, piece.endMs) << piece.title;
+		EXPECT_GT(melody, 0) << piece.title << " has no melody";
+		EXPECT_GT(piece.count, melody) << piece.title << " has no accompaniment";
+		EXPECT_GE(piece.endMs, 30 * 1000) << piece.title << " is too short";
+		EXPECT_LE(piece.endMs, 10 * 60 * 1000) << piece.title << " is too long";
+	}
+}
+
+TEST(Score, AveMariaOpensLikeBachAndTheMelodyWaitsFourBars) {
+	const Piece& piece = PIECES[0];
+	// Bar 1 of the C major prelude: C E G C E G C E
 	const int bar1[8] = {60, 64, 67, 72, 76, 67, 72, 76};
-	for (int i = 0; i < 16; ++i) {
-		EXPECT_EQ(arpeggioNote(i), bar1[i % 8]) << "step " << i;
+	int seen = 0;
+	int firstMelody = -1;
+	for (int n = 0; n < piece.count; ++n) {
+		const ScoreNote& note = piece.notes[n];
+		if (!note.melody && seen < 8) {
+			EXPECT_EQ(note.pitch, bar1[seen]) << "accompaniment note " << seen;
+			++seen;
+		}
+		if (note.melody && firstMelody < 0) {
+			firstMelody = n;
+		}
 	}
-	EXPECT_EQ(arpeggioNote(16 + 1), 62);  // bar 2 is Dm7/C: C D A D F ...
-	EXPECT_EQ(arpeggioNote(32), 59);      // bar 3 is G7/B: B D G D F ...
+	ASSERT_GE(firstMelody, 0);
+	EXPECT_EQ(piece.notes[firstMelody].pitch, 76);  // E5, first note of the melody
+	EXPECT_NEAR(piece.notes[firstMelody].start, 64 * 60000 / 66 / 4, 20);  // after four bars at 66 BPM
 }
 
-TEST(Score, MelodyWaitsFourBarsThenSings) {
-	for (int step = 0; step < 64; ++step) {
-		EXPECT_EQ(melodyNote(step), -1) << "step " << step;
-	}
-	EXPECT_EQ(melodyNote(64), 76);       // E5, first note of the melody
-	EXPECT_EQ(melodyNote(64 + 15), 76);  // held for the whole bar
-	EXPECT_EQ(melodyNote(80), 77);       // F5
-	EXPECT_EQ(melodyNote(96), 79);       // G5
-	EXPECT_EQ(melodyNote(96 + 12), 74);  // D5
-}
-
-TEST(Score, DataIsConsistent) {
-	for (int step = 0; step < ARPEGGIO_STEPS; ++step) {
-		EXPECT_GE(arpeggioNote(step), 36) << "step " << step;
-		EXPECT_LE(arpeggioNote(step), 96) << "step " << step;
-	}
-	EXPECT_EQ(arpeggioNote(ARPEGGIO_STEPS), -1);  // the final chord takes over
-	int end = 0;
-	for (int i = 0; i < MELODY_COUNT; ++i) {
-		EXPECT_GE(MELODY[i].start, end) << "note " << i << " overlaps the previous one";
-		EXPECT_GT(MELODY[i].length, 0);
-		EXPECT_GE(MELODY[i].pitch, 48);
-		EXPECT_LE(MELODY[i].pitch, 96);
-		end = MELODY[i].start + MELODY[i].length;
-	}
-	EXPECT_LE(end, SCORE_STEPS - 8) << "melody must leave a breath before the loop restarts";
-}
-
-TEST(Score, WrapsAroundAtTheEnd) {
-	for (int step : {0, 1, 17, 64, 100, 700}) {
-		EXPECT_EQ(arpeggioNote(step + SCORE_STEPS), arpeggioNote(step));
-		EXPECT_EQ(melodyNote(step + SCORE_STEPS), melodyNote(step));
-	}
-}
-
-TEST(Score, TempoIsCalm) {
-	EXPECT_LE(TEMPO_BPM, 72.0);
-	EXPECT_GE(TEMPO_BPM, 54.0);
-}
-
-TEST(Synth, PlaysThroughAndRestartsSeamlessly) {
+TEST(Synth, MusicGoesOnToTheNextPieceAfterABreathAndLoopsAfterTheLast) {
 	Synth s(LOW_RATE);
 	s.startMusic();
-	const int loopFrames = SCORE_STEPS * LOW_STEP;
-	std::vector<float> first = renderFrames(s, loopFrames);
-	std::vector<float> second = renderFrames(s, loopFrames);
+	std::vector<float> first = renderFrames(s, framesOf(LOW_RATE, PIECES[0].endMs + REST_BETWEEN_PIECES_MS));
 	EXPECT_FALSE(allZero(first));
-	EXPECT_EQ(first, second);
+	// The rest after the piece is silent
+	EXPECT_TRUE(allZero(first, static_cast<size_t>(framesOf(LOW_RATE, PIECES[0].endMs + 200))));
+	// The next piece follows at once
+	EXPECT_FALSE(allZero(renderFrames(s, framesOf(LOW_RATE, 30000))));
+
+	// After every piece the first one starts again, exactly as it did the first time
+	Synth loop(LOW_RATE), reference(LOW_RATE);
+	loop.startMusic();
+	reference.startMusic();
+	long long total = 0;
+	for (int i = 0; i < PIECE_COUNT; ++i) {
+		total += framesOf(LOW_RATE, PIECES[i].endMs + REST_BETWEEN_PIECES_MS);
+	}
+	renderFrames(loop, static_cast<int>(total));
+	EXPECT_EQ(renderFrames(loop, 20000), renderFrames(reference, 20000));
 }
 
-TEST(Synth, LeavesABreathBeforeRestarting) {
-	Synth s(LOW_RATE);
-	s.startMusic();
-	std::vector<float> loop = renderFrames(s, SCORE_STEPS * LOW_STEP);
-	EXPECT_TRUE(allZero(loop, static_cast<size_t>((SCORE_STEPS - 8) * LOW_STEP)));
+TEST(Synth, StoppingKeepsThePlaceAndStartingGoesOnFromIt) {
+	Synth continuous(LOW_RATE), paused(LOW_RATE);
+	continuous.startMusic();
+	std::vector<float> whole = renderFrames(continuous, 60000);
+
+	paused.startMusic();
+	std::vector<float> before = renderFrames(paused, 30000);
+	paused.stopMusic();
+	EXPECT_TRUE(allZero(renderFrames(paused, 5000)));
+	paused.startMusic();
+	std::vector<float> after = renderFrames(paused, 30000);
+	EXPECT_EQ(before, std::vector<float>(whole.begin(), whole.begin() + 30000));
+	EXPECT_EQ(after, std::vector<float>(whole.begin() + 30000, whole.end()));
 }
 
 TEST(Synth, MelodyAddsToTheAccompaniment) {
-	// Bars 1-4 are accompaniment only; the melody enters in bar 5 and the sound gets louder
+	// The first four bars of the Ave Maria are accompaniment only; the melody enters after them and the sound gets louder
 	Synth s(LOW_RATE);
 	s.startMusic();
-	std::vector<float> out = renderFrames(s, 8 * 16 * LOW_STEP);
+	std::vector<float> out = renderFrames(s, framesOf(LOW_RATE, 29000));
 	double intro = 0, withMelody = 0;
-	for (size_t i = 0; i < out.size() / 2; ++i) {
+	for (int i = 0; i < framesOf(LOW_RATE, 14000); ++i) {
 		intro += std::fabs(out[i]);
-		withMelody += std::fabs(out[i + out.size() / 2]);
+		withMelody += std::fabs(out[i + framesOf(LOW_RATE, 15000)]);
 	}
 	EXPECT_GT(withMelody, intro * 1.1);
 }
 
 TEST(Synth, MusicStaysQuietAndFinite) {
+	// The whole repertoire, so the loudest chord of any piece is covered
 	Synth s(LOW_RATE);
 	s.startMusic();
+	long long total = 0;
+	for (int i = 0; i < PIECE_COUNT; ++i) {
+		total += framesOf(LOW_RATE, PIECES[i].endMs + REST_BETWEEN_PIECES_MS);
+	}
 	float peak = 0.0f;
-	for (float v : renderFrames(s, SCORE_STEPS * LOW_STEP)) {
+	for (float v : renderFrames(s, static_cast<int>(total))) {
 		ASSERT_TRUE(std::isfinite(v));
 		peak = std::max(peak, std::fabs(v));
 	}
@@ -149,20 +192,22 @@ TEST(Synth, SilentWhenStopped) {
 }
 
 TEST(Synth, TheLastMusicCommandWinsWhenSeveralArriveBetweenCallbacks) {
+	const int step = framesOf(LOW_RATE, 1000);
 	Synth stopped(LOW_RATE);
 	stopped.startMusic();
-	renderFrames(stopped, 5 * LOW_STEP);
+	renderFrames(stopped, 5 * step);
 	stopped.startMusic();
 	stopped.stopMusic();  // quit right after a restart, before the audio thread ran
-	EXPECT_TRUE(allZero(renderFrames(stopped, 4 * LOW_STEP)));
+	EXPECT_TRUE(allZero(renderFrames(stopped, 4 * step)));
 
-	Synth restarted(LOW_RATE), fresh(LOW_RATE);
-	restarted.startMusic();
-	renderFrames(restarted, 5 * LOW_STEP);
-	restarted.stopMusic();
-	restarted.startMusic();  // and the other way round: the game starts over from the beginning
+	Synth again(LOW_RATE), fresh(LOW_RATE);
+	again.startMusic();
+	renderFrames(again, 5 * step);
+	again.stopMusic();
+	again.startMusic();  // and the other way round: the music goes on, with no gap
 	fresh.startMusic();
-	EXPECT_EQ(renderFrames(restarted, 4 * LOW_STEP), renderFrames(fresh, 4 * LOW_STEP));
+	std::vector<float> whole = renderFrames(fresh, 9 * step);
+	EXPECT_EQ(renderFrames(again, 4 * step), std::vector<float>(whole.begin() + 5 * step, whole.end()));
 }
 
 TEST(Synth, BlipsDecay) {
