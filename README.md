@@ -159,7 +159,7 @@ The game opens on a menu. Pick a level, then start.
 | A / Left arrow | Previous level (Level row), toggle (Sound and Practice rows) | Move left |
 | D / Right arrow | Next level (Level row), toggle (Sound and Practice rows) | Move right |
 | Enter | Choose the selected row | Nothing |
-| Q / Ctrl+C | Quit | End the game |
+| Q / Ctrl+C | Quit | End the game (it is not saved) |
 
 The menu rows are Start, Level, Leaderboard, How to play, Sound, Practice and Quit. The levels set the time per step: Easy 300 ms, Normal 200 ms, Hard 100 ms. The menu shows the best score, games played and average over the last 10 games of the selected level. The Leaderboard lists the top 10 scores of a level (A/D switch level, Enter goes back, C offers to clear the scores of the level shown: Enter deletes that level's history with no way back and the other levels are untouched, Q keeps it). Sound is on at each launch and only beeps in a terminal. Practice is off at each launch; while it is on, finished games are not saved. Any other key does nothing.
 

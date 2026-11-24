@@ -7,7 +7,7 @@ import re
 import sys
 import tempfile
 
-from harness import Game, quit_game
+from harness import Game, end_game
 
 KEYS = {"w": (0, -1), "s": (0, 1), "a": (-1, 0), "d": (1, 0)}
 
@@ -78,7 +78,7 @@ with tempfile.TemporaryDirectory() as tmp, Game(sys.argv[1], cwd=tmp, frame_ms=1
 			if KEYS[key] != d:
 				game.send(key)
 	game.wait_for(r"Score: 1\n")
-	panel = quit_game(game)
+	panel = end_game(game)
 	assert re.search(r"Final Score:\s+1\n", panel), panel
 	assert re.search(r"Best Score:\s+1\n", panel), panel
 	# One bell for the food, one for the game over

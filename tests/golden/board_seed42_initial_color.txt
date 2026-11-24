@@ -22,4 +22,4 @@
 [36m######################[0m
 [1mScore:[0m [1;33m0[0m
 [1mBest:[0m [1;33m0[0m
-[2mControls: WASD to move, Q to quit[0m
+[2mControls: WASD to move, Q to end game[0m

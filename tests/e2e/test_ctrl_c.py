@@ -1,7 +1,7 @@
 """
 test_ctrl_c.py
 Author: Miguel Mochizuki Silva
-Description: E2E: Ctrl+C (byte 0x03 in raw mode) acts as q: it ends the round with the score saved, then exits 0
+Description: E2E: Ctrl+C (byte 0x03 in raw mode) acts as q: it ends the round without saving the game, then exits 0
 """
 import os
 import sys
@@ -34,9 +34,9 @@ os.close(_slave)
 with tempfile.TemporaryDirectory() as tmp, Game(sys.argv[1], cwd=tmp, frame_ms=100) as game:
 	game.send(b"\x03")
 	game.wait_for("GAME OVER!")
-	assert history_lines(tmp) == 1
+	assert history_lines(tmp) == 0
 	game.send(b"\x03")
 	code = game.exit_code()
 	assert code == 0, "exit code %d" % code
 	assert game.tty_attrs() == before, "terminal not restored"
-	assert history_lines(tmp) == 1
+	assert history_lines(tmp) == 0
