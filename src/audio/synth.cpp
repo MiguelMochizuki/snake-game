@@ -101,12 +101,33 @@ void Synth::trigger(Blip blip) {
 }
 
 /**
- * Moves to another piece, chosen at random and never the one that was playing, and starts it from the beginning
+ * Moves to another piece, chosen at random and never the one that was playing, and starts it from the beginning.
+ * Each easter egg has 1% of the chance and the other pieces share the rest equally
  */
 void Synth::chooseOtherPiece() {
 	if (PIECE_COUNT > 1) {
-		const int pick = static_cast<int>(rng_() % static_cast<unsigned>(PIECE_COUNT - 1));
-		piece_ = pick >= piece_ ? pick + 1 : pick;
+		int rare = 0;
+		for (int i = 0; i < PIECE_COUNT; ++i) {
+			rare += PIECES[i].rare ? 1 : 0;
+		}
+		const double common = rare < PIECE_COUNT ? (100.0 - rare) / (PIECE_COUNT - rare) : 1.0;
+		double total = 0.0;
+		for (int i = 0; i < PIECE_COUNT; ++i) {
+			total += i == piece_ ? 0.0 : (PIECES[i].rare ? 1.0 : common);
+		}
+		double pick = static_cast<double>(rng_() % 1000000u) / 1000000.0 * total;
+		int chosen = piece_;
+		for (int i = 0; i < PIECE_COUNT; ++i) {
+			if (i == piece_) {
+				continue;
+			}
+			chosen = i;
+			pick -= PIECES[i].rare ? 1.0 : common;
+			if (pick < 0.0) {
+				break;
+			}
+		}
+		piece_ = chosen;
 	}
 	pos_ = 0;
 	next_ = 0;
@@ -136,6 +157,7 @@ void Synth::startNote(const ScoreNote& note) {
 	slot->age = 0;
 	slot->length = std::max(1, static_cast<int>(static_cast<long long>(note.length) * rate_ / 1000));
 	slot->melody = note.melody != 0;
+	slot->gain = static_cast<float>(note.velocity) / 100.0f;
 }
 
 int Synth::piece() const {
@@ -202,11 +224,11 @@ void Synth::render(float* out, int frames) {
 					env = std::min(env, static_cast<float>(left) / static_cast<float>(release));
 				}
 				if (v.melody) {
-					sample += MELODY_GAIN * env * square(phase);
+					sample += MELODY_GAIN * v.gain * env * square(phase);
 				} else {
 					// A plucked note: it fades while it rings
 					const float fade = 1.0f - 0.55f * static_cast<float>(v.age) / static_cast<float>(v.length);
-					sample += share * env * fade * triangle(phase);
+					sample += share * v.gain * env * fade * triangle(phase);
 				}
 				++v.age;
 			}

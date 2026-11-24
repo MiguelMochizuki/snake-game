@@ -14,12 +14,14 @@
  * int length: How long it lasts, in milliseconds
  * unsigned char pitch: MIDI note number
  * unsigned char melody: 1 if the note belongs to the melody, 0 for the accompaniment
+ * unsigned char velocity: How loud, 1 to 127, 100 being the loudest the piece gets without a crescendo
  */
 struct ScoreNote {
 	int start;
 	int length;
 	unsigned char pitch;
 	unsigned char melody;
+	unsigned char velocity;
 };
 
 /**
@@ -31,6 +33,7 @@ struct ScoreNote {
  * const ScoreNote* notes: The notes, sorted by start
  * int count: Number of notes
  * int endMs: When the piece ends, in milliseconds
+ * bool rare: An easter egg, chosen with 1% of the probability
  */
 struct Piece {
 	const char* title;
@@ -38,6 +41,7 @@ struct Piece {
 	const ScoreNote* notes;
 	int count;
 	int endMs;
+	bool rare;
 };
 
 // Silence after each piece, before the next one starts

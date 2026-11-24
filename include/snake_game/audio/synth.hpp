@@ -43,12 +43,14 @@ class Synth {
 	 * int age: Samples played so far
 	 * int length: Samples it lasts; the voice is free once age reaches it
 	 * bool melody: Whether it is a melody note
+	 * float gain: Loudness of the note, from its velocity
 	 */
 	struct Voice {
 		double hz = 0.0;
 		int age = 0;
 		int length = 0;
 		bool melody = false;
+		float gain = 1.0f;
 	};
 
 	static constexpr int MAX_VOICES = 16;

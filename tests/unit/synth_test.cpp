@@ -60,16 +60,17 @@ int signChanges(const std::vector<float>& v, size_t n) {
 
 }  // namespace
 
-TEST(Score, TheRepertoireHasTenPiecesStartingWithTheAveMaria) {
-	EXPECT_EQ(PIECE_COUNT, 10);
+TEST(Score, TheRepertoireHasSevenPiecesAndTwoEasterEggsStartingWithTheAveMaria) {
+	EXPECT_EQ(PIECE_COUNT, 9);
 	EXPECT_STREQ(PIECES[0].title, "Ave Maria");
-	bool ode = false;
+	int rare = 0;
 	for (int i = 0; i < PIECE_COUNT; ++i) {
 		EXPECT_GT(std::string(PIECES[i].title).size(), 0u);
 		EXPECT_GT(std::string(PIECES[i].composer).size(), 0u);
-		ode = ode || std::string(PIECES[i].title) == "Ode to Joy";
+		rare += PIECES[i].rare ? 1 : 0;
 	}
-	EXPECT_TRUE(ode);
+	EXPECT_EQ(rare, 2);
+	EXPECT_FALSE(PIECES[0].rare);
 }
 
 TEST(Score, EveryPieceIsConsistent) {
@@ -82,6 +83,8 @@ TEST(Score, EveryPieceIsConsistent) {
 			ASSERT_GT(note.length, 0) << piece.title << " note " << n;
 			ASSERT_GE(note.pitch, 21) << piece.title << " note " << n;
 			ASSERT_LE(note.pitch, 108) << piece.title << " note " << n;
+			ASSERT_GE(note.velocity, 1) << piece.title << " note " << n;
+			ASSERT_LE(note.velocity, 127) << piece.title << " note " << n;
 			last = note.start;
 			end = std::max(end, note.start + note.length);
 			melody += note.melody;
@@ -132,7 +135,7 @@ TEST(Synth, ARandomPieceNeverRepeatsTheLastOneAndEveryPieceCanCome) {
 	Synth s(LOW_RATE, 1);
 	std::vector<bool> seen(PIECE_COUNT, false);
 	int last = s.piece();
-	for (int i = 0; i < 300; ++i) {
+	for (int i = 0; i < 3000; ++i) {
 		s.startRandomPiece();
 		renderFrames(s, 1);
 		EXPECT_NE(s.piece(), last);
@@ -140,6 +143,25 @@ TEST(Synth, ARandomPieceNeverRepeatsTheLastOneAndEveryPieceCanCome) {
 		seen[last] = true;
 	}
 	EXPECT_EQ(std::count(seen.begin(), seen.end(), true), PIECE_COUNT);
+}
+
+TEST(Synth, EachEasterEggComesAboutOnceInAHundredGames) {
+	Synth s(LOW_RATE, 3);
+	std::vector<int> count(PIECE_COUNT, 0);
+	const int games = 20000;
+	for (int i = 0; i < games; ++i) {
+		s.startRandomPiece();
+		renderFrames(s, 1);
+		++count[s.piece()];
+	}
+	for (int i = 0; i < PIECE_COUNT; ++i) {
+		const double share = static_cast<double>(count[i]) / games;
+		if (PIECES[i].rare) {
+			EXPECT_NEAR(share, 0.01, 0.005) << PIECES[i].title;
+		} else {
+			EXPECT_GT(share, 0.08) << PIECES[i].title;
+		}
+	}
 }
 
 TEST(Synth, TheSameSeedChoosesTheSamePiecesAndANewPieceStartsFromItsBeginning) {
