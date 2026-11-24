@@ -22,6 +22,7 @@
 #include "snake_game/input/wasd_input_handler.hpp"
 #include "env_options.hpp"
 #include "snake_game/render/terminal_renderer.hpp"
+#include "snake_game/terminal/terminal_size.hpp"
 #include <cctype>
 #include <cerrno>
 #include <cstdint>
@@ -88,6 +89,14 @@ int main() {
 		cues = &synthSound;
 	}
 #endif
+	// The menu clears the screen at once, so the notice must wait for a key; the size is unknown on a pipe or an unsized pty
+	if (const std::optional<TerminalSize> size = queryTerminalSize(); size && terminalTooSmall(*size) && !skipMenu()) {
+		std::cout << "\033[2J\033[H" << tooSmallNotice(*size) << std::flush;
+		std::optional<Key> key = keys.waitKey();
+		if (!key || input.handle(*key) == Action::Quit) {
+			return 0;
+		}
+	}
 	MenuModel menu;
 	bool showMenu = !skipMenu();
 	if (showMenu) {

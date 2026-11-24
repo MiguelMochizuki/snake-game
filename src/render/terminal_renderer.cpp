@@ -101,15 +101,16 @@ void TerminalRenderer::render(const GameState& state) {
 	p.put(WALL, rule);
 	p.endl();
 
+	// One line, so the whole screen is 23 lines and fits a 24-line terminal
 	p.put(LABEL, "Score:");
 	p.put(PLAIN, " ");
 	p.put(NUMBER, std::to_string(state.getScore()));
-	p.endl();
+	p.put(PLAIN, "  ");
 	p.put(LABEL, "Best:");
 	p.put(PLAIN, " ");
 	p.put(NUMBER, std::to_string(state.getBestScore()));
-	p.endl();
-	p.put(DIM, "Controls: WASD to move, P pause, Q end game");
+	p.put(PLAIN, "  ");
+	p.put(DIM, "P pause, Q end game");
 	p.endl();
 
 	out_ << buf.str();
@@ -143,7 +144,8 @@ void TerminalRenderer::printPanel(const std::string& title, Style titleStyle, si
 	std::ostringstream buf;
 	Painter p(buf, color_);
 	const std::string rule(30, '=');
-	buf << "\n";
+	// Drawn over the board (23 lines) from line 6 on, so the last position stays in view, then the cursor goes below it
+	buf << "\033[6;1H";
 	p.put(WALL, rule);
 	p.endl();
 	// A title wider than the box is cut, so the line never grows past 30 columns
@@ -196,6 +198,7 @@ void TerminalRenderer::printPanel(const std::string& title, Style titleStyle, si
 	p.endl();
 	p.put(WALL, rule);
 	p.endl();
+	buf << "\033[24;1H";
 	out_ << buf.str();
 }
 

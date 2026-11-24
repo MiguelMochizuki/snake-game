@@ -20,6 +20,4 @@
 #                    #
 #                    #
 ######################
-Score: 0
-Best: 0
-Controls: WASD to move, P pause, Q end game
+Score: 0  Best: 0  P pause, Q end game

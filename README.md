@@ -167,7 +167,7 @@ The menu rows are Start, Level, Leaderboard, How to play, Sound, Practice and Qu
 
 While the game is paused the board is hidden, so you cannot plan your next moves with the clock stopped; keys pressed meanwhile are ignored, and Q ends the game as usual (it is not saved). In the graphical version the game also pauses by itself when the window loses focus or is minimized, and stays paused until you press P.
 
-After a game ends, you see the level, your final score and that level's statistics. Press **R** to play again straight away, **M** to go back to the menu (for example to change the level; your choice is kept) or **Q** to quit.
+The terminal version needs a window of at least 30 columns by 24 lines (a default 80x24 terminal is enough). If yours is smaller it says so before the menu and waits for a key, so you can enlarge it first. When the game ends, the final panel is drawn over the board, so you still see where the snake stopped; it shows the level, your final score and that level's statistics. Press **R** to play again straight away, **M** to go back to the menu (for example to change the level; your choice is kept) or **Q** to quit.
 
 Set `NO_COLOR` to any non-empty value to turn colors off, for example `NO_COLOR=1 ./snake`. An empty value keeps them on, as [no-color.org](https://no-color.org) describes. The snake's head is drawn as `@` and its body as `O`, so you can tell them apart without colors.
 

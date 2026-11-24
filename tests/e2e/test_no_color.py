@@ -9,7 +9,8 @@ import tempfile
 
 from harness import Game, quit_game
 
-ALLOWED = ("\033[2J", "\033[H")
+# Cursor moves are not color: the clear, home and the end-of-game panel placement
+ALLOWED = ("\033[2J", "\033[H", "\033[6;1H", "\033[24;1H")
 
 with tempfile.TemporaryDirectory() as tmp, Game(sys.argv[1], cwd=tmp, env={"NO_COLOR": "1"}) as game:
 	game.wait_for(r"Score: 0")

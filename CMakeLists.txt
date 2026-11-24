@@ -41,6 +41,7 @@ add_library(snake_core STATIC
 	src/input/composite_input_handler.cpp
 	src/input/key_decoder.cpp
 	src/input/terminal_key_source.cpp
+	src/terminal/terminal_size.cpp
 	src/menu/menu_model.cpp
 	src/menu/menu_controller.cpp
 	src/menu/menu_settings.cpp
