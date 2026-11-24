@@ -202,7 +202,7 @@ void TerminalMenuView::showHelp() {
 	Painter p(buf, color_);
 	const std::string rule(INNER + 2, '#');
 	const std::vector<std::string> text = {
-		"", "Steer: WASD or", "the arrow keys", "",
+		"", "Steer: WASD or", "the arrow keys.", "P pauses; Q ends", "the game.", "",
 		"Eat the red *", "to grow and", "score points.", "",
 		"Hitting a wall", "or yourself", "ends the game.", "",
 		"After a game:", "R again, M menu", "Q quit",

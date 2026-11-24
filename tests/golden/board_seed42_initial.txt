@@ -22,4 +22,4 @@
 ######################
 Score: 0
 Best: 0
-Controls: WASD to move, Q to end game
+Controls: WASD to move, P pause, Q end game

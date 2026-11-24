@@ -95,6 +95,34 @@ TEST(SdlRenderer, GameOverPanelChangesThePicture) {
 	EXPECT_NE(before, canvas->pixelsRgb());
 }
 
+TEST(SdlRenderer, PausePanelHidesTheBoardAndTheNextRenderBringsItBack) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+	SdlApp app(*canvas, false);
+	SdlRenderer renderer(*canvas, app);
+	GameState state(20, 20, 0, 42);
+	renderer.clear();
+	renderer.render(state);
+	std::vector<unsigned char> board = canvas->pixelsRgb();
+	const Layout l = layoutFor(640, 720, 20, 20);
+	const SnakeSegment* head = state.getSnake().getHead();
+	const int hx = l.originX + (head->getX() + 1) * l.cell + l.cell / 2;
+	const int hy = l.originY + (head->getY() + 1) * l.cell + l.cell / 2;
+	EXPECT_TRUE(same(pixelAt(board, 640, hx, hy), theme::HEAD));
+
+	renderer.printPaused();
+	std::vector<unsigned char> paused = canvas->pixelsRgb();
+	EXPECT_NE(board, paused);
+	// Neither the snake nor the food is drawn while paused
+	const int fxp = l.originX + (state.getFood().getX() + 1) * l.cell + l.cell / 2;
+	const int fyp = l.originY + (state.getFood().getY() + 1) * l.cell + l.cell / 2;
+	EXPECT_FALSE(same(pixelAt(paused, 640, fxp, fyp), theme::FOOD));
+	EXPECT_FALSE(same(pixelAt(paused, 640, hx, hy), theme::HEAD));
+
+	renderer.clear();
+	renderer.render(state);
+	EXPECT_EQ(canvas->pixelsRgb(), board);
+}
+
 TEST(SdlRenderer, VictoryPanelChangesThePicture) {
 	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
 	SdlApp app(*canvas, false);

@@ -116,6 +116,8 @@ MenuOutcome MenuModel::apply(Action action) {
 		case Action::Restart:
 		case Action::Menu:
 		case Action::Clear:
+		case Action::Pause:
+		case Action::AutoPause:
 			break;
 	}
 	return MenuOutcome::None;

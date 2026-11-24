@@ -61,6 +61,10 @@ void SdlApp::handle(const void* event) {
 			closeRequested_ = true;
 			keys_.push_back(charKey('q'));
 			break;
+		case SDL_EVENT_WINDOW_FOCUS_LOST:
+		case SDL_EVENT_WINDOW_MINIMIZED:
+			keys_.push_back(specialKey(KeyKind::FocusLost));
+			break;
 		case SDL_EVENT_WINDOW_RESIZED:
 		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 		case SDL_EVENT_WINDOW_EXPOSED:

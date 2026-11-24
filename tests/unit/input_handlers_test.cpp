@@ -98,6 +98,13 @@ TEST(InputHandlers, EnterIgnoredByMovementHandlers) {
 	EXPECT_EQ(ArrowInputHandler().handle(specialKey(KeyKind::Enter)), std::nullopt);
 }
 
+TEST(CommandInputHandler, PauseKeyAndLostFocus) {
+	CommandInputHandler h;
+	EXPECT_EQ(h.handle(charKey('p')), Action::Pause);
+	EXPECT_EQ(h.handle(charKey('P')), Action::Pause);
+	EXPECT_EQ(h.handle(specialKey(KeyKind::FocusLost)), Action::AutoPause);
+}
+
 TEST(CommandInputHandler, CommandMapsOnlyCommands) {
 	CommandInputHandler h;
 	EXPECT_EQ(h.handle(charKey('q')), Action::Quit);
@@ -107,7 +114,7 @@ TEST(CommandInputHandler, CommandMapsOnlyCommands) {
 	EXPECT_EQ(h.handle(charKey('R')), Action::Restart);
 
 	for (const Key& k : allCharKeys()) {
-		if (k == charKey('q') || k == charKey('Q') || k == charKey('r') || k == charKey('R') || k == charKey('m') || k == charKey('M') || k == charKey('c') || k == charKey('C')) {
+		if (k == charKey('q') || k == charKey('Q') || k == charKey('r') || k == charKey('R') || k == charKey('m') || k == charKey('M') || k == charKey('c') || k == charKey('C') || k == charKey('p') || k == charKey('P')) {
 			continue;
 		}
 		EXPECT_EQ(h.handle(k), std::nullopt);

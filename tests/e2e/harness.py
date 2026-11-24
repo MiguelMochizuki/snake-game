@@ -14,7 +14,7 @@ import termios
 import time
 
 ANSI_RE = re.compile(r"\033\[[0-9;]*[A-Za-z]")
-FRAME_END = "Controls: WASD to move, Q to end game"
+FRAME_END = "Controls: WASD to move, P pause, Q end game"
 
 # Keys with no effect in any state: function/navigation keys, modified keys, control bytes, UTF-8, other characters
 UNREGISTERED_KEYS = [

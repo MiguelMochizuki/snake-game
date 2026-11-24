@@ -109,6 +109,19 @@ TEST(SdlKeys, WindowCloseBecomesQ) {
 	EXPECT_EQ(*key, charKey('q'));
 }
 
+TEST(SdlKeys, LosingFocusOrMinimizingBecomesFocusLost) {
+	for (SDL_EventType type : {SDL_EVENT_WINDOW_FOCUS_LOST, SDL_EVENT_WINDOW_MINIMIZED}) {
+		std::unique_ptr<Canvas> canvas = Canvas::offscreen(32, 32);
+		SdlApp app(*canvas, true);
+		SdlKeySource source(app);
+		source.flush();
+		pushEvent(type);
+		std::optional<Key> key = source.waitKey();
+		ASSERT_TRUE(key.has_value());
+		EXPECT_EQ(*key, specialKey(KeyKind::FocusLost));
+	}
+}
+
 TEST(SdlKeys, ResizeRedrawsTheScene) {
 	std::unique_ptr<Canvas> canvas = Canvas::offscreen(32, 32);
 	SdlApp app(*canvas, true);

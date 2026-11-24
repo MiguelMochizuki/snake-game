@@ -82,3 +82,10 @@ TEST(TerminalRendererGolden, PanelCutsATitleThatDoesNotFit) {
 	renderer.printPanel("A TITLE FAR TOO LONG FOR THE BOX", terminal::FOOD, 9, Level::Hard, 3, {12, 7, 4.2857});
 	expectGolden("panel_long_title.txt", out.str());
 }
+
+TEST(TerminalRendererGolden, PausePanel) {
+	std::ostringstream out;
+	TerminalRenderer renderer(out);
+	renderer.printPaused();
+	expectGolden("pause_panel.txt", out.str());
+}

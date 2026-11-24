@@ -56,6 +56,8 @@ TickInput GameEngine::readTick(IKeySource& keys, const IInputHandler& handler) {
 			case Action::Confirm: break;
 			case Action::Menu: break;
 			case Action::Clear: break;
+			case Action::Pause: tick.pause = true; break;
+			case Action::AutoPause: tick.pause = true; break;
 		}
 	}
 	return tick;
@@ -90,6 +92,26 @@ GameEnd GameEngine::awaitChoice(IKeySource& keys, const IInputHandler& handler,
 		}
 		if (action == Action::Quit) {
 			return GameEnd::Quit;
+		}
+	}
+}
+
+bool GameEngine::awaitResume(IKeySource& keys, const IInputHandler& handler,
+		const std::function<void()>& showPanel) {
+	showPanel();
+	keys.flush();
+	while (true) {
+		std::optional<Key> key = keys.waitKey();
+		if (!key) {
+			return false;
+		}
+		std::optional<Action> action = handler.handle(*key);
+		if (action == Action::Pause) {
+			keys.flush();
+			return true;
+		}
+		if (action == Action::Quit) {
+			return false;
 		}
 	}
 }
@@ -168,6 +190,25 @@ GameEnd GameEngine::run() {
 				abandoned = true;
 				running_ = false;
 				break;
+			}
+
+			if (tick.pause) {
+				if (sound_) {
+					sound_->musicStop();
+				}
+				if (!awaitResume(keys_, input_, [&]() { renderer_.printPaused(); })) {
+					abandoned = true;
+					running_ = false;
+					break;
+				}
+				if (sound_) {
+					sound_->musicStart();
+				}
+				// The pause panel took the whole screen, so the board is drawn again from scratch
+				renderer_.reset();
+				renderer_.clear();
+				renderer_.render(state_);
+				continue;
 			}
 
 			if (tick.move && !isOpposite(direction_, *tick.move)) {

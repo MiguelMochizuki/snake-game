@@ -62,6 +62,12 @@ public:
 	 * int ms: Time to wait in milliseconds
 	 */
 	virtual void pause(int ms) = 0;
+
+	/**
+	 * Shows the pause panel in place of the board, so the board cannot be studied while the game is stopped.
+	 * The caller draws the board again afterwards; a front-end without a pause screen can ignore the call
+	 */
+	virtual void printPaused() {}
 };
 
 #endif

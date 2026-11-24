@@ -20,6 +20,9 @@ std::optional<Action> CommandInputHandler::handle(const Key& key) const {
 	if (key.kind == KeyKind::Enter) {
 		return Action::Confirm;
 	}
+	if (key.kind == KeyKind::FocusLost) {
+		return Action::AutoPause;
+	}
 	if (key.kind != KeyKind::Char) {
 		return std::nullopt;
 	}
@@ -28,6 +31,7 @@ std::optional<Action> CommandInputHandler::handle(const Key& key) const {
 		case 'r': case 'R': return Action::Restart;
 		case 'm': case 'M': return Action::Menu;
 		case 'c': case 'C': return Action::Clear;
+		case 'p': case 'P': return Action::Pause;
 		default: return std::nullopt;
 	}
 }

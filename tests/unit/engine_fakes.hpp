@@ -58,7 +58,7 @@ public:
  */
 class RecordingRenderer : public IRenderer {
 public:
-	int renders = 0, clears = 0, resets = 0, gameOvers = 0, victories = 0, lastScore = -1;
+	int renders = 0, clears = 0, resets = 0, gameOvers = 0, victories = 0, pausedPanels = 0, lastScore = -1;
 	std::vector<int> pauses;
 
 	void reset() override { ++resets; }
@@ -73,6 +73,7 @@ public:
 		lastScore = finalScore;
 	}
 	void pause(int ms) override { pauses.push_back(ms); }
+	void printPaused() override { ++pausedPanels; }
 };
 
 /**
