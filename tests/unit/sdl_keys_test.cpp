@@ -59,6 +59,15 @@ TEST(SdlKeys, EnterAndKeypadEnterMapToEnter) {
 	EXPECT_EQ(keyFromSdl(SDLK_KP_ENTER), specialKey(KeyKind::Enter));
 }
 
+TEST(SdlKeys, KeypadSteersAndTheRestOfItDoesNothing) {
+	EXPECT_EQ(keyFromSdl(SDLK_KP_8), specialKey(KeyKind::Up));
+	EXPECT_EQ(keyFromSdl(SDLK_KP_2), specialKey(KeyKind::Down));
+	EXPECT_EQ(keyFromSdl(SDLK_KP_4), specialKey(KeyKind::Left));
+	EXPECT_EQ(keyFromSdl(SDLK_KP_6), specialKey(KeyKind::Right));
+	EXPECT_FALSE(keyFromSdl(SDLK_KP_5).has_value());
+	EXPECT_EQ(keyFromSdl(SDLK_KP_ENTER), specialKey(KeyKind::Enter));
+}
+
 TEST(SdlKeys, EscapeMapsToEscape) {
 	EXPECT_EQ(keyFromSdl(SDLK_ESCAPE), specialKey(KeyKind::Escape));
 }
@@ -185,6 +194,30 @@ TEST(SdlKeys, HeldEscapeDoesNotRepeat) {
 	pushRepeat(SDLK_ESCAPE);
 	app.pump(0);
 	EXPECT_TRUE(app.keys().empty());
+}
+
+TEST(SdlKeys, F11AndAltEnterChangeTheWindowAndGiveNoKey) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(32, 32);
+	SdlApp app(*canvas, true);
+	app.keys().clear();
+	SDL_Event f11;
+	SDL_zero(f11);
+	f11.type = SDL_EVENT_KEY_DOWN;
+	f11.key.key = SDLK_F11;
+	SDL_PushEvent(&f11);
+	SDL_Event altEnter = f11;
+	altEnter.key.key = SDLK_RETURN;
+	altEnter.key.mod = SDL_KMOD_LALT;
+	SDL_PushEvent(&altEnter);
+	app.pump(0);
+	EXPECT_TRUE(app.keys().empty());
+	// A plain Enter is still Enter
+	SDL_Event enter = altEnter;
+	enter.key.mod = SDL_KMOD_NONE;
+	SDL_PushEvent(&enter);
+	app.pump(0);
+	ASSERT_EQ(app.keys().size(), 1u);
+	EXPECT_EQ(app.keys()[0], specialKey(KeyKind::Enter));
 }
 
 TEST(SdlKeys, HeldDirectionsStillRepeat) {

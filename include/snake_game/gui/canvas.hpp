@@ -56,6 +56,13 @@ public:
 	void present() override;
 
 	/**
+	 * Switches the window between windowed and full screen; the scene is drawn at the new size by the resize events
+	 *
+	 * Returns bool: true if the window is now full screen; false when it is windowed or there is no window (off-screen)
+	 */
+	bool toggleFullscreen();
+
+	/**
 	 * Reads the canvas back
 	 *
 	 * Returns std::vector<unsigned char>: Row-major RGB bytes, width x height x 3

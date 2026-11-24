@@ -79,3 +79,9 @@ TEST(Canvas, WritePpmWritesHeaderAndPixels) {
 	EXPECT_EQ(content.str().substr(0, header.size()), header);
 	EXPECT_EQ(content.str().size(), header.size() + 64 * 48 * 3);
 }
+
+TEST(Canvas, OffscreenCanvasHasNoFullScreen) {
+	std::unique_ptr<Canvas> canvas = Canvas::offscreen(16, 16);
+	EXPECT_FALSE(canvas->toggleFullscreen());
+	EXPECT_EQ(canvas->width(), 16);
+}

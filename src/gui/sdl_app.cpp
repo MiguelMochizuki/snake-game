@@ -13,7 +13,7 @@
  * Parameters:
  * SDL_Keycode code: The SDL key
  *
- * Returns std::optional<Key>: Arrows, Enter or a lower-case letter; nullopt for any other key
+ * Returns std::optional<Key>: Arrows (and the keypad's 8, 2, 4, 6), Enter or a lower-case letter; nullopt for any other key
  */
 std::optional<Key> keyFromSdl(SDL_Keycode code) {
 	switch (code) {
@@ -21,6 +21,11 @@ std::optional<Key> keyFromSdl(SDL_Keycode code) {
 		case SDLK_DOWN: return specialKey(KeyKind::Down);
 		case SDLK_LEFT: return specialKey(KeyKind::Left);
 		case SDLK_RIGHT: return specialKey(KeyKind::Right);
+		// The keypad steers too (with NumLock on); 5 and the other keys do nothing
+		case SDLK_KP_8: return specialKey(KeyKind::Up);
+		case SDLK_KP_2: return specialKey(KeyKind::Down);
+		case SDLK_KP_4: return specialKey(KeyKind::Left);
+		case SDLK_KP_6: return specialKey(KeyKind::Right);
 		case SDLK_RETURN:
 		case SDLK_KP_ENTER: return specialKey(KeyKind::Enter);
 		case SDLK_ESCAPE: return specialKey(KeyKind::Escape);
@@ -49,6 +54,11 @@ void SdlApp::handle(const void* event) {
 	const SDL_Event& e = *static_cast<const SDL_Event*>(event);
 	switch (e.type) {
 		case SDL_EVENT_KEY_DOWN:
+			// F11 and Alt+Enter change the window, they are not keys of the game
+			if ((e.key.key == SDLK_F11 || (e.key.key == SDLK_RETURN && (e.key.mod & SDL_KMOD_ALT))) && !e.key.repeat) {
+				canvas_.toggleFullscreen();
+				break;
+			}
 			if (std::optional<Key> key = keyFromSdl(e.key.key)) {
 				// Only steering and menu navigation repeat while held; a held Enter, Esc or Q must not skip through screens
 				const bool repeatable = key->kind != KeyKind::Enter && key->kind != KeyKind::Escape && !(key->kind == KeyKind::Char && std::string("wasd").find(key->ch) == std::string::npos);
