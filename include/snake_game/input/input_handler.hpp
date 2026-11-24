@@ -19,9 +19,9 @@ enum class Direction {
 };
 
 /**
- * Kind of key pressed; FocusLost is not a key but the graphical window losing focus, queued like one
+ * Kind of key pressed; Escape is only produced by the graphical window (a lone Esc is ambiguous in a terminal); FocusLost is not a key but the graphical window losing focus, queued like one
  */
-enum class KeyKind { Char, Up, Down, Left, Right, CtrlC, Enter, FocusLost, Unknown };
+enum class KeyKind { Char, Up, Down, Left, Right, CtrlC, Enter, Escape, FocusLost, Unknown };
 
 /**
  * A decoded key press
@@ -72,9 +72,10 @@ inline Key specialKey(KeyKind k) {
 }
 
 /**
- * Game action a key can trigger; Pause toggles the pause, AutoPause (the window lost focus) only ever pauses
+ * Game action a key can trigger; Pause toggles the pause, AutoPause (the window lost focus) only ever pauses,
+ * Back (Esc) goes back or cancels on a screen with a way back, pauses and resumes during a game, and leaves the game over panel for the menu
  */
-enum class Action { MoveUp, MoveDown, MoveLeft, MoveRight, Quit, Restart, Confirm, Menu, Clear, Pause, AutoPause };
+enum class Action { MoveUp, MoveDown, MoveLeft, MoveRight, Quit, Restart, Confirm, Menu, Clear, Pause, AutoPause, Back };
 
 /**
  * Maps a key to an action

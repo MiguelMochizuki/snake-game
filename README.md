@@ -160,6 +160,7 @@ The game opens on a menu. Pick a level, then start.
 | D / Right arrow | Next level (Level row), toggle (Sound and Practice rows) | Move right |
 | Enter | Choose the selected row | Nothing |
 | P | Nothing | Pause, and again to resume |
+| Esc (graphical version) | Nothing in the main menu; back from the Leaderboard, How to play and the clear confirmation | Pause, and again to resume; on the game over panel, the menu |
 | Q / Ctrl+C | Quit | End the game (it is not saved) |
 
 The menu rows are Start, Level, Leaderboard, How to play, Sound, Practice and Quit. The levels set the time per step: Easy 300 ms, Normal 200 ms, Hard 100 ms. The menu shows the best score, games played and average over the last 10 games of the selected level. The Leaderboard lists the top 10 scores of a level (A/D switch level, Enter goes back, C offers to clear the scores of the level shown: Enter deletes that level's history with no way back and the other levels are untouched, Q keeps it). The level and the sound switch are remembered between runs (each version keeps its own, in `settings.txt` next to its scores). Sound only beeps in a terminal. Practice is off at each launch, on purpose, so that a forgotten switch never keeps your games out of the leaderboard; while it is on, finished games are not saved. Any other key does nothing.

@@ -20,6 +20,9 @@ std::optional<Action> CommandInputHandler::handle(const Key& key) const {
 	if (key.kind == KeyKind::Enter) {
 		return Action::Confirm;
 	}
+	if (key.kind == KeyKind::Escape) {
+		return Action::Back;
+	}
 	if (key.kind == KeyKind::FocusLost) {
 		return Action::AutoPause;
 	}

@@ -58,6 +58,7 @@ TickInput GameEngine::readTick(IKeySource& keys, const IInputHandler& handler) {
 			case Action::Clear: break;
 			case Action::Pause: tick.pause = true; break;
 			case Action::AutoPause: tick.pause = true; break;
+			case Action::Back: tick.pause = true; break;
 		}
 	}
 	return tick;
@@ -87,7 +88,7 @@ GameEnd GameEngine::awaitChoice(IKeySource& keys, const IInputHandler& handler,
 		if (action == Action::Restart) {
 			return GameEnd::Restart;
 		}
-		if (action == Action::Menu) {
+		if (action == Action::Menu || action == Action::Back) {
 			return GameEnd::Menu;
 		}
 		if (action == Action::Quit) {
@@ -106,7 +107,7 @@ bool GameEngine::awaitResume(IKeySource& keys, const IInputHandler& handler,
 			return false;
 		}
 		std::optional<Action> action = handler.handle(*key);
-		if (action == Action::Pause) {
+		if (action == Action::Pause || action == Action::Back) {
 			keys.flush();
 			return true;
 		}

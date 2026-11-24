@@ -105,6 +105,11 @@ TEST(CommandInputHandler, PauseKeyAndLostFocus) {
 	EXPECT_EQ(h.handle(specialKey(KeyKind::FocusLost)), Action::AutoPause);
 }
 
+TEST(CommandInputHandler, EscapeIsBack) {
+	CommandInputHandler h;
+	EXPECT_EQ(h.handle(specialKey(KeyKind::Escape)), Action::Back);
+}
+
 TEST(CommandInputHandler, CommandMapsOnlyCommands) {
 	CommandInputHandler h;
 	EXPECT_EQ(h.handle(charKey('q')), Action::Quit);
