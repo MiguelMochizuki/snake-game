@@ -21,11 +21,13 @@
  * std::ostream& out_: Stream that receives all output
  * bool firstRender_: Whether the next clear is the first one (full clear)
  * bool color_: Whether output carries ANSI SGR color codes
+ * bool practice_: Whether the status line and the end panels say it is a practice game
  */
 class TerminalRenderer : public IRenderer {
 	std::ostream& out_;
 	bool firstRender_ = true;
 	bool color_;
+	bool practice_ = false;
 
 public:
 	/**
@@ -112,6 +114,11 @@ public:
 	 * Clears the screen and prints the pause panel
 	 */
 	void printPaused() override;
+
+	/**
+	 * Marks the status line and the end panels as practice
+	 */
+	void setPractice(bool practice) override;
 };
 
 #endif

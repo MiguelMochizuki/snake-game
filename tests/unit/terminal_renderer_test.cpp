@@ -128,3 +128,29 @@ TEST(TerminalRendererGolden, PausePanel) {
 	renderer.printPaused();
 	expectGolden("pause_panel.txt", out.str());
 }
+
+TEST(TerminalRendererGolden, PracticeStatusLine) {
+	GameState state(20, 20, 0, 42);
+	std::ostringstream out;
+	TerminalRenderer renderer(out, false);
+	renderer.setPractice(true);
+	renderer.render(state);
+	expectGolden("board_practice.txt", out.str());
+}
+
+TEST(TerminalRendererGolden, PracticeGameOverPanel) {
+	std::ostringstream out;
+	TerminalRenderer renderer(out, false);
+	renderer.setPractice(true);
+	renderer.printGameOver(Level::Hard, 3, {7, 0});
+	expectGolden("game_over_panel_practice.txt", out.str());
+}
+
+TEST(TerminalRenderer, PracticePanelHasNoGamesAndNoSavedWarning) {
+	std::ostringstream out;
+	TerminalRenderer renderer(out, false);
+	renderer.setPractice(true);
+	renderer.printVictory(Level::Hard, 3, {7, 0});
+	EXPECT_EQ(out.str().find("Games"), std::string::npos);
+	EXPECT_NE(out.str().find("PRACTICE - not saved"), std::string::npos);
+}

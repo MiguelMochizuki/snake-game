@@ -159,7 +159,14 @@ bool GameEngine::isOpposite(Direction current, Direction next) {
 void GameEngine::setLevel(Level level, int speedMs) {
 	level_ = level;
 	speedMs_ = speedMs;
-	state_.setBestScore(scores_.bestScore(level));
+	applyBest();
+}
+
+/**
+ * Sets the best score the status line starts from: the saved one, or 0 for a practice session, whose best is its own
+ */
+void GameEngine::applyBest() {
+	state_.setBestScore(practice_ ? 0 : scores_.bestScore(level_));
 }
 
 /**
@@ -180,6 +187,7 @@ void GameEngine::setSound(ISound* sound) {
  */
 void GameEngine::setPractice(bool practice) {
 	practice_ = practice;
+	applyBest();
 }
 
 /**
@@ -189,6 +197,7 @@ void GameEngine::setPractice(bool practice) {
  */
 GameEnd GameEngine::run() {
 	GameEnd end;
+	renderer_.setPractice(practice_);
 	do {
 		renderer_.clear();
 		renderer_.render(state_);
@@ -259,6 +268,8 @@ GameEnd GameEngine::run() {
 			scores_.saveScore(level_, finalScore);
 		}
 
+		// Practice has no saved figures: the panel gets this session's own best (kept across restarts) and no games count
+		const ScoreStats panelStats = practice_ ? ScoreStats{state_.getBestScore(), 0} : scores_.stats(level_);
 		const bool won = state_.isWon();
 		end = awaitChoice(keys_, input_, [&]() {
 			if (sound_) {
@@ -270,9 +281,9 @@ GameEnd GameEngine::run() {
 				}
 			}
 			if (won) {
-				renderer_.printVictory(level_, finalScore, scores_.stats(level_));
+				renderer_.printVictory(level_, finalScore, panelStats);
 			} else {
-				renderer_.printGameOver(level_, finalScore, scores_.stats(level_));
+				renderer_.printGameOver(level_, finalScore, panelStats);
 			}
 		});
 

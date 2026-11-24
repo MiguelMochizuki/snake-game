@@ -382,3 +382,21 @@ TEST(SdlRenderer, GameOverPanelRedrawsTheBoardInsteadOfTrustingTheBackBuffer) {
 	renderer.printGameOver(Level::Normal, 0, ScoreStats{});
 	EXPECT_EQ(canvas->pixelsRgb(), clean->pixelsRgb());
 }
+
+TEST(SdlRenderer, PracticeChangesTheStatusLineAndThePanel) {
+	auto draw = [](bool practice, bool panel) {
+		std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
+		SdlApp app(*canvas, false);
+		SdlRenderer renderer(*canvas, app);
+		GameState state(20, 20, 0, 42);
+		renderer.setPractice(practice);
+		renderer.clear();
+		renderer.render(state);
+		if (panel) {
+			renderer.printGameOver(Level::Normal, 12, ScoreStats{12, 0});
+		}
+		return canvas->pixelsRgb();
+	};
+	EXPECT_NE(draw(true, false), draw(false, false));
+	EXPECT_NE(draw(true, true), draw(false, true));
+}
