@@ -101,12 +101,11 @@ protected:
 	}
 };
 
-TEST_F(EngineInputTest, ReadTickLastMoveWins) {
+TEST_F(EngineInputTest, ReadTickKeepsEveryMoveInOrder) {
 	keys.batches = {{charKey('w'), specialKey(KeyKind::Left)}};
 	TickInput t = GameEngine::readTick(keys, input);
 	EXPECT_FALSE(t.quit);
-	ASSERT_TRUE(t.move);
-	EXPECT_EQ(*t.move, Direction::LEFT);
+	EXPECT_EQ(t.moves, (std::vector<Direction>{Direction::UP, Direction::LEFT}));
 }
 
 TEST_F(EngineInputTest, ReadTickQuitWins) {
@@ -123,22 +122,22 @@ TEST_F(EngineInputTest, ReadTickManyKeys) {
 	many.push_back(charKey('s'));
 	keys.batches = {many};
 	TickInput t = GameEngine::readTick(keys, input);
-	ASSERT_TRUE(t.move);
-	EXPECT_EQ(*t.move, Direction::DOWN);
+	ASSERT_EQ(t.moves.size(), 50u);
+	EXPECT_EQ(t.moves.back(), Direction::DOWN);
 }
 
 TEST_F(EngineInputTest, ReadTickIgnoresRestartAndUnknown) {
 	keys.batches = {{charKey('r'), specialKey(KeyKind::Unknown), charKey('z')}};
 	TickInput t = GameEngine::readTick(keys, input);
 	EXPECT_FALSE(t.quit);
-	EXPECT_FALSE(t.move);
+	EXPECT_TRUE(t.moves.empty());
 }
 
 TEST_F(EngineInputTest, ReadTickIgnoresEnter) {
 	keys.batches = {{specialKey(KeyKind::Enter)}};
 	TickInput t = GameEngine::readTick(keys, input);
 	EXPECT_FALSE(t.quit);
-	EXPECT_FALSE(t.move);
+	EXPECT_TRUE(t.moves.empty());
 }
 
 TEST_F(EngineInputTest, AwaitChoiceIgnoresEnter) {
@@ -162,7 +161,7 @@ TEST_F(EngineInputTest, ReadTickIgnoresMenuKey) {
 	keys.batches = {{charKey('m'), charKey('M')}};
 	TickInput t = GameEngine::readTick(keys, input);
 	EXPECT_FALSE(t.quit);
-	EXPECT_FALSE(t.move);
+	EXPECT_TRUE(t.moves.empty());
 }
 
 TEST_F(EngineInputTest, AwaitChoiceFlushesAfterThePanel) {

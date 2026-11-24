@@ -23,7 +23,7 @@ Snake Game has two front-ends on one engine: the graphical game (`snake-gui`, dr
 ![The graphical version playing a full game with the demo autopilot](docs/snake-gui.gif)
 
 - Start menu with three levels (Easy, Normal, Hard), a leaderboard, a how-to-play screen, a sound switch and a practice mode that keeps your games out of the leaderboard; press M at game over to return to it
-- Arrow keys or WASD
+- Arrow keys or WASD; turns pressed within one step are kept (up to two), so a quick Up then Left makes both
 - Best score, games played, average score and top 10, kept separately for each level and saved between sessions
 - Terminal beep when you eat and when the game ends; in builds with audio (the release binaries), Gounod's "Ave Maria" over Bach's C major Prelude plays during the game (about four minutes, then it starts again), with short blips when you eat, when the game ends and when you move around the menu
 - Filling the whole board is a win: the last food is scored and a victory screen replaces game over (a yellow panel in the terminal; in the window the board fades to dark under a gold one)

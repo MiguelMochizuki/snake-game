@@ -60,10 +60,15 @@ class RecordingRenderer : public IRenderer {
 public:
 	int renders = 0, clears = 0, resets = 0, gameOvers = 0, victories = 0, pausedPanels = 0, lastScore = -1;
 	std::vector<int> pauses;
+	std::vector<std::pair<int, int>> heads;
 
 	void reset() override { ++resets; }
 	void clear() override { ++clears; }
-	void render(const GameState&) override { ++renders; }
+	void render(const GameState& state) override {
+		++renders;
+		const SnakeSegment* head = state.getSnake().getHead();
+		heads.push_back({head->getX(), head->getY()});
+	}
 	void printGameOver(Level, int finalScore, const ScoreStats&) override {
 		++gameOvers;
 		lastScore = finalScore;

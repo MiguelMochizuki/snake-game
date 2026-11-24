@@ -47,10 +47,10 @@ TickInput GameEngine::readTick(IKeySource& keys, const IInputHandler& handler) {
 			continue;
 		}
 		switch (*action) {
-			case Action::MoveUp: tick.move = Direction::UP; break;
-			case Action::MoveDown: tick.move = Direction::DOWN; break;
-			case Action::MoveLeft: tick.move = Direction::LEFT; break;
-			case Action::MoveRight: tick.move = Direction::RIGHT; break;
+			case Action::MoveUp: tick.moves.push_back(Direction::UP); break;
+			case Action::MoveDown: tick.moves.push_back(Direction::DOWN); break;
+			case Action::MoveLeft: tick.moves.push_back(Direction::LEFT); break;
+			case Action::MoveRight: tick.moves.push_back(Direction::RIGHT); break;
 			case Action::Quit: tick.quit = true; break;
 			case Action::Restart: break;
 			case Action::Confirm: break;
@@ -113,6 +113,19 @@ bool GameEngine::awaitResume(IKeySource& keys, const IInputHandler& handler,
 		if (action == Action::Quit) {
 			return false;
 		}
+	}
+}
+
+void GameEngine::queueTurns(std::deque<Direction>& pending, Direction current, const std::vector<Direction>& moves) {
+	for (Direction move : moves) {
+		const Direction last = pending.empty() ? current : pending.back();
+		if (pending.size() >= MAX_PENDING_TURNS) {
+			break;
+		}
+		if (move == last || isOpposite(last, move)) {
+			continue;
+		}
+		pending.push_back(move);
 	}
 }
 
@@ -205,14 +218,17 @@ GameEnd GameEngine::run() {
 					sound_->musicStart();
 				}
 				// The pause panel took the whole screen, so the board is drawn again from scratch
+				pending_.clear();
 				renderer_.reset();
 				renderer_.clear();
 				renderer_.render(state_);
 				continue;
 			}
 
-			if (tick.move && !isOpposite(direction_, *tick.move)) {
-				direction_ = *tick.move;
+			queueTurns(pending_, direction_, tick.moves);
+			if (!pending_.empty()) {
+				direction_ = pending_.front();
+				pending_.pop_front();
 			}
 
 			const int scoreBefore = state_.getScore();
@@ -262,6 +278,7 @@ GameEnd GameEngine::run() {
 		if (end != GameEnd::Quit) {
 			state_.reset();
 			direction_ = Direction::RIGHT;
+			pending_.clear();
 			running_ = true;
 			renderer_.reset();
 		}
