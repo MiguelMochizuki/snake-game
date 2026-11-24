@@ -218,21 +218,6 @@ struct Page {
 };
 
 /**
- * Formats a number with a fixed number of decimals
- *
- * Parameters:
- * double value: The number
- * int decimals: Digits after the point
- *
- * Returns std::string: The text
- */
-std::string fixed(double value, int decimals) {
-	std::ostringstream os;
-	os << std::fixed << std::setprecision(decimals) << value;
-	return os.str();
-}
-
-/**
  * Draws a screen twice: once to measure it, once centred vertically
  *
  * Parameters:
@@ -279,7 +264,6 @@ void SdlMenuView::show(const MenuSnapshot& snapshot) {
 			p.rule();
 			p.stat("Best", std::to_string(snapshot.stats.best));
 			p.stat("Games", std::to_string(snapshot.stats.games));
-			p.stat("Average", fixed(snapshot.stats.average, 1));
 			p.rule();
 			if (snapshot.scoresReset) {
 				p.line("Scores reset: score file was edited or damaged", theme::FOOD);

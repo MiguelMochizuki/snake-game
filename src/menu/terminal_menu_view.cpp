@@ -134,7 +134,6 @@ void TerminalMenuView::show(const MenuSnapshot& snapshot) {
 	frameRow(p, {});
 	frameRow(p, statRow("Best: ", padded(snapshot.stats.best, 5)));
 	frameRow(p, statRow("Games:", padded(snapshot.stats.games, 5)));
-	frameRow(p, statRow("Avg:  ", padded(snapshot.stats.average, 5, 1)));
 	frameRow(p, {});
 	p.put(WALL, rule);
 	p.endl();

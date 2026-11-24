@@ -91,7 +91,7 @@ TEST(SdlRenderer, GameOverPanelChangesThePicture) {
 	renderer.clear();
 	renderer.render(state);
 	std::vector<unsigned char> before = canvas->pixelsRgb();
-	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4});
 	EXPECT_NE(before, canvas->pixelsRgb());
 }
 
@@ -131,12 +131,12 @@ TEST(SdlRenderer, VictoryPanelChangesThePicture) {
 	renderer.clear();
 	renderer.render(state);
 	std::vector<unsigned char> before = canvas->pixelsRgb();
-	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4});
 	std::vector<unsigned char> victory = canvas->pixelsRgb();
 	EXPECT_NE(before, victory);
 	renderer.clear();
 	renderer.render(state);
-	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4});
 	EXPECT_NE(victory, canvas->pixelsRgb());
 }
 
@@ -148,7 +148,7 @@ TEST(SdlRenderer, VictoryDoesNotWaitOffScreen) {
 	renderer.clear();
 	renderer.render(state);
 	const auto start = std::chrono::steady_clock::now();
-	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4});
 	// The fade lasts 600 ms on a window; off-screen there is nobody to watch it
 	EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::milliseconds(200));
 }
@@ -161,7 +161,7 @@ TEST(SdlRenderer, ClosingTheWindowDuringTheFadeStillDrawsThePanel) {
 	GameState state(20, 20, 0, 42);
 	plainRenderer.clear();
 	plainRenderer.render(state);
-	plainRenderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	plainRenderer.printVictory(Level::Normal, 12, ScoreStats{30, 4});
 
 	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
 	SdlApp app(*canvas, true);
@@ -174,7 +174,7 @@ TEST(SdlRenderer, ClosingTheWindowDuringTheFadeStillDrawsThePanel) {
 	close.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
 	SDL_PushEvent(&close);
 	const auto start = std::chrono::steady_clock::now();
-	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4});
 	const auto took = std::chrono::steady_clock::now() - start;
 
 	EXPECT_TRUE(app.closeRequested());
@@ -190,7 +190,7 @@ TEST(SdlRenderer, VictoryOnATinyCanvasDoesNotCrash) {
 	GameState state(20, 20, 0, 42);
 	renderer.clear();
 	renderer.render(state);
-	renderer.printVictory(Level::Hard, 0, ScoreStats{0, 0, 0.0});
+	renderer.printVictory(Level::Hard, 0, ScoreStats{0, 0});
 }
 
 TEST(SdlRenderer, VictoryDarkensTheBoard) {
@@ -206,7 +206,7 @@ TEST(SdlRenderer, VictoryDarkensTheBoard) {
 	renderer.clear();
 	renderer.render(state);
 	const Color before = pixelAt(canvas->pixelsRgb(), 640, px, py);
-	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4});
 	const Color after = pixelAt(canvas->pixelsRgb(), 640, px, py);
 	EXPECT_LT(after.r, before.r);
 	EXPECT_LT(after.g, before.g);
@@ -237,7 +237,7 @@ TEST(SdlRenderer, RedrawAfterVictoryKeepsTheBoardDark) {
 	GameState state(20, 20, 0, 42);
 	renderer.clear();
 	renderer.render(state);
-	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4});
 	const std::vector<unsigned char> shown = canvas->pixelsRgb();
 	app.redraw();
 	EXPECT_EQ(shown, canvas->pixelsRgb());
@@ -255,7 +255,7 @@ TEST(SdlRenderer, GameOverDarkensTheBoard) {
 	renderer.clear();
 	renderer.render(state);
 	const Color before = pixelAt(canvas->pixelsRgb(), 640, px, py);
-	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4});
 	const Color after = pixelAt(canvas->pixelsRgb(), 640, px, py);
 	EXPECT_LT(after.r, before.r);
 	EXPECT_LT(after.g, before.g);
@@ -270,7 +270,7 @@ TEST(SdlRenderer, GameOverDoesNotWaitOffScreen) {
 	renderer.clear();
 	renderer.render(state);
 	const auto start = std::chrono::steady_clock::now();
-	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4});
 	EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::milliseconds(200));
 }
 
@@ -282,7 +282,7 @@ TEST(SdlRenderer, ClosingTheWindowDuringTheGameOverFadeStillDrawsThePanel) {
 	GameState state(20, 20, 0, 42);
 	plainRenderer.clear();
 	plainRenderer.render(state);
-	plainRenderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	plainRenderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4});
 
 	std::unique_ptr<Canvas> canvas = Canvas::offscreen(640, 720);
 	SdlApp app(*canvas, true);
@@ -295,7 +295,7 @@ TEST(SdlRenderer, ClosingTheWindowDuringTheGameOverFadeStillDrawsThePanel) {
 	close.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
 	SDL_PushEvent(&close);
 	const auto start = std::chrono::steady_clock::now();
-	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4});
 	const auto took = std::chrono::steady_clock::now() - start;
 
 	EXPECT_TRUE(app.closeRequested());
@@ -310,7 +310,7 @@ TEST(SdlRenderer, RedrawAfterGameOverKeepsTheBoardDark) {
 	GameState state(20, 20, 0, 42);
 	renderer.clear();
 	renderer.render(state);
-	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	renderer.printGameOver(Level::Normal, 12, ScoreStats{30, 4});
 	const std::vector<unsigned char> shown = canvas->pixelsRgb();
 	app.redraw();
 	EXPECT_EQ(shown, canvas->pixelsRgb());
@@ -332,7 +332,7 @@ TEST(SdlRenderer, SpritesFadeWithTheBoard) {
 	renderer.clear();
 	renderer.render(state);
 	ASSERT_GT(foodPixels(), 0);  // the apple is on the board at full brightness
-	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4});
 	EXPECT_EQ(foodPixels(), 0);  // after the fade the same apple is drawn dimmed
 }
 
@@ -344,7 +344,7 @@ TEST(SdlRenderer, ResetRestoresFullBrightness) {
 	renderer.clear();
 	renderer.render(state);
 	const std::vector<unsigned char> fresh = canvas->pixelsRgb();
-	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4, 9.5});
+	renderer.printVictory(Level::Normal, 12, ScoreStats{30, 4});
 	renderer.reset();
 	renderer.clear();
 	renderer.render(state);
@@ -358,7 +358,7 @@ TEST(SdlRenderer, TinyCanvasDoesNotCrash) {
 	GameState state(20, 20, 0, 42);
 	renderer.clear();
 	renderer.render(state);
-	renderer.printGameOver(Level::Hard, 0, ScoreStats{0, 0, 0.0});
+	renderer.printGameOver(Level::Hard, 0, ScoreStats{0, 0});
 	renderer.pause(1);
 }
 

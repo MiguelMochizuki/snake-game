@@ -33,21 +33,21 @@ TEST(TerminalRendererGolden, AfterMoves) {
 TEST(TerminalRendererGolden, GameOverPanel) {
 	std::ostringstream out;
 	TerminalRenderer renderer(out);
-	renderer.printGameOver(Level::Hard, 3, {12, 7, 4.2857});
+	renderer.printGameOver(Level::Hard, 3, {12, 7});
 	expectGolden("game_over_panel.txt", out.str());
 }
 
 TEST(TerminalRendererGolden, GameOverPanelWhenScoresCannotBeSaved) {
 	std::ostringstream out;
 	TerminalRenderer renderer(out);
-	renderer.printGameOver(Level::Hard, 3, {12, 7, 4.2857, "/no/such"});
+	renderer.printGameOver(Level::Hard, 3, {12, 7, "/no/such"});
 	expectGolden("game_over_panel_unsaved.txt", out.str());
 }
 
 TEST(TerminalRendererGolden, VictoryPanel) {
 	std::ostringstream out;
 	TerminalRenderer renderer(out);
-	renderer.printVictory(Level::Hard, 3, {12, 7, 4.2857});
+	renderer.printVictory(Level::Hard, 3, {12, 7});
 	expectGolden("victory_panel.txt", out.str());
 }
 
@@ -90,7 +90,7 @@ TEST(TerminalRenderer, ClearEscapes) {
 TEST(TerminalRendererGolden, PanelCutsATitleThatDoesNotFit) {
 	std::ostringstream out;
 	TerminalRenderer renderer(out);
-	renderer.printPanel("A TITLE FAR TOO LONG FOR THE BOX", terminal::FOOD, 9, Level::Hard, 3, {12, 7, 4.2857});
+	renderer.printPanel("A TITLE FAR TOO LONG FOR THE BOX", terminal::FOOD, 9, Level::Hard, 3, {12, 7});
 	expectGolden("panel_long_title.txt", out.str());
 }
 

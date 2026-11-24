@@ -169,11 +169,11 @@ public:
 	 */
 	ScoreStats stats(Level level) const override {
 		switch (level) {
-			case Level::Easy: return ScoreStats{10, 1, 10.0};
-			case Level::Normal: return ScoreStats{42, 7, 4.3};
-			case Level::Hard: return ScoreStats{99, 3, 50.0};
+			case Level::Easy: return ScoreStats{10, 1};
+			case Level::Normal: return ScoreStats{42, 7};
+			case Level::Hard: return ScoreStats{99, 3};
 		}
-		return ScoreStats{0, 0, 0.0};
+		return ScoreStats{0, 0};
 	}
 
 	/**

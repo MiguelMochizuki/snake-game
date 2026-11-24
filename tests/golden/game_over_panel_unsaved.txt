@@ -6,7 +6,6 @@
   Final Score:      3
   Best Score:      12
   Games Played:     7
-  Average Score:   4.3
                               
   Scores not saved            
   [R] Restart  [M] Menu       

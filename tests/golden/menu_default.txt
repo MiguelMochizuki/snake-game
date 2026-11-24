@@ -16,7 +16,6 @@
 #                    #
 #   Best:     42     #
 #   Games:     7     #
-#   Avg:     4.3     #
 #                    #
 ######################
 W/S pick, A/D change

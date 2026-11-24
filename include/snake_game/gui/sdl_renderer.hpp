@@ -103,7 +103,7 @@ class SdlRenderer : public IRenderer {
 	 * Color titleColor: Color of the heading
 	 * Level level: Difficulty that was played
 	 * int finalScore: Score of the round
-	 * const ScoreStats& stats: Best, games played and average for the level
+	 * const ScoreStats& stats: Best and games played for the level
 	 */
 	void showPanel(const std::string& title, Color titleColor, Level level, int finalScore, const ScoreStats& stats);
 

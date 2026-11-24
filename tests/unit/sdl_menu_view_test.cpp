@@ -30,7 +30,7 @@ struct Fixture {
 };
 
 MenuSnapshot snapshot(MenuItem selected) {
-	return MenuSnapshot{selected, Level::Normal, ScoreStats{42, 7, 12.5}, true};
+	return MenuSnapshot{selected, Level::Normal, ScoreStats{42, 7}, true};
 }
 
 }  // namespace
@@ -66,33 +66,33 @@ TEST(SdlMenuView, MenuShowsTheSpriteSnakeAndApple) {
 
 TEST(SdlMenuView, SoundSwitchChangesThePicture) {
 	Fixture f;
-	f.view.show(MenuSnapshot{MenuItem::Sound, Level::Normal, ScoreStats{0, 0, 0.0}, true});
+	f.view.show(MenuSnapshot{MenuItem::Sound, Level::Normal, ScoreStats{0, 0}, true});
 	std::vector<unsigned char> on = f.canvas->pixelsRgb();
-	f.view.show(MenuSnapshot{MenuItem::Sound, Level::Normal, ScoreStats{0, 0, 0.0}, false});
+	f.view.show(MenuSnapshot{MenuItem::Sound, Level::Normal, ScoreStats{0, 0}, false});
 	EXPECT_NE(on, f.canvas->pixelsRgb());
 }
 
 TEST(SdlMenuView, PracticeSwitchChangesThePicture) {
 	Fixture f;
-	f.view.show(MenuSnapshot{MenuItem::Practice, Level::Normal, ScoreStats{0, 0, 0.0}, true, false});
+	f.view.show(MenuSnapshot{MenuItem::Practice, Level::Normal, ScoreStats{0, 0}, true, false});
 	std::vector<unsigned char> off = f.canvas->pixelsRgb();
-	f.view.show(MenuSnapshot{MenuItem::Practice, Level::Normal, ScoreStats{0, 0, 0.0}, true, true});
+	f.view.show(MenuSnapshot{MenuItem::Practice, Level::Normal, ScoreStats{0, 0}, true, true});
 	EXPECT_NE(off, f.canvas->pixelsRgb());
 }
 
 TEST(SdlMenuView, ResetNoticeChangesThePicture) {
 	Fixture f;
-	f.view.show(MenuSnapshot{MenuItem::Start, Level::Normal, ScoreStats{0, 0, 0.0}, true, false, false});
+	f.view.show(MenuSnapshot{MenuItem::Start, Level::Normal, ScoreStats{0, 0}, true, false, false});
 	std::vector<unsigned char> normal = f.canvas->pixelsRgb();
-	f.view.show(MenuSnapshot{MenuItem::Start, Level::Normal, ScoreStats{0, 0, 0.0}, true, false, true});
+	f.view.show(MenuSnapshot{MenuItem::Start, Level::Normal, ScoreStats{0, 0}, true, false, true});
 	EXPECT_NE(normal, f.canvas->pixelsRgb());
 }
 
 TEST(SdlMenuView, SaveFailureChangesThePicture) {
 	Fixture f;
-	f.view.show(MenuSnapshot{MenuItem::Start, Level::Normal, ScoreStats{0, 0, 0.0, ""}, true});
+	f.view.show(MenuSnapshot{MenuItem::Start, Level::Normal, ScoreStats{0, 0, ""}, true});
 	std::vector<unsigned char> normal = f.canvas->pixelsRgb();
-	f.view.show(MenuSnapshot{MenuItem::Start, Level::Normal, ScoreStats{0, 0, 0.0, "/no/such"}, true});
+	f.view.show(MenuSnapshot{MenuItem::Start, Level::Normal, ScoreStats{0, 0, "/no/such"}, true});
 	EXPECT_NE(normal, f.canvas->pixelsRgb());
 }
 

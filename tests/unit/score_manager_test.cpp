@@ -126,12 +126,10 @@ TEST_F(ScoreManagerTest, ScoresAreKeptPerLevel) {
 	m.saveScore(Level::Easy, 7);
 	EXPECT_EQ(m.bestScore(Level::Easy), 7);
 	EXPECT_EQ(m.totalGames(Level::Easy), 2u);
-	EXPECT_DOUBLE_EQ(m.averageScore(Level::Easy), 6.0);
 	EXPECT_EQ(m.bestScore(Level::Hard), 9);
 	EXPECT_EQ(m.totalGames(Level::Hard), 1u);
 	EXPECT_EQ(m.bestScore(Level::Normal), 0);
 	EXPECT_EQ(m.totalGames(Level::Normal), 0u);
-	EXPECT_DOUBLE_EQ(m.averageScore(Level::Normal), 0.0);
 }
 
 TEST_F(ScoreManagerTest, FileHoldsOneLinePerGame) {
@@ -139,22 +137,6 @@ TEST_F(ScoreManagerTest, FileHoldsOneLinePerGame) {
 	m.saveScore(Level::Normal, 5);
 	m.saveScore(Level::Easy, 1);
 	EXPECT_EQ(read("scores_v2.txt"), "N 5\nE 1\n");
-}
-
-TEST_F(ScoreManagerTest, AverageUsesLastTenGamesOfTheLevel) {
-	ScoreManager m(dir());
-	m.saveScore(Level::Normal, 100);
-	m.saveScore(Level::Normal, 100);
-	for (int s = 1; s <= 10; ++s) m.saveScore(Level::Normal, s);
-	m.saveScore(Level::Hard, 1000);
-	EXPECT_DOUBLE_EQ(m.averageScore(Level::Normal), 5.5);
-	EXPECT_EQ(m.totalGames(Level::Normal), 12u);
-}
-
-TEST_F(ScoreManagerTest, AverageUsesAllGamesBelowWindow) {
-	ScoreManager m(dir());
-	for (int s : {1, 2, 3}) m.saveScore(Level::Normal, s);
-	EXPECT_DOUBLE_EQ(m.averageScore(Level::Normal), 2.0);
 }
 
 TEST_F(ScoreManagerTest, TopScoresDescendingKeepsTiesAndCaps) {
@@ -174,7 +156,6 @@ TEST_F(ScoreManagerTest, StatsMatchTheGetters) {
 	ScoreStats st = m.stats(Level::Hard);
 	EXPECT_EQ(st.best, 8);
 	EXPECT_EQ(st.games, 2u);
-	EXPECT_DOUBLE_EQ(st.average, 6.0);
 }
 
 TEST_F(ScoreManagerTest, PersistsAcrossInstances) {
@@ -186,7 +167,6 @@ TEST_F(ScoreManagerTest, PersistsAcrossInstances) {
 	ScoreManager m2(dir());
 	EXPECT_EQ(m2.bestScore(Level::Hard), 5);
 	EXPECT_EQ(m2.totalGames(Level::Normal), 12u);
-	EXPECT_DOUBLE_EQ(m2.averageScore(Level::Normal), 7.5);
 }
 
 TEST_F(ScoreManagerTest, MissingChecksumZeroesScoresKeepsRecordsAndBacksUp) {
