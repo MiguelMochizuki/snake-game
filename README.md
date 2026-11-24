@@ -25,7 +25,7 @@ Snake Game has two front-ends on one engine: the graphical game (`snake-gui`, dr
 - Start menu with three levels (Easy, Normal, Hard), a leaderboard, a how-to-play screen, a sound switch and a practice mode that keeps your games out of the leaderboard; press M at game over to return to it
 - Arrow keys or WASD; turns pressed within one step are kept (up to two), so a quick Up then Left makes both
 - Best score, games played and top 10, kept separately for each level and saved between sessions
-- Terminal beep when you eat and when the game ends; in builds with audio (the release binaries), classical music (seven pieces and two easter eggs), a different one chosen at random at the start of every game (and again if one ends during a long game), with the music going on where it stopped when you pause, with short blips when you eat, when the game ends and when you move around the menu
+- Terminal beep when you eat and when the game ends; in builds with audio (the release binaries), classical music (eight pieces and two easter eggs), a different one chosen at random at the start of every game (and again if one ends during a long game), with the music going on where it stopped when you pause, with short blips when you eat, when the game ends and when you move around the menu
 - Filling the whole board is a win: the last food is scored and a victory screen replaces game over (a yellow panel in the terminal; in the window the board fades to dark under a gold one)
 - In the graphical version the snake and the food are drawn with sprites: a shaded, rounded snake with diamonds on its back, a head that faces where it goes with golden slit-pupil eyes and a forked tongue, and a red apple with a stem and a leaf. The app icon is drawn by the same code
 - In the graphical version the game over panel appears over a board that fades to dark, as the victory one does
@@ -177,7 +177,7 @@ Set `NO_COLOR` to any non-empty value to turn colors off, for example `NO_COLOR=
 
 The release binaries play music and blips through the system audio device. The sound switch in the menu turns all of it off. If no audio device can be opened, the game falls back to the terminal beep without any message. Set `SNAKE_AUDIO=off` to force the beep even when a device exists.
 
-The music is seven pieces and two easter eggs, all public domain (or CC0). Every game, restart included, starts with one chosen at random from its beginning, never the one that played last; each easter egg has a 1% chance and the seven pieces share the rest. If a piece ends while you are still playing, another follows after a short silence. Pausing stops the music and resuming goes on from the same note. `tools/gen_score.py` builds `src/audio/score_data.cpp` from the sources below and plays each piece the way it is performed: repeats written out, its own tempo, a ritardando at the end and a volume curve, with the melody told apart from the accompaniment.
+The music is eight pieces and two easter eggs, all public domain except where noted. Every game, restart included, starts with one chosen at random from its beginning, never the one that played last; each easter egg has a 1% chance and the seven pieces share the rest. If a piece ends while you are still playing, another follows after a short silence. Pausing stops the music and resuming goes on from the same note. `tools/gen_score.py` builds `src/audio/score_data.cpp` from the sources below and plays each piece the way it is performed: repeats written out, its own tempo, a ritardando at the end and a volume curve, with the melody told apart from the accompaniment.
 
 1. C. Gounod, *Ave Maria*, over J. S. Bach's Prelude in C major ([Mutopia 2167](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=2167), Heugel 1856), slowing down at the end with the bass brought up to the level of the melody
 2. L. van Beethoven, *Ode to Joy*, the theme of the 9th symphony in a fast arrangement for the game that grows in three laps
@@ -186,8 +186,9 @@ The music is seven pieces and two easter eggs, all public domain (or CC0). Every
 5. J. S. Bach, *Air on the G String*, with both sections repeated ([Mutopia 1534](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=1534))
 6. W. A. Mozart, *Eine kleine Nachtmusik*, 1st movement, at a brisk tempo ([Mutopia 900](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=900))
 7. F. Schubert, *Leise flehen meine Lieder* (Ständchen), from the [OpenScore Lieder Corpus](https://musescore.com/openscore-lieder-corpus) (CC0), with its repeats and dynamics
-8. Easter egg: *Korobeiniki*, the Russian folk song of the Tetris theme, in an arrangement for the game
-9. Easter egg: *La Marseillaise* (Rouget de Lisle), the melody read from a public domain score, with an accompaniment for the game
+8. F. Liszt, *Hungarian Rhapsody No. 2*, a performance by Bernd Krueger from [piano-midi.de](http://www.piano-midi.de) (Wikimedia Commons, [CC BY-SA 3.0 de](https://creativecommons.org/licenses/by-sa/3.0/de/)), kept with its own tempo and dynamics. The notes generated from it in `src/audio/score_data.cpp` stay under that license; the rest of the project is MIT
+9. Easter egg: *Korobeiniki*, the Russian folk song of the Tetris theme, in an arrangement for the game
+10. Easter egg: *La Marseillaise* (Rouget de Lisle), the melody read from a public domain score, with an accompaniment for the game
 
 The pieces are played by a synth with a soft triangle wave for the accompaniment and a square wave for the melody, so they sound like a chiptune, not like a piano.
 

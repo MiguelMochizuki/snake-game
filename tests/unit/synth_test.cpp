@@ -60,8 +60,8 @@ int signChanges(const std::vector<float>& v, size_t n) {
 
 }  // namespace
 
-TEST(Score, TheRepertoireHasSevenPiecesAndTwoEasterEggsStartingWithTheAveMaria) {
-	EXPECT_EQ(PIECE_COUNT, 9);
+TEST(Score, TheRepertoireHasEightPiecesAndTwoEasterEggsStartingWithTheAveMaria) {
+	EXPECT_EQ(PIECE_COUNT, 10);
 	EXPECT_STREQ(PIECES[0].title, "Ave Maria");
 	int rare = 0;
 	for (int i = 0; i < PIECE_COUNT; ++i) {
