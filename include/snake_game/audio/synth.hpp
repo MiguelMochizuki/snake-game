@@ -29,6 +29,7 @@ enum class Blip { Eat, GameOver, MenuMove, MenuSelect, Win };
  * bool playing_: Render-thread state: whether the music sounds
  * int piece_, long long pos_, int next_: Render-thread state of the music: the piece playing, the sample position
  * inside it and the next note that has not started yet. Stopping keeps them, so the music goes on where it stopped
+ * int forced_: Piece every game plays when SNAKE_PIECE names one, -1 to choose at random
  * std::mt19937 rng_: Chooses the pieces, used by the render thread only
  * Voice voices_[MAX_VOICES]: The notes sounding now
  * int blipLeft_, blipTotal_, blipPos_: Render-thread state of the current blip
@@ -60,6 +61,7 @@ class Synth {
 	std::atomic<int> blipRequest_{0};
 	bool playing_ = false;
 	int piece_ = 0;
+	int forced_ = -1;
 	long long pos_ = 0;
 	int next_ = 0;
 	std::mt19937 rng_;

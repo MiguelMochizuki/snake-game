@@ -6,7 +6,10 @@
 #include "snake_game/audio/synth.hpp"
 #include "snake_game/audio/score.hpp"
 #include <algorithm>
+#include <cctype>
 #include <cmath>
+#include <cstdlib>
+#include <string>
 
 namespace {
 
@@ -67,6 +70,22 @@ float triangle(double phase) {
  * int sampleRate: Sample rate in Hz
  */
 Synth::Synth(int sampleRate, unsigned seed) : rate_(sampleRate), rng_(seed) {
+	// SNAKE_PIECE=<number from 1 or part of the title> plays that piece in every game, to listen to a piece on demand
+	const char* wanted = std::getenv("SNAKE_PIECE");
+	if (wanted == nullptr || *wanted == '\0') {
+		return;
+	}
+	std::string text(wanted);
+	std::transform(text.begin(), text.end(), text.begin(), [](unsigned char c) { return std::tolower(c); });
+	const bool number = std::all_of(text.begin(), text.end(), [](unsigned char c) { return std::isdigit(c) != 0; });
+	for (int i = 0; i < PIECE_COUNT; ++i) {
+		std::string title(PIECES[i].title);
+		std::transform(title.begin(), title.end(), title.begin(), [](unsigned char c) { return std::tolower(c); });
+		if (number ? std::atoi(text.c_str()) == i + 1 : title.find(text) != std::string::npos) {
+			forced_ = piece_ = i;
+			return;
+		}
+	}
 }
 
 /**
@@ -101,11 +120,13 @@ void Synth::trigger(Blip blip) {
 }
 
 /**
- * Moves to another piece, chosen at random and never the one that was playing, and starts it from the beginning.
+ * Moves to another piece (the one SNAKE_PIECE names, if any), chosen at random and never the one that was playing, and starts it from the beginning.
  * Each easter egg has 1% of the chance and the other pieces share the rest equally
  */
 void Synth::chooseOtherPiece() {
-	if (PIECE_COUNT > 1) {
+	if (forced_ >= 0) {
+		piece_ = forced_;
+	} else if (PIECE_COUNT > 1) {
 		int rare = 0;
 		for (int i = 0; i < PIECE_COUNT; ++i) {
 			rare += PIECES[i].rare ? 1 : 0;

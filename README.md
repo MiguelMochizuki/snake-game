@@ -175,7 +175,7 @@ Set `NO_COLOR` to any non-empty value to turn colors off, for example `NO_COLOR=
 
 ### Sound
 
-The release binaries play music and blips through the system audio device. The sound switch in the menu turns all of it off. If no audio device can be opened, the game falls back to the terminal beep without any message. Set `SNAKE_AUDIO=off` to force the beep even when a device exists.
+The release binaries play music and blips through the system audio device. The sound switch in the menu turns all of it off. If no audio device can be opened, the game falls back to the terminal beep without any message. Set `SNAKE_AUDIO=off` to force the beep even when a device exists. Set `SNAKE_PIECE` to a number from the list below or to part of a title (`SNAKE_PIECE=marseillaise`) to play that piece in every game instead of a random one.
 
 The music is eight pieces and two easter eggs, all public domain except where noted. Every game, restart included, starts with one chosen at random from its beginning, never the one that played last; each easter egg has a 1% chance and the seven pieces share the rest. If a piece ends while you are still playing, another follows after a short silence. Pausing stops the music and resuming goes on from the same note. `tools/gen_score.py` builds `src/audio/score_data.cpp` from the sources below and plays each piece the way it is performed: repeats written out, its own tempo, a ritardando at the end and a volume curve, with the melody told apart from the accompaniment.
 

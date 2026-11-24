@@ -145,6 +145,21 @@ TEST(Synth, ARandomPieceNeverRepeatsTheLastOneAndEveryPieceCanCome) {
 	EXPECT_EQ(std::count(seen.begin(), seen.end(), true), PIECE_COUNT);
 }
 
+TEST(Synth, SnakePieceForcesAPieceByNumberOrByTitle) {
+	setenv("SNAKE_PIECE", "marseillaise", 1);
+	Synth byTitle(LOW_RATE, 1);
+	setenv("SNAKE_PIECE", "3", 1);
+	Synth byNumber(LOW_RATE, 1);
+	unsetenv("SNAKE_PIECE");
+	EXPECT_STREQ(PIECES[byTitle.piece()].title, "La Marseillaise");
+	EXPECT_EQ(byNumber.piece(), 2);
+	for (int i = 0; i < 5; ++i) {
+		byTitle.startRandomPiece();
+		renderFrames(byTitle, 1);
+		EXPECT_STREQ(PIECES[byTitle.piece()].title, "La Marseillaise");
+	}
+}
+
 TEST(Synth, EachEasterEggComesAboutOnceInAHundredGames) {
 	Synth s(LOW_RATE, 3);
 	std::vector<int> count(PIECE_COUNT, 0);
