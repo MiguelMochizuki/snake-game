@@ -111,6 +111,38 @@ TEST(Score, EveryPieceIsConsistent) {
 	}
 }
 
+TEST(Score, NoPieceNeedsMoreVoicesThanTheSynthHas) {
+	const int synthVoices = 16;  // Synth::MAX_VOICES: one more note would take the place of one still sounding
+	for (int i = 0; i < PIECE_COUNT; ++i) {
+		const Piece& piece = PIECES[i];
+		std::vector<std::pair<int, int>> edges;  // (time, +1 start / -1 end), ends first at the same time
+		for (int n = 0; n < piece.count; ++n) {
+			edges.push_back({piece.notes[n].start, 1});
+			edges.push_back({piece.notes[n].start + piece.notes[n].length, -1});
+		}
+		std::sort(edges.begin(), edges.end());
+		int sounding = 0, most = 0;
+		for (const auto& e : edges) {
+			sounding += e.second;
+			most = std::max(most, sounding);
+		}
+		EXPECT_LE(most, synthVoices) << piece.title;
+	}
+}
+
+TEST(Score, NoNoteStrikesAPitchThatStillRingsInItsOwnLine) {
+	for (int i = 0; i < PIECE_COUNT; ++i) {
+		const Piece& piece = PIECES[i];
+		std::vector<int> ringsUntil(2 * 128, -1);  // by melody flag and pitch
+		for (int n = 0; n < piece.count; ++n) {
+			const ScoreNote& note = piece.notes[n];
+			int& until = ringsUntil[note.melody * 128 + note.pitch];
+			ASSERT_LE(until, note.start) << piece.title << " note " << n;
+			until = note.start + note.length;
+		}
+	}
+}
+
 TEST(Score, AveMariaOpensLikeBachAndTheMelodyWaitsFourBars) {
 	const Piece& piece = PIECES[0];
 	// Bar 1 of the C major prelude: C E G C E G C E
@@ -263,7 +295,7 @@ TEST(Synth, MusicStaysQuietAndFinite) {
 		peak = std::max(peak, std::fabs(v));
 	}
 	EXPECT_GT(peak, 0.05f);
-	EXPECT_LT(peak, 0.5f) << "leaves headroom for the blips on top";
+	EXPECT_LE(peak, 0.708f) << "at most -3 dBFS, which leaves room for the blips on top";
 }
 
 TEST(Synth, SilentWhenStopped) {
@@ -331,4 +363,72 @@ TEST(Synth, ConcurrentControlIsSafe) {
 		}
 	}
 	control.join();
+}
+
+TEST(Synth, TheStemsPlayOnlyTheirNotesAndAddUpToTheMix) {
+	const int frames = framesOf(LOW_RATE, 20000);
+	setVar("SNAKE_STEM", "melody");
+	Synth melody(LOW_RATE, 1);
+	setVar("SNAKE_STEM", "accompaniment");
+	Synth accompaniment(LOW_RATE, 1);
+	setVar("SNAKE_STEM", nullptr);
+	Synth mix(LOW_RATE, 1);
+	for (Synth* s : {&melody, &accompaniment, &mix}) {
+		s->startMusic();
+	}
+	std::vector<float> m = renderFrames(melody, frames), a = renderFrames(accompaniment, frames), all = renderFrames(mix, frames);
+	// The Ave Maria's first four bars are the prelude alone
+	EXPECT_TRUE(allZero(m, 0, static_cast<size_t>(framesOf(LOW_RATE, 14000))));
+	EXPECT_FALSE(allZero(m));
+	EXPECT_FALSE(allZero(a));
+	for (int i = 0; i < frames; ++i) {
+		ASSERT_NEAR(m[i] + a[i], all[i], 1e-5f) << "sample " << i;
+	}
+}
+
+namespace {
+
+// A melody note that rings for two seconds and, from 100 ms, sixteen accompaniment notes: one more than the voices
+const ScoreNote CROWDED[] = {
+	{0, 2000, 81, 1, 100}, {100, 1000, 48, 0, 100}, {100, 1000, 50, 0, 100}, {100, 1000, 52, 0, 100},
+	{100, 1000, 53, 0, 100}, {100, 1000, 55, 0, 100}, {100, 1000, 57, 0, 100}, {100, 1000, 59, 0, 100},
+	{100, 1000, 60, 0, 100}, {100, 1000, 62, 0, 100}, {100, 1000, 64, 0, 100}, {100, 1000, 65, 0, 100},
+	{100, 1000, 67, 0, 100}, {100, 1000, 69, 0, 100}, {100, 1000, 71, 0, 100}, {100, 1000, 72, 0, 100},
+	{100, 1000, 74, 0, 100},
+};
+const Piece CROWDED_PIECE[] = {{"Crowded", "test", CROWDED, 17, 2000, false}};
+const Piece ROOMY_PIECE[] = {{"Roomy", "test", CROWDED, 16, 2000, false}};  // the same with one note fewer
+
+// A low accompaniment note that rings while a chord starts at 501 ms, when the note is near the top of its wave
+const ScoreNote CHORD[] = {
+	{0, 2000, 57, 0, 100}, {501, 1000, 72, 0, 100}, {501, 1000, 76, 0, 100}, {501, 1000, 79, 0, 100}, {501, 1000, 84, 0, 100},
+};
+const Piece CHORD_PIECE[] = {{"Chord", "test", CHORD, 5, 2000, false}};
+
+}  // namespace
+
+TEST(Synth, WhenTheVoicesRunOutTheMelodyKeepsSounding) {
+	Synth crowded(RATE, 1, CROWDED_PIECE, 1), roomy(RATE, 1, ROOMY_PIECE, 1);
+	crowded.startMusic();
+	roomy.startMusic();
+	std::vector<float> a = renderFrames(crowded, RATE * 2), b = renderFrames(roomy, RATE * 2);
+	// After the accompaniment has ended only the melody sounds, in both
+	const size_t from = static_cast<size_t>(framesOf(RATE, 1200)), to = static_cast<size_t>(framesOf(RATE, 1900));
+	EXPECT_FALSE(allZero(a, from, to));
+	for (size_t i = from; i < to; ++i) {
+		ASSERT_FLOAT_EQ(a[i], b[i]) << "sample " << i;
+	}
+}
+
+TEST(Synth, AChordStartingDoesNotMakeARingingNoteJump) {
+	Synth s(RATE, 1, CHORD_PIECE, 1);
+	s.startMusic();
+	std::vector<float> out = renderFrames(s, RATE);
+	float jump = 0.0f;
+	// Around the chord's start, while its notes are still in their attack
+	for (int i = framesOf(RATE, 499); i < framesOf(RATE, 503); ++i) {
+		jump = std::max(jump, std::fabs(out[i] - out[i - 1]));
+	}
+	// A 220 Hz triangle moves at most 0.005 per sample; dropping its gain at once to make room for the chord was 0.1
+	EXPECT_LT(jump, 0.02f);
 }

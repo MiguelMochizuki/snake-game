@@ -1,279 +1,225 @@
 # Snake Game Makefile
 # Author: Miguel Mochizuki Silva
-# Description: Makefile to orchestrate CMake and Docker build processes
+# Description: Builds, runs and tests the three variants (term, audio, gui), plus Docker and the maintenance tasks
 
 # ==============================
 # Configuration
 # ==============================
 
-# Three build variants, each in its own directory so they never clash:
-#   terminal  build/        the terminal game, no extra dependencies (BUILD=dir overrides)
-#   audio     build-audio/  the terminal game with chord music (fetches miniaudio)
-#   gui       build-sdl/    the graphical game, implies audio (fetches SDL3 and miniaudio)
-#   icon      build-icon/   only the tool that draws the app icon, with no SDL and no tests
-BUILD ?= build
-BUILD_DIR = $(BUILD)
-AUDIO_BUILD_DIR = build-audio
-GUI_BUILD_DIR = build-sdl
-ICON_BUILD_DIR = build-icon
-DATA_DIR = data
-
-# CMake options
 CMAKE = cmake
 CMAKE_BUILD_TYPE ?= Release
 CMAKE_FLAGS = -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
 
-# Executables
-EXECUTABLE = $(BUILD_DIR)/bin/snake
-AUDIO_EXECUTABLE = $(AUDIO_BUILD_DIR)/bin/snake
-GUI_EXECUTABLE = $(GUI_BUILD_DIR)/bin/snake-gui
+# Each variant builds in its own directory: build directory, extra CMake flags, executable and environment of run
+VARIANTS = term audio gui
+DIR_term = build
+DIR_audio = build-audio
+DIR_gui = build-sdl
+FLAGS_term =
+FLAGS_audio = -DSNAKE_GAME_BUILD_AUDIO=ON
+FLAGS_gui = -DSNAKE_GAME_BUILD_GUI=ON
+EXE_term = snake
+EXE_audio = snake
+EXE_gui = snake-gui
+ENV_term = SNAKE_DATA_DIR=data
+ENV_audio = SNAKE_DATA_DIR=data
+ENV_gui =
 
-# Docker options
-DOCKER_IMAGE = snake-game
-DOCKER_CONTAINER = snake-game-container
-DOCKER_VOLUME = snake-data
+IMAGE = snake-game
+VOLUME = snake-data
 
-# Docker cache tracking
-DOCKER_CACHE = .docker-build-cache
-
-# Files that trigger a rebuild (build trees and tooling folders are skipped)
-SOURCES = $(shell find . \( -path './build*' -o -path ./.git -o -path ./.superpowers \) -prune -o \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' -o -name '*.c' \) -print 2>/dev/null)
-TEST_FILES = $(shell find tests \( -name '*.py' -o -name '*.txt' \) -print 2>/dev/null)
+OS_NAME := $(shell uname -s)
+APP_VERSION := $(shell sed -n 's/^project.*VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+MAC_APP = $(HOME)/Applications/Snake.app
 
 # Colors
 GREEN = \033[0;32m
 BLUE = \033[0;34m
 YELLOW = \033[0;33m
-RED = \033[0;31m
 NC = \033[0m
 
-# Configures and builds one variant. Arguments: label, build directory, extra CMake flags, executable
-define build_variant
-	@echo "$(BLUE)Configuring CMake ($(1))...$(NC)"
-	@$(CMAKE) -S . -B $(2) $(CMAKE_FLAGS) $(3)
-	@echo "$(BLUE)Building project...$(NC)"
-	@$(CMAKE) --build $(2) -j
-	@echo "$(GREEN)Build complete!$(NC)"
-	@echo "$(GREEN)Executable: $(4)$(NC)"
-	@touch $(2)/.built
+# say COLOR TEXT: a colored line
+say = @printf '$(1)%s$(NC)\n' '$(2)'
+
+# ==============================
+# Variants: make X, make run-X, make test-X
+# ==============================
+
+define variant
+.PHONY: $(1) run-$(1) test-$(1)
+
+$(1):
+	$$(call say,$$(BLUE),Building $(1)...)
+	@$$(CMAKE) -S . -B $$(DIR_$(1)) $$(CMAKE_FLAGS) $$(FLAGS_$(1))
+	@$$(CMAKE) --build $$(DIR_$(1)) -j
+	$$(call say,$$(GREEN),Built $$(DIR_$(1))/bin/$$(EXE_$(1)))
+
+run-$(1): $(1)
+	$$(call say,$$(GREEN),Running $(1)...)
+	@$$(ENV_$(1)) $$(DIR_$(1))/bin/$$(EXE_$(1))
+
+test-$(1): $(1)
+	$$(call say,$$(BLUE),Testing $(1)...)
+	@ctest --test-dir $$(DIR_$(1)) --output-on-failure
 endef
 
-# Runs the tests of one variant. Arguments: label, build directory
-define test_variant
-	@echo "$(BLUE)Running tests ($(1))...$(NC)"
-	@ctest --test-dir $(2) --output-on-failure
-endef
+$(foreach v,$(VARIANTS),$(eval $(call variant,$(v))))
+
+.DEFAULT_GOAL := all
+.PHONY: all run test test-all rebuild
+all: term
+run: run-term
+test: test-term
+test-all: $(addprefix test-,$(VARIANTS))
+rebuild: clean all
 
 # ==============================
-# Build targets
+# Clean
 # ==============================
 
-.PHONY: all local audio gui
-all local: $(BUILD_DIR)/.built
-audio: $(AUDIO_BUILD_DIR)/.built
-gui: $(GUI_BUILD_DIR)/.built
+.PHONY: clean clean-data clean-user-data
 
-# Each variant rebuilds only if source files, tests or CMakeLists.txt changed. The .built stamp is
-# written only after the whole build succeeded, so a failed build is never mistaken for a finished one
-$(BUILD_DIR)/.built: $(SOURCES) $(TEST_FILES) CMakeLists.txt
-	$(call build_variant,terminal,$(BUILD_DIR),,$(EXECUTABLE))
+clean:
+	$(call say,$(YELLOW),Cleaning build files...)
+	@rm -rf $(foreach v,$(VARIANTS),$(DIR_$(v))) build-icon build-music
 
-$(AUDIO_BUILD_DIR)/.built: $(SOURCES) $(TEST_FILES) CMakeLists.txt
-	$(call build_variant,terminal with audio,$(AUDIO_BUILD_DIR),-DSNAKE_GAME_BUILD_AUDIO=ON,$(AUDIO_EXECUTABLE))
+clean-data:
+	$(call say,$(YELLOW),Removing local scores...)
+	@rm -rf data
 
-$(GUI_BUILD_DIR)/.built: $(SOURCES) $(TEST_FILES) CMakeLists.txt
-	$(call build_variant,graphical,$(GUI_BUILD_DIR),-DSNAKE_GAME_BUILD_GUI=ON,$(GUI_EXECUTABLE))
-
-# ==============================
-# Run targets
-# ==============================
-
-.PHONY: run run-local run-audio run-gui
-run run-local: all
-	@echo "$(GREEN)Running Snake Game...$(NC)"
-	@SNAKE_DATA_DIR=$(DATA_DIR) $(EXECUTABLE)
-
-run-audio: audio
-	@echo "$(GREEN)Running Snake Game with music...$(NC)"
-	@SNAKE_DATA_DIR=$(DATA_DIR) $(AUDIO_EXECUTABLE)
-
-run-gui: gui
-	@echo "$(GREEN)Running Snake Game (graphical)...$(NC)"
-	@$(GUI_EXECUTABLE)
-
-# ==============================
-# Test targets
-# ==============================
-
-.PHONY: test test-local test-audio test-gui test-all
-test test-local: all
-	$(call test_variant,terminal,$(BUILD_DIR))
-
-test-audio: audio
-	$(call test_variant,audio,$(AUDIO_BUILD_DIR))
-
-test-gui: gui
-	$(call test_variant,graphical,$(GUI_BUILD_DIR))
-
-test-all: test test-audio test-gui
-
-# ==============================
-# Clean targets
-# ==============================
-
-.PHONY: clean clean-local clean-data clean-local-data rebuild rebuild-local
-clean clean-local:
-	@echo "$(YELLOW)Cleaning build files...$(NC)"
-	@rm -rf $(BUILD_DIR) $(AUDIO_BUILD_DIR) $(GUI_BUILD_DIR) $(ICON_BUILD_DIR)
-	@echo "$(YELLOW)Clean complete!$(NC)"
-
-clean-data clean-local-data:
-	@echo "$(YELLOW)Removing local data...$(NC)"
-	@rm -rf $(DATA_DIR)
-	@echo "$(YELLOW)Local data removed!$(NC)"
-
-rebuild rebuild-local: clean all
+# Removes the scores both versions keep for your user (clean-data removes the ./data of this checkout)
+clean-user-data:
+ifeq ($(filter Darwin Linux,$(OS_NAME)),)
+	$(call say,$(YELLOW),On Windows: delete %APPDATA%\snake-game and %APPDATA%\snake-game-terminal)
+else
+	@bash tools/clean_user_data.sh
+endif
 
 # ==============================
 # Tools
 # ==============================
 
-# Installs the graphical game for the current user like any other app: on Linux the binary goes to
-# ~/.local/bin with an app-menu entry and icon, on macOS Snake.app goes to ~/Applications. Either way the
-# source folder can be deleted afterwards. On Windows use the zip from the Releases page.
-.PHONY: install-gui uninstall-gui
-OS_NAME := $(shell uname -s)
-APP_VERSION := $(shell sed -n 's/^project.*VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
-MAC_APP_DIR = $(HOME)/Applications
+.PHONY: install-gui uninstall-gui icon music loudness balance
 
+# Installs the graphical game for your user (Linux: ~/.local/bin with menu entry and icon; macOS: ~/Applications)
 install-gui: gui
 ifeq ($(OS_NAME),Darwin)
-	@tmp=$$(mktemp -d) && NO_ZIP=1 bash tools/package.sh macos $(GUI_EXECUTABLE) $(APP_VERSION) $$tmp \
-		&& mkdir -p $(MAC_APP_DIR) && rm -rf $(MAC_APP_DIR)/Snake.app && cp -R $$tmp/Snake.app $(MAC_APP_DIR)/ && rm -rf $$tmp
-	@echo "$(GREEN)Installed $(MAC_APP_DIR)/Snake.app$(NC)"
+	@tmp=$$(mktemp -d) && NO_ZIP=1 bash tools/package.sh macos $(DIR_gui)/bin/snake-gui $(APP_VERSION) $$tmp \
+		&& mkdir -p $(dir $(MAC_APP)) && rm -rf $(MAC_APP) && cp -R $$tmp/Snake.app $(MAC_APP) && rm -rf $$tmp
+	$(call say,$(GREEN),Installed $(MAC_APP))
 else ifeq ($(OS_NAME),Linux)
-	@bash tools/install_desktop.sh install $(GUI_EXECUTABLE)
-	@echo "$(GREEN)Installed ~/.local/bin/snake-gui with its app-menu entry and icon; log out and in if your dock does not pick it up$(NC)"
+	@bash tools/install_desktop.sh install $(DIR_gui)/bin/snake-gui
+	$(call say,$(GREEN),Installed ~/.local/bin/snake-gui with its menu entry and icon; log out and in if your dock does not show it)
 else
-	@echo "$(YELLOW)On Windows, download snake-gui-windows-x86_64.zip (or arm64) from the Releases page$(NC)"
+	$(call say,$(YELLOW),On Windows: download the zip from the Releases page)
 endif
 
 uninstall-gui:
 ifeq ($(OS_NAME),Darwin)
-	@rm -rf $(MAC_APP_DIR)/Snake.app
-	@echo "$(YELLOW)Removed $(MAC_APP_DIR)/Snake.app$(NC)"
+	@rm -rf $(MAC_APP)
 else ifeq ($(OS_NAME),Linux)
-	@bash tools/install_desktop.sh uninstall $(GUI_EXECUTABLE)
-	@echo "$(YELLOW)Removed the Snake binary, entry and icon$(NC)"
+	@bash tools/install_desktop.sh uninstall $(DIR_gui)/bin/snake-gui
 endif
-	@echo "Your scores were kept; make clean-user-data removes them."
+	$(call say,$(YELLOW),Removed. Your scores were kept; make clean-user-data removes them)
 
-# Removes the scores both versions keep for you (not the ./data of this checkout: make clean-data does that)
-.PHONY: clean-user-data
-clean-user-data:
-ifeq ($(filter Darwin Linux,$(OS_NAME)),)
-	@echo "$(YELLOW)On Windows, delete %APPDATA%\\snake-game and %APPDATA%\\snake-game-terminal$(NC)"
-else
-	@bash tools/clean_user_data.sh
-endif
-
-# Draws the icon with the game's own sprites (a small tool that needs no SDL), then packs it with Python 3 and
-# Pillow (pip install pillow)
-.PHONY: icon
+# Redraws assets/icon.* with the game's own sprites (needs Python 3 and Pillow)
 icon:
-	@echo "$(BLUE)Building the icon tool...$(NC)"
-	@$(CMAKE) -S . -B $(ICON_BUILD_DIR) $(CMAKE_FLAGS) -DSNAKE_GAME_BUILD_ICON=ON -DSNAKE_GAME_BUILD_APPS=OFF -DSNAKE_GAME_BUILD_TESTS=OFF
-	@$(CMAKE) --build $(ICON_BUILD_DIR) --target snake_icon -j
-	@echo "$(BLUE)Drawing the app icon...$(NC)"
-	@python3 tools/make_icon.py --tool $(ICON_BUILD_DIR)/bin/snake_icon
-	@echo "$(GREEN)Icons written to assets/$(NC)"
+	$(call say,$(BLUE),Drawing the icon...)
+	@$(CMAKE) -S . -B build-icon $(CMAKE_FLAGS) -DSNAKE_GAME_BUILD_ICON=ON -DSNAKE_GAME_BUILD_APPS=OFF -DSNAKE_GAME_BUILD_TESTS=OFF
+	@$(CMAKE) --build build-icon --target snake_icon -j
+	@python3 tools/make_icon.py --tool build-icon/bin/snake_icon
+	$(call say,$(GREEN),Icons written to assets/)
+
+# Writes every piece of the soundtrack as a WAV file in music/ (ignored by git), played by the game's own synth
+music:
+	$(call say,$(BLUE),Rendering the soundtrack...)
+	@$(CMAKE) -S . -B build-music $(CMAKE_FLAGS) -DSNAKE_GAME_BUILD_MUSIC_TOOL=ON -DSNAKE_GAME_BUILD_APPS=OFF -DSNAKE_GAME_BUILD_TESTS=OFF
+	@$(CMAKE) --build build-music --target snake_render_music -j
+	@mkdir -p music && rm -f music/*.wav && build-music/bin/snake_render_music music
+	$(call say,$(GREEN),WAV files written to music/)
+
+# Integrated loudness of each file of music/; they should be within 0.3 LUFS of each other (the "gain" of each
+# piece in tools/gen_score.py sets it). Needs ffmpeg
+loudness:
+	@for f in music/*.wav; do printf '%-60s' "$$f"; ffmpeg -nostats -i "$$f" -af ebur128=peak=true -f null - 2>&1 \
+		| grep -A1 "Integrated loudness" | grep -o "I: *[-0-9.]* LUFS"; done
+
+# Checks the mix of each piece (peak, loudness, melody against accompaniment, registers) and fails when a piece clips
+# or its tune is not clearly above the accompaniment; see tools/check_balance.py. Needs numpy, scipy and ffmpeg
+balance: music
+	$(call say,$(BLUE),Checking the balance of the soundtrack...)
+	@python3 tools/check_balance.py
 
 # ==============================
-# Docker targets
+# Docker
 # ==============================
 
-# Build Docker image only if Dockerfile or source files changed
-$(DOCKER_CACHE): Dockerfile .gitattributes $(SOURCES) $(TEST_FILES) CMakeLists.txt
-	@echo "$(BLUE)Building Docker image...$(NC)"
-	@docker build -t $(DOCKER_IMAGE) .
-	@touch $(DOCKER_CACHE)
-	@echo "$(GREEN)Docker image built: $(DOCKER_IMAGE)$(NC)"
+.PHONY: docker test-docker run-docker clean-docker clean-docker-data rebuild-docker
 
-.PHONY: docker
-docker: $(DOCKER_CACHE)
+docker:
+	$(call say,$(BLUE),Building the Docker image...)
+	@docker build -t $(IMAGE) .
+	$(call say,$(GREEN),Docker image built: $(IMAGE))
 
-.PHONY: test-docker
 test-docker:
-	@echo "$(BLUE)Running tests in Docker...$(NC)"
-	@docker build --target test -t $(DOCKER_IMAGE)-test .
+	$(call say,$(BLUE),Running the tests in Docker...)
+	@docker build --target test -t $(IMAGE)-test .
 
-.PHONY: run-docker
 run-docker: docker
-	@echo "$(GREEN)Running Snake Game in Docker with persistent scores...$(NC)"
-	@docker volume create $(DOCKER_VOLUME) 2>/dev/null || true
-	@docker run --rm -it \
-		-v $(DOCKER_VOLUME):/app/data \
-		--name $(DOCKER_CONTAINER) \
-		$(DOCKER_IMAGE)
+	$(call say,$(GREEN),Running in Docker with persistent scores...)
+	@docker volume create $(VOLUME) >/dev/null
+	@docker run --rm -it -v $(VOLUME):/app/data $(IMAGE)
 
-.PHONY: clean-docker
 clean-docker:
-	@echo "$(YELLOW)Cleaning Docker...$(NC)"
-	@docker rm -f $(DOCKER_CONTAINER) 2>/dev/null || true
-	@docker rmi -f $(DOCKER_IMAGE) $(DOCKER_IMAGE)-test 2>/dev/null || true
-	@rm -f $(DOCKER_CACHE)
-	@echo "$(YELLOW)Docker clean complete!$(NC)"
+	$(call say,$(YELLOW),Removing the Docker image...)
+	@docker rmi -f $(IMAGE) $(IMAGE)-test 2>/dev/null || true
 
-.PHONY: clean-docker-data
 clean-docker-data:
-	@echo "$(YELLOW)Removing Docker data volume...$(NC)"
-	@docker volume rm $(DOCKER_VOLUME) 2>/dev/null || true
-	@echo "$(YELLOW)Docker data volume removed!$(NC)"
+	$(call say,$(YELLOW),Removing the Docker score volume...)
+	@docker volume rm $(VOLUME) 2>/dev/null || true
 
-.PHONY: rebuild-docker
 rebuild-docker: clean-docker docker
 
 # ==============================
 # Help
 # ==============================
 
+# head TITLE: a section title; row TARGET TEXT: a target and what it does, in two columns
+head = @printf '\n$(BLUE)%s$(NC)\n' '$(1)'
+row = @printf '  $(GREEN)make %-18s$(NC) %s\n' '$(1)' '$(2)'
+
 .PHONY: help
 help:
-	@echo "$(GREEN)Snake Game - Makefile Options$(NC)"
-	@echo ""
-	@echo "$(BLUE)Build (only if changed):$(NC)"
-	@echo "  make                - Terminal game: $(EXECUTABLE)"
-	@echo "  make audio          - Terminal game with music: $(AUDIO_EXECUTABLE)"
-	@echo "  make gui            - Graphical game: $(GUI_EXECUTABLE)"
-	@echo ""
-	@echo "$(BLUE)Run:$(NC)"
-	@echo "  make run            - Build and run the terminal game"
-	@echo "  make run-audio      - Build and run the terminal game with music"
-	@echo "  make run-gui        - Build and run the graphical game"
-	@echo ""
-	@echo "$(BLUE)Test:$(NC)"
-	@echo "  make test           - Build and run the unit and e2e tests (terminal)"
-	@echo "  make test-audio     - Same, for the audio build"
-	@echo "  make test-gui       - Same, for the graphical build"
-	@echo "  make test-all       - All three"
-	@echo ""
-	@echo "$(BLUE)Clean:$(NC)"
-	@echo "  make clean          - Remove all build directories"
-	@echo "  make clean-data     - Remove local score data"
-	@echo "  make clean-user-data - Remove the scores kept for your user (Linux, macOS)"
-	@echo "  make rebuild        - Clean and rebuild the terminal game"
-	@echo ""
-	@echo "$(BLUE)Tools:$(NC)"
-	@echo "  make install-gui    - Install the graphical game for this user, with menu entry and icon (Linux, macOS)"
-	@echo "  make uninstall-gui  - Remove it (scores are kept)"
-	@echo "  make icon           - Redraw assets/icon.* (needs Python and Pillow)"
-	@echo ""
-	@echo "$(BLUE)Docker:$(NC)"
-	@echo "  make docker         - Build Docker image (only if changed)"
-	@echo "  make test-docker    - Run the test suite in Docker (test stage only)"
-	@echo "  make run-docker     - Build and run in Docker (only if changed)"
-	@echo "  make clean-docker   - Remove Docker image, container and cache"
-	@echo "  make clean-docker-data - Remove Docker data volume"
-	@echo "  make rebuild-docker - Clean and rebuild Docker image"
-	@echo ""
-	@echo "The old *-local names (local, run-local, test-local, ...) still work."
+	@printf '$(GREEN)Snake Game - Makefile Options$(NC)\n'
+	$(call head,Build)
+	$(call row,term,Terminal game: build/bin/snake - the default)
+	$(call row,audio,Terminal game with music: build-audio/bin/snake)
+	$(call row,gui,Graphical game: build-sdl/bin/snake-gui)
+	$(call head,Run)
+	$(call row,run-term,Build and play - make run is the same)
+	$(call row,run-audio,Build and play with music)
+	$(call row,run-gui,Build and play the graphical game)
+	$(call head,Test)
+	$(call row,test-term,Build and run the tests - make test is the same)
+	$(call row,test-audio,Same for the audio build)
+	$(call row,test-gui,Same for the graphical build)
+	$(call row,test-all,All three)
+	$(call head,Clean)
+	$(call row,clean,Remove all build directories)
+	$(call row,clean-data,Remove the local scores)
+	$(call row,clean-user-data,Remove the scores kept for your user)
+	$(call row,rebuild,Clean and rebuild the terminal game)
+	$(call head,Tools)
+	$(call row,install-gui,Install the graphical game for your user)
+	$(call row,uninstall-gui,Remove it - the scores are kept)
+	$(call row,icon,Redraw assets/icon.* - needs Python and Pillow)
+	$(call row,music,Write the soundtrack as WAV files in music/)
+	$(call row,loudness,Show the loudness of each file of music/)
+	$(call row,balance,Check the mix of each piece - peak and melody against accompaniment)
+	$(call head,Docker)
+	$(call row,docker,Build the image)
+	$(call row,test-docker,Run the tests inside the Docker build)
+	$(call row,run-docker,Build and play with a persistent score volume)
+	$(call row,clean-docker,Remove the image)
+	$(call row,clean-docker-data,Remove the score volume)
+	$(call row,rebuild-docker,Clean and rebuild the image)
