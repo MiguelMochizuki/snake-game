@@ -13,11 +13,16 @@
 
 namespace {
 
-// With several accompaniment notes at once each one gets 1/sqrt(n) of the gain, so a full chord is not much louder
-const float ACCOMPANIMENT_GAIN = 0.15f;
-const float MELODY_GAIN = 0.10f;
+// With several accompaniment notes at once each one gets 1/sqrt(n) of the gain, so a full chord is not much louder.
+// A note of velocity 100 plays at these gains; the soundtrack keeps its notes around 60, so that the louder notes
+// (crescendos, low notes that tools/gen_score.py raises) still have room below velocity 127
+const float ACCOMPANIMENT_GAIN = 0.24f;
+const float MELODY_GAIN = 0.16f;
 const double NOTE_ATTACK = 0.008;   // seconds
 const double NOTE_RELEASE = 0.03;   // seconds, so repeated notes do not click
+// The accompaniment's share follows the number of notes through a 5 ms smoothing, so a ringing note does not jump in
+// volume (a click) when a chord starts or ends around it
+const double SHARE_SMOOTHING = 0.005;  // seconds
 
 struct BlipSpec {
 	double hz;
@@ -69,7 +74,25 @@ float triangle(double phase) {
  * Parameters:
  * int sampleRate: Sample rate in Hz
  */
-Synth::Synth(int sampleRate, unsigned seed) : rate_(sampleRate), rng_(seed) {
+Synth::Synth(int sampleRate, unsigned seed) : Synth(sampleRate, seed, PIECES, PIECE_COUNT) {
+}
+
+/**
+ * Constructor for the Synth class with a repertoire of its own (tests)
+ *
+ * Parameters:
+ * int sampleRate: Sample rate in Hz
+ * unsigned seed: Seed of the choice of pieces
+ * const Piece* pieces: The pieces
+ * int count: How many there are
+ */
+Synth::Synth(int sampleRate, unsigned seed, const Piece* pieces, int count)
+	: rate_(sampleRate), pieces_(pieces), count_(count), rng_(seed) {
+	// SNAKE_STEM=melody or accompaniment plays only those notes (tools/check_balance.py measures them apart)
+	const char* stem = std::getenv("SNAKE_STEM");
+	if (stem != nullptr) {
+		stem_ = std::string(stem) == "melody" ? 1 : (std::string(stem) == "accompaniment" ? 0 : -1);
+	}
 	// SNAKE_PIECE=<number from 1 or part of the title> plays that piece in every game, to listen to a piece on demand
 	const char* wanted = std::getenv("SNAKE_PIECE");
 	if (wanted == nullptr || *wanted == '\0') {
@@ -78,8 +101,8 @@ Synth::Synth(int sampleRate, unsigned seed) : rate_(sampleRate), rng_(seed) {
 	std::string text(wanted);
 	std::transform(text.begin(), text.end(), text.begin(), [](unsigned char c) { return std::tolower(c); });
 	const bool number = std::all_of(text.begin(), text.end(), [](unsigned char c) { return std::isdigit(c) != 0; });
-	for (int i = 0; i < PIECE_COUNT; ++i) {
-		std::string title(PIECES[i].title);
+	for (int i = 0; i < count_; ++i) {
+		std::string title(pieces_[i].title);
 		std::transform(title.begin(), title.end(), title.begin(), [](unsigned char c) { return std::tolower(c); });
 		if (number ? std::atoi(text.c_str()) == i + 1 : title.find(text) != std::string::npos) {
 			forced_ = piece_ = i;
@@ -126,24 +149,24 @@ void Synth::trigger(Blip blip) {
 void Synth::chooseOtherPiece() {
 	if (forced_ >= 0) {
 		piece_ = forced_;
-	} else if (PIECE_COUNT > 1) {
+	} else if (count_ > 1) {
 		int rare = 0;
-		for (int i = 0; i < PIECE_COUNT; ++i) {
-			rare += PIECES[i].rare ? 1 : 0;
+		for (int i = 0; i < count_; ++i) {
+			rare += pieces_[i].rare ? 1 : 0;
 		}
-		const double common = rare < PIECE_COUNT ? (100.0 - rare) / (PIECE_COUNT - rare) : 1.0;
+		const double common = rare < count_ ? (100.0 - rare) / (count_ - rare) : 1.0;
 		double total = 0.0;
-		for (int i = 0; i < PIECE_COUNT; ++i) {
-			total += i == piece_ ? 0.0 : (PIECES[i].rare ? 1.0 : common);
+		for (int i = 0; i < count_; ++i) {
+			total += i == piece_ ? 0.0 : (pieces_[i].rare ? 1.0 : common);
 		}
 		double pick = static_cast<double>(rng_() % 1000000u) / 1000000.0 * total;
 		int chosen = piece_;
-		for (int i = 0; i < PIECE_COUNT; ++i) {
+		for (int i = 0; i < count_; ++i) {
 			if (i == piece_) {
 				continue;
 			}
 			chosen = i;
-			pick -= PIECES[i].rare ? 1.0 : common;
+			pick -= pieces_[i].rare ? 1.0 : common;
 			if (pick < 0.0) {
 				break;
 			}
@@ -155,22 +178,28 @@ void Synth::chooseOtherPiece() {
 	for (Voice& v : voices_) {
 		v.age = v.length = 0;
 	}
+	share_ = 0.0f;
 }
 
 /**
- * Starts a note, taking the place of the oldest voice when all are busy
+ * Starts a note in a free voice; when all are busy it takes the one closest to its end, an accompaniment note before
+ * a melody note
  *
  * Parameters:
  * const ScoreNote& note: The note to start
  */
 void Synth::startNote(const ScoreNote& note) {
-	Voice* slot = &voices_[0];
+	if (stem_ >= 0 && note.melody != stem_) {
+		return;
+	}
+	Voice* slot = nullptr;
 	for (Voice& v : voices_) {
 		if (v.age >= v.length) {
 			slot = &v;
 			break;
 		}
-		if (v.age > slot->age) {
+		if (slot == nullptr || (slot->melody && !v.melody) ||
+		    (slot->melody == v.melody && v.length - v.age < slot->length - slot->age)) {
 			slot = &v;
 		}
 	}
@@ -217,10 +246,11 @@ void Synth::render(float* out, int frames) {
 	}
 	const int attack = static_cast<int>(NOTE_ATTACK * rate_);
 	const int release = static_cast<int>(NOTE_RELEASE * rate_);
+	const float smoothing = static_cast<float>(1.0 - std::exp(-1.0 / (SHARE_SMOOTHING * rate_)));
 	for (int i = 0; i < frames; ++i) {
 		float sample = 0.0f;
 		if (playing_) {
-			const Piece& piece = PIECES[piece_];
+			const Piece& piece = pieces_[piece_];
 			while (next_ < piece.count && static_cast<long long>(piece.notes[next_].start) * rate_ / 1000 <= pos_) {
 				startNote(piece.notes[next_++]);
 			}
@@ -230,7 +260,11 @@ void Synth::render(float* out, int frames) {
 					++accompaniment;
 				}
 			}
-			const float share = accompaniment > 0 ? ACCOMPANIMENT_GAIN / std::sqrt(static_cast<float>(accompaniment)) : 0.0f;
+			if (accompaniment > 0) {
+				const float target = ACCOMPANIMENT_GAIN / std::sqrt(static_cast<float>(accompaniment));
+				share_ = share_ <= 0.0f ? target : share_ + (target - share_) * smoothing;
+			}
+			const float share = share_;
 			for (Voice& v : voices_) {
 				if (v.age >= v.length) {
 					continue;

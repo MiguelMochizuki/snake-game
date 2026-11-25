@@ -14,7 +14,8 @@
  * int length: How long it lasts, in milliseconds
  * unsigned char pitch: MIDI note number
  * unsigned char melody: 1 if the note belongs to the melody, 0 for the accompaniment
- * unsigned char velocity: How loud, 1 to 127, 100 being the loudest the piece gets without a crescendo
+ * unsigned char velocity: How loud, 1 to 127: the synth plays the note at velocity / 100 of its gain (the soundtrack
+ * stays well below 100, so that crescendos and low notes have room)
  */
 struct ScoreNote {
 	int start;

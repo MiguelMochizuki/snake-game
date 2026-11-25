@@ -5,6 +5,7 @@ build/
 build-audio/
 build-sdl/
 build-icon/
+build-music/
 .docker-build-cache
 
 # ==============================
@@ -16,3 +17,8 @@ data/
 # Python
 # ==============================
 __pycache__/
+
+# ==============================
+# Soundtrack previews (make music)
+# ==============================
+music/

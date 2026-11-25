@@ -75,6 +75,13 @@ if(SNAKE_GAME_BUILD_ICON)
 	snake_game_set_warnings(snake_icon)
 endif()
 
+option(SNAKE_GAME_BUILD_MUSIC_TOOL "Build snake_render_music, which writes the soundtrack as WAV files (used by make music)" OFF)
+if(SNAKE_GAME_BUILD_MUSIC_TOOL)
+	add_executable(snake_render_music tools/render_music.cpp)
+	target_link_libraries(snake_render_music PRIVATE snake_core)
+	snake_game_set_warnings(snake_render_music)
+endif()
+
 if(SNAKE_GAME_BUILD_GUI)
 	set(SNAKE_GAME_BUILD_AUDIO ON CACHE BOOL "" FORCE)
 endif()
